@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>משחק חברה</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Segoe UI',Arial,sans-serif; min-height:100vh; color:#fff;
+    background:#0e1a14 url('/poster.png') center top / cover no-repeat fixed; }
+  .overlay { position:fixed; inset:0; background:linear-gradient(180deg, rgba(10,20,15,.05), rgba(10,20,15,.25)); z-index:0; }
+  #welcome { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding:0 0 40px; }
+  #welcome .companyName { background:rgba(0,0,0,.5); padding:8px 24px; border-radius:30px; font-size:20px; font-weight:800; margin-bottom:16px; backdrop-filter:blur(4px); }
+  #welcome .startBtn { background:linear-gradient(135deg,#f5b800,#ff9100); color:#1a1208; border:none; padding:20px 70px; border-radius:50px; font-size:26px; font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 0 4px rgba(255,255,255,.15); letter-spacing:1px; animation:bob 2s ease-in-out infinite; }
+  @keyframes bob { 50% { transform:translateY(-8px); } }
+  #welcome .startBtn:active { transform:scale(.96); }
+  #welcome .hint { margin-top:14px; font-size:14px; color:rgba(255,255,255,.85); text-shadow:0 2px 8px rgba(0,0,0,.8); }
+  #menu { position:relative; z-index:2; min-height:100vh; display:none; align-items:center; justify-content:center; padding:20px; }
+  .card { background:rgba(255,255,255,.97); color:#1a2a4a; border-radius:24px; padding:32px 28px; max-width:420px; width:100%; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,.5); }
+  .card .logo { font-size:28px; font-weight:900; margin-bottom:2px; }
+  .card .sub { color:#5a6b8a; margin-bottom:22px; font-size:15px; }
+  .btn { display:block; width:100%; padding:16px; border:none; border-radius:14px; font-weight:800; font-size:17px; text-decoration:none; margin-bottom:12px; color:#fff; cursor:pointer; font-family:inherit; }
+  .bjoin { background:linear-gradient(135deg,#22a06b,#16c79a); }
+  .bscan { background:linear-gradient(135deg,#f5b800,#ff9100); color:#1a1208; }
+  .b2 { background:linear-gradient(135deg,#2a4d9e,#3b7dd8); }
+  #qrReader { width:100%; max-width:320px; margin:8px auto 12px; border-radius:14px; overflow:hidden; }
+  .scan-err { color:#c0392b; font-size:13px; margin-bottom:10px; }
+  .credit { color:#8a98b5; font-size:13px; margin-top:16px; }
+  .err-screen { position:relative; z-index:2; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+</style>
+</head>
+<body>
+
+<div id="loadingErr" class="err-screen hidden" style="display:none">
+  <div class="card"><h2 id="errMsg">טוען...</h2></div>
+</div>
+
+<div id="welcome" style="display:none">
+  <div class="companyName" id="companyNameTop"></div>
+  <button class="startBtn" onclick="enter()">התחל ▶</button>
+  <div class="hint">לחצו כדי להתחיל את ההרפתקה</div>
+</div>
+
+<div class="overlay" id="ov" style="display:none"></div>
+<div id="menu">
+  <div class="card">
+    <div class="logo" id="gameName">משחק חברה</div>
+    <div class="sub" id="companyNameMenu"></div>
+    <a class="btn bjoin" id="joinLink" href="#">🙋 הצטרף למשחק</a>
+    <button class="btn bscan" id="scanBtn" onclick="startScan()">📷 סרוק QR של תחנה</button>
+    <div id="qrReader"></div>
+    <p class="scan-err" id="scanErr"></p>
+    <button class="btn b2" style="display:none" id="stopScanBtn" onclick="stopScan()">עצור סריקה</button>
+    <a class="btn b2" id="boardLink" href="#">📊 לוח תוצאות חי</a>
+    <p class="credit">נוצר ע"י Amir Cohen</p>
+  </div>
+</div>
+
+<script>
+const companyId = location.pathname.split('/')[2]; // /c/:cid
+let company = null;
+
+async function init() {
+  try {
+    const r = await fetch('/api/company/' + companyId);
+    if (r.status === 403) { showErr('המשחק של חברה זו מושבת כרגע'); return; }
+    if (!r.ok) { showErr('חברה לא נמצאה'); return; }
+    company = await r.json();
+    document.getElementById('companyNameTop').textContent = company.name;
+    document.getElementById('gameName').textContent = company.gameName || 'משחק חברה';
+    document.getElementById('companyNameMenu').textContent = company.name;
+    document.getElementById('joinLink').href = '/c/' + companyId + '/join';
+    document.getElementById('boardLink').href = '/c/' + companyId + '/board';
+    document.getElementById('welcome').style.display = 'flex';
+  } catch(e) { showErr('שגיאת חיבור'); }
+}
+function showErr(msg) {
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('menu').style.display = 'none';
+  const s = document.getElementById('loadingErr'); s.style.display = 'flex'; s.classList.remove('hidden');
+  document.getElementById('errMsg').textContent = msg;
+}
+function enter() {
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('ov').style.display = 'block';
+  document.getElementById('menu').style.display = 'flex';
+}
+
+let qrScanner = null;
+async function startScan() {
+  const err = document.getElementById('scanErr'); err.textContent = '';
+  document.getElementById('scanBtn').style.display = 'none';
+  document.getElementById('stopScanBtn').style.display = 'block';
+  try {
+    qrScanner = new Html5Qrcode('qrReader');
+    await qrScanner.start({ facingMode:'environment' }, { fps:10, qrbox:{width:220,height:220} }, onScanSuccess, ()=>{});
+  } catch(e) {
+    err.textContent = 'לא ניתן לגשת למצלמה. סרקו עם אפליקציית המצלמה.';
+    document.getElementById('scanBtn').style.display = 'block';
+    document.getElementById('stopScanBtn').style.display = 'none';
+  }
+}
+function onScanSuccess(t) {
+  stopScan();
+  try { const u = new URL(t); if (/\/c\/[^/]+\/station\/\d+/.test(u.pathname)) { location.href = u.pathname + '?via=app'; return; } } catch(e){}
+  location.href = t;
+}
+async function stopScan() {
+  if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch(e){} qrScanner = null; }
+  document.getElementById('stopScanBtn').style.display = 'none';
+  document.getElementById('scanBtn').style.display = 'block';
+}
+init();
+</script>
+</body>
+</html>

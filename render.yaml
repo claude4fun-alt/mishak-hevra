@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: mishak-hevra
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: GH_TOKEN
+        sync: false
+      - key: GH_OWNER
+        sync: false
+      - key: GH_REPO
+        sync: false

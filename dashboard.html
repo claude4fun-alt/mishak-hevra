@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>דשבורד ניהול - משחק חברה</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; background:#eef2f9; color:#1a2a4a; padding:18px; }
+  body.login-mode { background:#0e1a14 url('/poster.png') center top / cover no-repeat fixed; padding:18px; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  body.login-mode::before { content:''; position:fixed; inset:0; background:linear-gradient(180deg,rgba(10,20,15,.1),rgba(10,20,15,.3)); z-index:0; }
+  .wrap { max-width:1100px; margin:0 auto; }
+  header { background:linear-gradient(135deg,#1a2a6c,#3b7dd8); color:#fff; padding:22px; border-radius:18px; margin-bottom:18px; box-shadow:0 10px 30px rgba(26,42,108,.25); }
+  header h1 { font-size:24px; } header p { opacity:.85; margin-top:4px; font-size:14px; }
+  .login { position:relative; z-index:1; background:#fff; padding:30px; border-radius:18px; max-width:380px; width:100%; box-shadow:0 20px 50px rgba(0,0,0,.4); text-align:center; }
+  .tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+  .tab { padding:10px 18px; background:#fff; border-radius:12px; cursor:pointer; font-weight:700; border:2px solid transparent; }
+  .tab.active { border-color:#3b7dd8; color:#1a2a6c; }
+  .panel { display:none; } .panel.active { display:block; }
+  .card2 { background:#fff; border-radius:16px; padding:18px; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+  .station-card { background:#fff; border-radius:16px; padding:18px; margin-bottom:14px; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+  .station-card h3 { color:#1a2a6c; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .num { background:#ffd23f; color:#1a2a4a; width:32px; height:32px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-weight:800; }
+  label { display:block; font-size:13px; font-weight:700; color:#5a6b8a; margin:10px 0 4px; }
+  input, textarea, select { width:100%; padding:11px; border:2px solid #d5deef; border-radius:10px; font-size:15px; font-family:inherit; }
+  textarea { min-height:60px; resize:vertical; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .btn { padding:11px 20px; border:none; border-radius:10px; font-weight:700; cursor:pointer; background:#3b7dd8; color:#fff; font-size:15px; }
+  .btn.green { background:#22a06b; } .btn.gold { background:#ffd23f; color:#1a2a4a; } .btn.gray{ background:#8a98b5;} .btn.red{ background:#c0392b;}
+  .btn:active { transform:scale(.97); }
+  .saved { color:#22a06b; font-weight:700; font-size:13px; margin-right:8px; }
+  .qr-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+  .qr-cell { background:#fff; border-radius:14px; padding:16px; text-align:center; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+  .qr-cell h4 { color:#1a2a6c; margin-bottom:8px; }
+  .qr-cell .url { font-size:11px; color:#8a98b5; word-break:break-all; margin-top:6px; }
+  .qr-cell.main-qr { border:3px solid #ffd23f; }
+  .pending-card { background:#fff; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 4px 14px rgba(0,0,0,.06); display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .pending-card img { width:120px; border-radius:10px; }
+  .imgprev { max-width:140px; border-radius:10px; margin-top:8px; }
+  .hint { font-size:12px; color:#8a98b5; margin-top:3px; }
+  .company-row { background:#fff; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+  .company-row .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+  .company-row .cname { font-size:18px; font-weight:800; color:#1a2a6c; }
+  .badge-on { background:#22a06b; color:#fff; padding:2px 10px; border-radius:20px; font-size:12px; }
+  .badge-off { background:#c0392b; color:#fff; padding:2px 10px; border-radius:20px; font-size:12px; }
+  .meta { font-size:13px; color:#5a6b8a; margin-top:6px; }
+  .pwbox { font-family:monospace; background:#f0f3fa; padding:4px 10px; border-radius:6px; }
+  @media print { .noprint { display:none !important; } body{background:#fff;} .qr-cell{page-break-inside:avoid;} }
+</style>
+</head>
+<body class="login-mode">
+
+<div id="login" class="login">
+  <h2 style="margin-bottom:16px">🔐 כניסת מנהל</h2>
+  <input id="user" placeholder="שם משתמש / שם חברה" autocomplete="username" style="margin-bottom:10px">
+  <input id="pass" type="password" placeholder="סיסמה" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+  <button class="btn" style="width:100%;margin-top:12px" onclick="doLogin()">כניסה</button>
+  <p class="hint" id="loginErr" style="margin-top:10px;color:#c0392b"></p>
+</div>
+
+<div id="app" class="wrap" style="display:none">
+  <header>
+    <h1 id="hdrTitle">🎮 דשבורד ניהול</h1>
+    <p id="hdrSub"></p>
+  </header>
+
+  <!-- ===== מנהל-על: ניהול חברות ===== -->
+  <div id="superView" style="display:none">
+    <div class="tabs noprint">
+      <div class="tab active" onclick="superTab('companies',this)">🏢 חברות</div>
+    </div>
+    <div class="card2">
+      <h3 style="color:#1a2a6c;margin-bottom:10px">➕ הוספת חברה חדשה</h3>
+      <div class="row">
+        <div><label>שם החברה</label><input id="newCoName" placeholder="למשל: משפחת כהן"></div>
+        <div><label>סיסמה למנהל החברה</label><input id="newCoPass" placeholder="לפחות 4 תווים"></div>
+      </div>
+      <button class="btn green" style="margin-top:12px" onclick="createCompany()">צור חברה</button>
+      <span class="saved" id="coCreated" style="display:none">נוצר ✓</span>
+    </div>
+    <div id="companiesList"></div>
+  </div>
+
+  <!-- ===== ניהול תוכן חברה (גם מנהל-על וגם מנהל חברה) ===== -->
+  <div id="companyView" style="display:none">
+    <button class="btn gray noprint" id="backToCompanies" style="margin-bottom:14px;display:none" onclick="backToSuper()">↩ חזרה לרשימת החברות</button>
+    <div class="tabs noprint">
+      <div class="tab active" onclick="coTab('questions',this)">📝 שאלות</div>
+      <div class="tab" onclick="coTab('qr',this)">🔲 קודי QR</div>
+      <div class="tab" onclick="coTab('pending',this)">📸 אישור תמונות</div>
+      <div class="tab" onclick="coTab('settings',this)">⚙️ הגדרות</div>
+    </div>
+
+    <div id="questions" class="copanel"></div>
+
+    <div id="qr" class="copanel" style="display:none">
+      <div class="noprint card2">
+        <label>כתובת בסיס (ה-URL של האתר)</label>
+        <input id="baseUrl" placeholder="https://family-game-12r6.onrender.com">
+        <p class="hint">השאר ריק לכתובת הנוכחית. ה-QR הראשי (הצהוב) הוא נקודת הכניסה לשחקנים — תלה אותו בכניסה. שאר ה-QR לתחנות.</p>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button class="btn" onclick="generateAllQR()">🔄 צור הכל</button>
+          <button class="btn gold" onclick="window.print()">🖨️ הדפס</button>
+        </div>
+      </div>
+      <div class="qr-grid" id="qrGrid"></div>
+    </div>
+
+    <div id="pending" class="copanel" style="display:none">
+      <button class="btn noprint" onclick="loadPending()">🔄 רענן</button>
+      <div id="pendingList" style="margin-top:14px"></div>
+    </div>
+
+    <div id="settings" class="copanel" style="display:none">
+      <div class="station-card">
+        <label>שם המשחק (מוצג לשחקנים)</label>
+        <input id="gameName">
+        <button class="btn" style="margin-top:10px" onclick="saveGameName()">שמור שם</button>
+      </div>
+      <div class="station-card">
+        <h3>⚡ בונוס מהירות</h3>
+        <p class="hint">תשובה נכונה מהירה מזכה בבונוס שיורד בהדרגה למשך חלון הזמן.</p>
+        <div style="display:flex;align-items:center;gap:8px;margin:12px 0">
+          <input type="checkbox" id="sbEnabled" style="width:auto"> <label style="margin:0">הפעל בונוס מהירות</label>
+        </div>
+        <div class="row">
+          <div><label>בונוס מקסימלי</label><input type="number" id="sbMax" min="0" value="10"></div>
+          <div><label>חלון זמן (שניות)</label><input type="number" id="sbWindow" min="1" value="60"></div>
+        </div>
+        <button class="btn" style="margin-top:10px" onclick="saveSpeedBonus()">שמור בונוס</button>
+        <span class="saved" id="sbSaved" style="display:none">נשמר ✓</span>
+      </div>
+      <div class="station-card">
+        <h3>🔗 קישורים</h3>
+        <p>📊 לוח תוצאות: <a id="boardLink" href="#" target="_blank">פתח</a></p>
+        <p style="margin-top:8px">🎮 עמוד החברה: <a id="coLink" href="#" target="_blank">פתח</a></p>
+      </div>
+      <div class="station-card">
+        <h3 style="color:#c0392b">⚠️ איפוס משחק</h3>
+        <p class="hint">מוחק שחקנים ותשובות של חברה זו (השאלות נשמרות).</p>
+        <button class="btn red" style="margin-top:10px" onclick="resetGame()">אפס משחק</button>
+      </div>
+      <div class="station-card">
+        <button class="btn gray" onclick="logout()">🚪 יציאה</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let TOKEN='', ROLE='', activeCompanyId=null, activeCompanyName='';
+function H() { return { 'x-admin-token': TOKEN }; }
+
+async function doLogin() {
+  const user=document.getElementById('user').value.trim();
+  const pass=document.getElementById('pass').value;
+  const errEl=document.getElementById('loginErr'); errEl.textContent='';
+  try {
+    const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user,pass})});
+    if(!r.ok){ errEl.textContent='שם או סיסמה שגויים'; return; }
+    const d=await r.json();
+    TOKEN=d.token; ROLE=d.role;
+    localStorage.setItem('fg_token',TOKEN);
+    enterApp(d);
+  } catch(e){ errEl.textContent='שגיאת חיבור'; }
+}
+
+function enterApp(d) {
+  document.body.classList.remove('login-mode');
+  document.getElementById('login').style.display='none';
+  document.getElementById('app').style.display='block';
+  if (ROLE==='super') {
+    document.getElementById('hdrTitle').textContent='🎮 דשבורד מנהל ראשי';
+    document.getElementById('hdrSub').textContent='ניהול כל החברות';
+    document.getElementById('superView').style.display='block';
+    document.getElementById('companyView').style.display='none';
+    loadCompanies();
+  } else {
+    // מנהל חברה - ישר לתוכן החברה שלו
+    activeCompanyId=d.companyId; activeCompanyName=d.companyName;
+    document.getElementById('hdrTitle').textContent='🎮 דשבורד: '+d.companyName;
+    document.getElementById('hdrSub').textContent='ניהול השאלות והתוצאות';
+    openCompany(d.companyId, false);
+  }
+}
+
+function logout() {
+  fetch('/api/admin/logout',{method:'POST',headers:H()});
+  localStorage.removeItem('fg_token');
+  location.reload();
+}
+
+// ===== מנהל-על: חברות =====
+function superTab(id, el){ document.querySelectorAll('#superView .tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+
+async function loadCompanies() {
+  const r=await fetch('/api/admin/companies',{headers:H()});
+  const d=await r.json();
+  const c=document.getElementById('companiesList');
+  if(!d.companies.length){ c.innerHTML='<p class="hint" style="padding:20px;text-align:center">עדיין אין חברות. צור חברה ראשונה למעלה.</p>'; return; }
+  c.innerHTML=d.companies.map(co=>`
+    <div class="company-row">
+      <div class="top">
+        <div>
+          <span class="cname">${esc(co.name)}</span>
+          <span class="${co.enabled?'badge-on':'badge-off'}">${co.enabled?'פעיל':'מושבת'}</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn" onclick="openCompany('${co.id}',true)">✏️ ערוך שאלות</button>
+          <button class="btn ${co.enabled?'gray':'green'}" onclick="toggleCompany('${co.id}',${!co.enabled})">${co.enabled?'השבת':'הפעל'}</button>
+          <button class="btn red" onclick="deleteCompany('${co.id}','${esc(co.name)}')">🗑️</button>
+        </div>
+      </div>
+      <div class="meta">
+        סיסמת מנהל: <span class="pwbox">${esc(co.password)}</span> ·
+        ${co.questionsSet}/${co.stationCount} שאלות הוגדרו · ${co.playerCount} שחקנים
+      </div>
+    </div>`).join('');
+}
+
+async function createCompany() {
+  const name=document.getElementById('newCoName').value.trim();
+  const password=document.getElementById('newCoPass').value.trim();
+  if(!name||!password){ alert('נא למלא שם וסיסמה'); return; }
+  const r=await fetch('/api/admin/companies',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({name,password})});
+  const d=await r.json();
+  if(!r.ok){ alert(d.error||'שגיאה'); return; }
+  document.getElementById('newCoName').value=''; document.getElementById('newCoPass').value='';
+  const s=document.getElementById('coCreated'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
+  loadCompanies();
+}
+
+async function toggleCompany(cid, enabled) {
+  await fetch('/api/admin/companies/'+cid,{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({enabled})});
+  loadCompanies();
+}
+async function deleteCompany(cid, name) {
+  if(!confirm('למחוק את החברה "'+name+'"? כל השאלות, השחקנים והתוצאות יימחקו לצמיתות.')) return;
+  await fetch('/api/admin/companies/'+cid,{method:'DELETE',headers:H()});
+  loadCompanies();
+}
+
+function backToSuper() {
+  document.getElementById('superView').style.display='block';
+  document.getElementById('companyView').style.display='none';
+  document.getElementById('hdrTitle').textContent='🎮 דשבורד מנהל ראשי';
+  document.getElementById('hdrSub').textContent='ניהול כל החברות';
+  loadCompanies();
+}
+
+// ===== תוכן חברה =====
+function coTab(id, el){
+  document.querySelectorAll('.copanel').forEach(p=>p.style.display='none');
+  document.querySelectorAll('#companyView .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).style.display='block'; el.classList.add('active');
+  if(id==='qr') generateAllQR();
+  if(id==='pending') loadPending();
+}
+
+let stations=[];
+async function openCompany(cid, fromSuper) {
+  activeCompanyId=cid;
+  document.getElementById('superView').style.display='none';
+  document.getElementById('companyView').style.display='block';
+  document.getElementById('backToCompanies').style.display = fromSuper ? 'inline-block' : 'none';
+  // reset to questions tab
+  document.querySelectorAll('.copanel').forEach(p=>p.style.display='none');
+  document.getElementById('questions').style.display='block';
+  document.querySelectorAll('#companyView .tab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  await loadCompanyData();
+}
+
+async function loadCompanyData() {
+  const r=await fetch('/api/admin/company/'+activeCompanyId+'/data',{headers:H()});
+  const d=await r.json();
+  stations=d.stations;
+  activeCompanyName=d.name;
+  if(ROLE==='super') document.getElementById('hdrSub').textContent='עורך את: '+d.name;
+  document.getElementById('gameName').value=d.gameName||'';
+  document.getElementById('sbEnabled').checked=!!(d.speedBonus&&d.speedBonus.enabled);
+  document.getElementById('sbMax').value=(d.speedBonus&&d.speedBonus.maxBonus)??10;
+  document.getElementById('sbWindow').value=(d.speedBonus&&d.speedBonus.windowSec)??60;
+  document.getElementById('boardLink').href='/c/'+activeCompanyId+'/board';
+  document.getElementById('coLink').href='/c/'+activeCompanyId;
+  renderStations();
+}
+
+function renderStations() {
+  const toolbar = `
+    <div class="card2 noprint">
+      <h3 style="color:#1a2a6c;margin-bottom:6px">📁 סטים של שאלות</h3>
+      <p class="hint" style="margin-bottom:12px">גבו את השאלות לקובץ במחשב, טענו סט שמור, או ערכו קובץ חיצונית וטענו אותו. הטעינה מחליפה את כל 10 השאלות.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="exportQuestions()">⬇️ ייצוא לקובץ</button>
+        <button class="btn green" onclick="document.getElementById('importFile').click()">⬆️ טעינה מקובץ</button>
+        <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importQuestions(event)">
+      </div>
+      <span class="saved" id="importMsg" style="display:none"></span>
+    </div>`;
+  document.getElementById('questions').innerHTML = toolbar + stations.map(st=>`
+    <div class="station-card">
+      <h3><span class="num">${st.id}</span> <input style="font-size:16px;font-weight:700" value="${esc(st.title)}" id="title-${st.id}"></h3>
+      <div class="row">
+        <div><label>סוג שאלה</label>
+          <select id="type-${st.id}" onchange="toggleType(${st.id})">
+            <option value="text" ${st.questionType==='text'?'selected':''}>תשובת טקסט</option>
+            <option value="photo" ${st.questionType==='photo'?'selected':''}>תשובת תמונה (משימה)</option>
+          </select>
+        </div>
+        <div><label>נקודות</label><input type="number" id="points-${st.id}" value="${st.points}"></div>
+      </div>
+      <label>השאלה / המשימה</label>
+      <textarea id="qtext-${st.id}">${esc(st.questionText)}</textarea>
+      <div id="ans-${st.id}" style="${st.questionType==='photo'?'display:none':''}">
+        <label>תשובה נכונה <span class="hint">(מילות מפתח מופרדות בפסיק)</span></label>
+        <input id="correct-${st.id}" value="${esc(st.correctAnswer)}">
+      </div>
+      <label>תמונה לשאלה (אופציונלי)</label>
+      <div class="row">
+        <input type="file" id="imgfile-${st.id}" accept="image/*">
+        <input id="imglink-${st.id}" placeholder="או לינק לתמונה">
+      </div>
+      ${st.imageUrl?`<img class="imgprev" src="${st.imageUrl}"><br><button class="btn gray" style="margin-top:6px" onclick="clearImg(${st.id})">הסר תמונה</button>`:''}
+      <div style="margin-top:14px;display:flex;align-items:center">
+        <button class="btn green" onclick="saveStation(${st.id})">💾 שמור תחנה ${st.id}</button>
+        <span class="saved" id="saved-${st.id}" style="display:none">נשמר ✓</span>
+      </div>
+    </div>`).join('');
+}
+function toggleType(id){ document.getElementById('ans-'+id).style.display=document.getElementById('type-'+id).value==='photo'?'none':'block'; }
+
+async function saveStation(id) {
+  const fd=new FormData();
+  fd.append('title',document.getElementById('title-'+id).value);
+  fd.append('questionType',document.getElementById('type-'+id).value);
+  fd.append('questionText',document.getElementById('qtext-'+id).value);
+  fd.append('correctAnswer',document.getElementById('correct-'+id)?.value||'');
+  fd.append('points',document.getElementById('points-'+id).value);
+  const link=document.getElementById('imglink-'+id).value.trim(); if(link) fd.append('imageLink',link);
+  const f=document.getElementById('imgfile-'+id).files[0]; if(f) fd.append('image',f);
+  const r=await fetch('/api/admin/company/'+activeCompanyId+'/station/'+id,{method:'POST',headers:H(),body:fd});
+  const d=await r.json();
+  const idx=stations.findIndex(s=>s.id==id); if(idx>=0) stations[idx]=d.station;
+  const s=document.getElementById('saved-'+id); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
+  if(f||link) renderStations();
+}
+async function clearImg(id) {
+  const fd=new FormData(); fd.append('clearImage','true');
+  await fetch('/api/admin/company/'+activeCompanyId+'/station/'+id,{method:'POST',headers:H(),body:fd});
+  const idx=stations.findIndex(s=>s.id==id); if(idx>=0) stations[idx].imageUrl=''; renderStations();
+}
+
+// ייצוא סט שאלות לקובץ (כולל תמונות מוטמעות)
+async function exportQuestions() {
+  const r=await fetch('/api/admin/company/'+activeCompanyId+'/export',{headers:H()});
+  if(!r.ok){ alert('שגיאה בייצוא'); return; }
+  const data=await r.json();
+  const safeName=(data.gameName||'questions').replace(/[^\w\u0590-\u05FF -]/g,'').trim()||'questions';
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=safeName+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// טעינת סט שאלות מקובץ
+async function importQuestions(e) {
+  const file=e.target.files[0];
+  if(!file) return;
+  e.target.value=''; // אפשר לטעון אותו קובץ שוב בעתיד
+  if(!confirm('הטעינה תחליף את כל 10 השאלות הנוכחיות בחברה זו. להמשיך?')) return;
+  let data;
+  try { data=JSON.parse(await file.text()); }
+  catch(err){ alert('הקובץ אינו JSON תקין'); return; }
+  if(!data.stations || !Array.isArray(data.stations)){ alert('קובץ לא תקין - חסרה רשימת שאלות (stations)'); return; }
+  const r=await fetch('/api/admin/company/'+activeCompanyId+'/import',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const d=await r.json();
+  if(!r.ok){ alert(d.error||'שגיאה בטעינה'); return; }
+  // רענן את התצוגה מהשרת
+  await loadCompanyData();
+  const m=document.getElementById('importMsg');
+  if(m){ m.textContent='נטען בהצלחה ✓'; m.style.display='inline'; setTimeout(()=>m.style.display='none',2500); }
+}
+
+async function generateAllQR() {
+  const base=document.getElementById('baseUrl').value.trim();
+  const grid=document.getElementById('qrGrid'); grid.innerHTML='יוצר קודים...';
+  const q=base?'?base='+encodeURIComponent(base):'';
+  let html='';
+  // QR ראשי
+  const rm=await fetch('/api/admin/company/'+activeCompanyId+'/qr/main'+q,{headers:H()});
+  const dm=await rm.json();
+  html+=`<div class="qr-cell main-qr"><h4>⭐ QR ראשי (כניסה למשחק)</h4><div style="font-size:13px;color:#5a6b8a;margin-bottom:6px">${esc(activeCompanyName)}</div><img src="${dm.qr}"><div class="url">${dm.url}</div></div>`;
+  // QR לכל תחנה
+  for(const st of stations){
+    const r=await fetch('/api/admin/company/'+activeCompanyId+'/qr/'+st.id+q,{headers:H()});
+    const d=await r.json();
+    html+=`<div class="qr-cell"><h4>תחנה ${st.id}</h4><div style="font-size:13px;color:#5a6b8a;margin-bottom:6px">${esc(st.title)}</div><img src="${d.qr}"><div class="url">${d.url}</div></div>`;
+  }
+  grid.innerHTML=html;
+}
+
+async function loadPending() {
+  const r=await fetch('/api/admin/company/'+activeCompanyId+'/pending',{headers:H()});
+  const d=await r.json();
+  const c=document.getElementById('pendingList');
+  if(!d.pending.length){ c.innerHTML='<p class="hint">אין תשובות תמונה הממתינות לאישור</p>'; return; }
+  c.innerHTML=d.pending.map(p=>`
+    <div class="pending-card">
+      <img src="${p.photoUrl}">
+      <div style="flex:1"><strong>${esc(p.name)}</strong> ${p.team?('('+esc(p.team)+')'):''} - תחנה ${p.stationId}
+        ${p.answerText?('<div class="hint">כיתוב: '+esc(p.answerText)+'</div>'):''}</div>
+      <button class="btn green" onclick="review('${p.playerId}',${p.stationId},true)">✓ נכון</button>
+      <button class="btn gray" onclick="review('${p.playerId}',${p.stationId},false)">✗ לא</button>
+    </div>`).join('');
+}
+async function review(playerId, stationId, approve) {
+  await fetch('/api/admin/company/'+activeCompanyId+'/review',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({playerId,stationId,approve})});
+  loadPending();
+}
+
+async function saveGameName() {
+  await fetch('/api/admin/company/'+activeCompanyId+'/game-name',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({gameName:document.getElementById('gameName').value})});
+  alert('שם המשחק נשמר');
+}
+async function saveSpeedBonus() {
+  const body={enabled:document.getElementById('sbEnabled').checked,maxBonus:Number(document.getElementById('sbMax').value),windowSec:Number(document.getElementById('sbWindow').value)};
+  await fetch('/api/admin/company/'+activeCompanyId+'/speed-bonus',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const s=document.getElementById('sbSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
+}
+async function resetGame() {
+  if(!confirm('בטוח? כל השחקנים והתשובות של חברה זו יימחקו')) return;
+  await fetch('/api/admin/company/'+activeCompanyId+'/reset',{method:'POST',headers:H()});
+  alert('המשחק אופס');
+}
+
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// כניסה אוטומטית
+(async()=>{
+  const saved=localStorage.getItem('fg_token');
+  if(!saved) return;
+  TOKEN=saved;
+  const r=await fetch('/api/admin/me',{headers:H()});
+  if(r.ok){ const d=await r.json(); ROLE=d.role; enterApp(d); }
+  else { localStorage.removeItem('fg_token'); TOKEN=''; }
+})();
+</script>
+</body>
+</html>
