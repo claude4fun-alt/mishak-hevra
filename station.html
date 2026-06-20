@@ -243,6 +243,11 @@ async function join() {
 async function loadStation() {
   const r = await fetch('/api/company/' + companyId + '/station/' + stationId + '?player=' + player.playerId);
   station = await r.json();
+  // איפוס מצב מלא (חשוב במיוחד אחרי החלפת שחקן)
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = false; submitBtn.style.opacity = 1;
+  document.getElementById('alreadyMsg').textContent = '';
+  const ta = document.getElementById('textAnswer'); if (ta) ta.value = '';
   document.getElementById('qBadge').textContent = 'תחנה ' + station.id;
   // שורת שחקן נוכחי + אפשרות החלפה
   const teamTxt = player.team ? (' · קבוצה: ' + player.team) : '';
@@ -251,8 +256,13 @@ async function loadStation() {
     ' <a href="#" onclick="switchPlayer(event)" style="color:#2a4d9e;font-weight:700">(החלף שחקן)</a>';
   document.getElementById('qTitle').textContent = station.title;
   document.getElementById('qText').textContent = station.questionText || '(לא הוגדרה שאלה לתחנה זו)';
-  if (station.imageUrl) { const im = document.getElementById('qImg'); im.src = station.imageUrl; im.classList.remove('hidden'); }
+  const im = document.getElementById('qImg');
+  if (station.imageUrl) { im.src = station.imageUrl; im.classList.remove('hidden'); }
+  else { im.src = ''; im.classList.add('hidden'); }
 
+  // איפוס סוג תשובה
+  document.getElementById('textAnswer').classList.remove('hidden');
+  document.getElementById('photoAnswer').classList.add('hidden');
   if (station.questionType === 'photo') {
     document.getElementById('textAnswer').classList.add('hidden');
     document.getElementById('photoAnswer').classList.remove('hidden');
@@ -384,12 +394,32 @@ async function stopScan() {
 
 // ===== קול "קבוצה אחרת ענתה נכון" =====
 function speakOtherGroup() {
+  // צליל התראה ברור (Web Audio - אמין אחרי unlock) - "דינג דונג" יורד
+  unlockAudio();
+  tone(784, 0, 0.18, 'triangle', 0.3);
+  tone(587, 0.2, 0.28, 'triangle', 0.3);
+  tone(440, 0.45, 0.35, 'sine', 0.25);
+  // ניסיון דיבור (עובד בדפדפנים מסוימים; במובייל לפעמים חסום ללא מחווה)
   try {
-    const u = new SpeechSynthesisUtterance('The other group answered correctly');
-    u.lang = 'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u);
+    if (window.speechSynthesis) {
+      const u = new SpeechSynthesisUtterance('The other group answered correctly');
+      u.lang = 'en-US'; u.rate = 1; u.volume = 1;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }
   } catch(e){}
-  tone(440, 0, 0.12, 'sine', 0.18); tone(330, 0.14, 0.18, 'sine', 0.16);
 }
+// חימום מנוע הדיבור במגע ראשון (כדי שיהיה מוכן מאוחר יותר)
+function _warmSpeech() {
+  try {
+    if (window.speechSynthesis) {
+      const w = new SpeechSynthesisUtterance(''); w.volume = 0;
+      speechSynthesis.speak(w);
+      speechSynthesis.getVoices();
+    }
+  } catch(e){}
+}
+['pointerdown','touchstart','click'].forEach(ev =>
+  document.addEventListener(ev, _warmSpeech, { once: true, passive: true }));
 let _streamConnected = false;
 function connectStream() {
   if (!player || _streamConnected) return;
