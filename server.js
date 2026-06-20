@@ -164,6 +164,11 @@ function broadcast(companyId) {
   const payload = `data: ${JSON.stringify(buildLeaderboard(companyId))}\n\n`;
   sseClients.filter(c => c.companyId === companyId).forEach(c => { try { c.res.write(payload); } catch(e){} });
 }
+// שידור אירוע בעל-שם (למשל הודעת "קבוצה אחרת ענתה נכון")
+function broadcastEvent(companyId, eventName, data) {
+  const payload = `event: ${eventName}\ndata: ${JSON.stringify(data)}\n\n`;
+  sseClients.filter(c => c.companyId === companyId).forEach(c => { try { c.res.write(payload); } catch(e){} });
+}
 app.get('/api/stream', (req, res) => {
   const companyId = req.query.company;
   if (!getCompany(companyId)) { res.status(404).end(); return; }
@@ -300,6 +305,7 @@ app.post('/api/company/:cid/answer', upload.single('photo'), (req, res) => {
   player.answers[station.id] = { stationId: station.id, answerText: answerText || '', photoUrl, correct, basePoints: correct ? station.points : 0, bonus, points: correct ? (station.points + bonus) : 0, timeMs, at: Date.now() };
   c.submissions.push({ playerId, name: player.name, team: player.team, ...player.answers[station.id] });
   saveDB(); broadcast(c.id);
+  if (correct === true) broadcastEvent(c.id, 'scored', { team: player.team || '', name: player.name, stationId: station.id });
   res.json({ correct, pending: correct === null, points: correct ? station.points : 0, bonus, message: correct === true ? (bonus > 0 ? `תשובה נכונה! +${station.points} נק' ועוד ${bonus} בונוס מהירות! ⚡🎉` : 'תשובה נכונה! 🎉') : correct === false ? 'לא מדויק, אבל ממשיכים! 💪' : 'התקבל! המנהל יבדוק 📸' });
 });
 
@@ -308,6 +314,24 @@ app.get('/api/company/:cid/leaderboard', (req, res) => {
   const c = getCompany(req.params.cid);
   if (!c) return res.status(404).json({ error: 'חברה לא קיימת' });
   res.json(buildLeaderboard(c.id));
+});
+
+// התקדמות אישית של שחקן - אילו תחנות סרק ומה התוצאה
+app.get('/api/company/:cid/progress', (req, res) => {
+  const c = getCompany(req.params.cid);
+  if (!c) return res.status(404).json({ error: 'חברה לא קיימת' });
+  const player = c.players[req.query.player];
+  const stations = c.stations.map(st => {
+    const a = player ? (player.answers || {})[st.id] : null;
+    let status = 'none';
+    if (a) {
+      if (a.correct === true) status = 'correct';
+      else if (a.correct === false) status = 'wrong';
+      else status = 'pending';
+    }
+    return { id: st.id, status };
+  });
+  res.json({ stationCount: c.stations.length, stations, name: player ? player.name : '', team: player ? player.team : '' });
 });
 
 // ============================================================
@@ -564,6 +588,7 @@ app.get('/c/:cid/station/:id', (req, res) => res.sendFile(path.join(__dirname, '
 app.get('/c/:cid/join', (req, res) => res.sendFile(path.join(__dirname, 'join.html')));
 // לוח תוצאות של חברה
 app.get('/c/:cid/board', (req, res) => res.sendFile(path.join(__dirname, 'board.html')));
+app.get('/c/:cid/progress', (req, res) => res.sendFile(path.join(__dirname, 'progress.html')));
 
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ההתקדמות שלי</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Segoe UI',Arial,sans-serif; min-height:100vh; color:#fff; padding:20px;
+    background:#0e1a14 url('/poster.png') center top / cover no-repeat fixed; position:relative; }
+  body::before { content:''; position:fixed; inset:0; background:linear-gradient(180deg, rgba(10,20,15,.4), rgba(10,20,15,.65)); z-index:0; }
+  .wrap { position:relative; z-index:1; max-width:520px; margin:0 auto; }
+  .top { text-align:center; margin-bottom:18px; }
+  .top h1 { font-size:26px; text-shadow:0 2px 10px rgba(0,0,0,.7); }
+  .top .me { margin-top:6px; font-size:15px; background:rgba(0,0,0,.45); display:inline-block; padding:6px 16px; border-radius:20px; backdrop-filter:blur(4px); }
+  .summary { text-align:center; margin:14px 0 20px; font-size:16px; background:rgba(255,255,255,.95); color:#1a2a4a; border-radius:14px; padding:12px; font-weight:700; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:16px; }
+  .circle { aspect-ratio:1; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-weight:900; font-size:30px; border:4px solid rgba(255,255,255,.5); transition:all .4s;
+    background:rgba(150,160,175,.35); color:#fff; box-shadow:0 6px 16px rgba(0,0,0,.3); }
+  .circle .lbl { font-size:11px; font-weight:700; opacity:.9; margin-top:2px; }
+  .circle.correct { background:rgba(34,160,107,.92); border-color:#7ef5c0; }
+  .circle.wrong { background:rgba(200,60,50,.6); border-color:#ffb0a8; }
+  .circle.pending { background:rgba(245,184,0,.85); border-color:#ffe08a; color:#1a1208; }
+  .circle.none { background:rgba(150,160,175,.30); }
+  .legend { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:22px 0 8px; font-size:13px; }
+  .legend span { display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.4); padding:5px 12px; border-radius:16px; }
+  .dot { width:14px; height:14px; border-radius:50%; display:inline-block; }
+  .dot.g { background:#22a06b; } .dot.r { background:rgba(200,60,50,.8); } .dot.y { background:#f5b800; } .dot.x { background:rgba(150,160,175,.6); }
+  .actions { display:flex; gap:10px; margin-top:22px; }
+  .btn { flex:1; padding:14px; border:none; border-radius:14px; font-weight:800; font-size:16px; text-decoration:none; text-align:center; color:#fff; cursor:pointer; font-family:inherit; }
+  .bscan { background:linear-gradient(135deg,#f5b800,#ff9100); color:#1a1208; }
+  .bboard { background:linear-gradient(135deg,#2a4d9e,#3b7dd8); }
+  .credit { text-align:center; color:rgba(255,255,255,.85); font-size:13px; margin-top:18px; text-shadow:0 2px 8px rgba(0,0,0,.8); }
+  .notice { position:fixed; left:50%; transform:translateX(-50%); bottom:24px; background:#1a2a6c; color:#fff; padding:14px 22px; border-radius:30px; font-weight:700; box-shadow:0 10px 30px rgba(0,0,0,.5); z-index:5; opacity:0; transition:opacity .3s; pointer-events:none; max-width:90%; text-align:center; }
+  .notice.show { opacity:1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>🗺️ ההתקדמות שלי</h1>
+    <div class="me" id="me"></div>
+  </div>
+  <div class="summary" id="summary">טוען...</div>
+  <div class="grid" id="grid"></div>
+  <div class="legend">
+    <span><i class="dot g"></i> נכון</span>
+    <span><i class="dot y"></i> ממתין לאישור</span>
+    <span><i class="dot r"></i> לא נכון</span>
+    <span><i class="dot x"></i> טרם נסרק</span>
+  </div>
+  <div class="actions">
+    <a class="btn bscan" id="scanLink" href="#">📷 לסריקת תחנה</a>
+    <a class="btn bboard" id="boardLink" href="#">📊 לוח תוצאות</a>
+  </div>
+  <div class="credit">נוצר ע"י Amir Cohen</div>
+</div>
+<div class="notice" id="notice"></div>
+
+<script>
+// ===== צלילים =====
+let _ac=null,_unlocked=false;
+function _ctx(){ if(!_ac){try{_ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}} if(_ac&&_ac.state==='suspended')_ac.resume().catch(()=>{}); return _ac;}
+function _unlock(){const c=_ctx();if(!c)return;if(c.state==='suspended')c.resume().catch(()=>{});if(!_unlocked){try{const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);_unlocked=true;}catch(e){}}}
+['pointerdown','touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev,_unlock,{passive:true}));
+function _tone(f,s,d,t,v){const c=_ctx();if(!c)return;const t0=c.currentTime+s;const o=c.createOscillator(),g=c.createGain();o.type=t||'sine';o.frequency.value=f;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v||0.25,t0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);o.start(t0);o.stop(t0+d+0.05);}
+function speakOtherGroup(){
+  // קול אנגלי + צליל גיבוי
+  try {
+    const u = new SpeechSynthesisUtterance('The other group answered correctly');
+    u.lang = 'en-US'; u.rate = 1; u.pitch = 1;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  } catch(e){}
+  _tone(440,0,0.12,'sine',0.18); _tone(330,0.14,0.18,'sine',0.16);
+}
+
+const companyId = location.pathname.split('/')[2]; // /c/:cid/progress
+const PLAYER_KEY = 'fg_player_' + companyId;
+const player = JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
+
+document.getElementById('scanLink').href = '/c/' + companyId;
+document.getElementById('boardLink').href = '/c/' + companyId + '/board';
+
+async function load() {
+  if (!player) {
+    document.getElementById('summary').textContent = 'עדיין לא נרשמת למשחק';
+    document.getElementById('me').textContent = '';
+    renderGrid([], 10);
+    return;
+  }
+  document.getElementById('me').textContent = player.name + (player.team ? ' · קבוצה: ' + player.team : '');
+  try {
+    const r = await fetch('/api/company/' + companyId + '/progress?player=' + player.playerId);
+    const d = await r.json();
+    renderGrid(d.stations, d.stationCount);
+    const correct = d.stations.filter(s => s.status === 'correct').length;
+    const done = d.stations.filter(s => s.status !== 'none').length;
+    document.getElementById('summary').textContent = `סרקת ${done} מתוך ${d.stationCount} תחנות · ${correct} תשובות נכונות`;
+  } catch(e) {
+    document.getElementById('summary').textContent = 'שגיאת חיבור';
+  }
+}
+
+function renderGrid(stations, count) {
+  const map = {};
+  stations.forEach(s => map[s.id] = s.status);
+  let html = '';
+  for (let i = 1; i <= count; i++) {
+    const status = map[i] || 'none';
+    html += `<div class="circle ${status}">${i}</div>`;
+  }
+  document.getElementById('grid').innerHTML = html;
+}
+
+// ===== האזנה לאירועי "קבוצה אחרת ענתה נכון" =====
+function connectStream() {
+  if (!player) return;
+  const es = new EventSource('/api/stream?company=' + companyId);
+  es.addEventListener('scored', (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      // אם זו לא הקבוצה שלי (וגם לא אני) - השמע קול
+      const myTeam = (player.team || '').trim();
+      if ((data.team || '').trim() !== myTeam || !myTeam) {
+        if (data.name !== player.name) {
+          speakOtherGroup();
+          showNotice('🔔 קבוצה אחרת ענתה נכון!');
+        }
+      }
+      load(); // רענן את ההתקדמות שלי גם
+    } catch(e){}
+  });
+  es.onerror = () => { /* יתחבר מחדש אוטומטית */ };
+}
+function showNotice(txt) {
+  const n = document.getElementById('notice');
+  n.textContent = txt; n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 3500);
+}
+
+load();
+connectStream();
+// רענון תקופתי ליתר ביטחון
+setInterval(load, 15000);
+</script>
+</body>
+</html>

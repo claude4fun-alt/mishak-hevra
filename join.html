@@ -64,6 +64,14 @@
 <p class="credit">נוצר ע"י Amir Cohen</p>
 
 <script>
+// ===== צליל סריקה =====
+let _ac=null,_unlocked=false;
+function _ctx(){ if(!_ac){try{_ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}} if(_ac&&_ac.state==='suspended')_ac.resume().catch(()=>{}); return _ac;}
+function _unlock(){const c=_ctx();if(!c)return;if(c.state==='suspended')c.resume().catch(()=>{});if(!_unlocked){try{const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);_unlocked=true;}catch(e){}}}
+['pointerdown','touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev,_unlock,{passive:true}));
+function _tone(f,s,d,t,v){const c=_ctx();if(!c)return;const t0=c.currentTime+s;const o=c.createOscillator(),g=c.createGain();o.type=t||'sine';o.frequency.value=f;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v||0.25,t0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);o.start(t0);o.stop(t0+d+0.05);}
+function playScanSound(){_unlock();_tone(1200,0,0.08,'square',0.22);_tone(660,0.12,0.14,'sine',0.25);_tone(880,0.26,0.2,'sine',0.25);}
+
 const companyId = location.pathname.split('/')[2]; // /c/:cid/join
 const PLAYER_KEY = 'fg_player_' + companyId;
 let player = JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
@@ -141,6 +149,7 @@ async function startScan() {
   }
 }
 function onScanSuccess(decodedText) {
+  playScanSound();
   stopScan();
   try { const url = new URL(decodedText); if (/\/c\/[^/]+\/station\/\d+/.test(url.pathname)) { location.href = url.pathname + '?via=app'; return; } } catch(e){}
   location.href = decodedText;
