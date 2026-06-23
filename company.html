@@ -54,7 +54,9 @@
     <button class="btn b2" style="display:none" id="stopScanBtn" onclick="stopScan()">עצור סריקה</button>
     <a class="btn b2" id="boardLink" href="#">📊 לוח תוצאות חי</a>
     <a class="btn b2" id="progressLink" href="#" style="background:linear-gradient(135deg,#22a06b,#16c79a)">🗺️ ההתקדמות שלי</a>
+    <a class="btn b2" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)">🧭 מפת המשחק</a>
     <p class="credit">נוצר ע"י Amir Cohen</p>
+    <p class="credit" style="margin-top:6px">למשחקים נוספים פנו ל-<a href="mailto:mishak.hevra@gmail.com" style="color:#c47f00;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
   </div>
 </div>
 
@@ -82,6 +84,7 @@ async function init() {
     document.getElementById('joinLink').href = '/c/' + companyId + '/join';
     document.getElementById('boardLink').href = '/c/' + companyId + '/board';
     document.getElementById('progressLink').href = '/c/' + companyId + '/progress';
+    document.getElementById('mapLink').href = '/c/' + companyId + '/map';
     document.getElementById('welcome').style.display = 'flex';
   } catch(e) { showErr('שגיאת חיבור'); }
 }

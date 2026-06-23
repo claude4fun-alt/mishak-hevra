@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>דשבורד ניהול - משחק חברה</title>
+<link rel="stylesheet" href="/leaflet.css"/>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Segoe UI',Arial,sans-serif; background:#eef2f9; color:#1a2a4a; padding:18px; }
@@ -73,7 +74,29 @@
     .qr-cell .print-sub { font-size:22px !important; color:#333 !important; margin-bottom:24px !important; }
     .qr-cell img { width:65% !important; max-width:480px !important; height:auto !important; }
     .qr-cell .url { font-size:13px !important; margin-top:18px !important; }
-  }
+  /* ===== עורך המפה ===== */
+  .map-frame-wrap{position:relative;width:100%;max-width:560px;margin:0 auto;}
+  .map-frame-wrap img.frame{display:block;width:100%;pointer-events:none;user-select:none;border-radius:10px;}
+  .map-edit-window{position:absolute;left:25.5%;top:26.2%;width:48.3%;height:53.3%;
+    border-radius:5px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(120,80,20,.4);}
+  #editMap{width:100%;height:100%;background:#1a1a1a;}
+  .edit-title{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:600;
+    background:linear-gradient(135deg,rgba(43,29,14,.92),rgba(80,55,20,.92));color:#fff;
+    padding:4px 12px;border-radius:999px;font-weight:800;font-size:13px;white-space:nowrap;
+    max-width:90%;overflow:hidden;text-overflow:ellipsis;border:1.5px solid #f0a500;}
+  .ed-pin{display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;
+    border-radius:50%;border:2.5px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);
+    width:28px;height:28px;font-size:14px;background:linear-gradient(135deg,#f0a500,#c47f00);cursor:move;}
+  .ed-pin.placing{background:linear-gradient(135deg,#3b7dd8,#1a2a6c);}
+  .station-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .schip{padding:7px 12px;border-radius:10px;font-weight:700;cursor:pointer;border:2px solid #d5deef;
+    background:#fff;font-size:14px;display:flex;align-items:center;gap:6px;}
+  .schip.placed{border-color:#22a06b;background:#eafaf1;}
+  .schip.active{border-color:#3b7dd8;background:#e8f0fc;box-shadow:0 0 0 2px #3b7dd8 inset;}
+  .schip .x{color:#c0392b;font-weight:900;}
+  .map-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+  .lock-badge{padding:4px 12px;border-radius:999px;font-weight:700;font-size:13px;}
+  .lock-badge.locked{background:#22a06b;color:#fff;} .lock-badge.unlocked{background:#ffd23f;color:#1a2a4a;}
 </style>
 </head>
 <body class="login-mode">
@@ -114,6 +137,7 @@
     <button class="btn gray noprint" id="backToCompanies" style="margin-bottom:14px;display:none" onclick="backToSuper()">↩ חזרה לרשימת החברות</button>
     <div class="tabs noprint">
       <div class="tab" onclick="coTab('questions',this)">📝 שאלות</div>
+      <div class="tab" onclick="coTab('mapedit',this)">🗺️ מפת תחנות</div>
       <div class="tab" onclick="coTab('board',this)">📊 לוח תוצאות</div>
       <div class="tab" onclick="coTab('qr',this)">🔲 קודי QR</div>
       <div class="tab" onclick="coTab('pending',this)">📸 אישור תמונות</div>
@@ -121,6 +145,34 @@
     </div>
 
     <div id="questions" class="copanel"></div>
+
+    <div id="mapedit" class="copanel" style="display:none">
+      <div class="card2">
+        <h3 style="color:#1a2a6c;margin-bottom:6px">🗺️ מפת התחנות</h3>
+        <p class="hint" style="margin-bottom:12px">
+          1) הזיזו וזמזמו את מפת הלוויין עד לתצוגה הרצויה.
+          2) לחצו על מספר תחנה ואז על המפה כדי למקם אותה (גרירה להזזה, לחיצה חוזרת על ✕ למחיקה).
+          3) "נעלו" את התצוגה כדי שהשחקנים יראו מפה קבועה, ולחצו "שמור".
+        </p>
+        <div class="map-toolbar">
+          <button class="btn green" onclick="saveMap()">💾 שמור מפה ותחנות</button>
+          <button class="btn gold" id="lockBtn" onclick="toggleLock()">🔒 נעל תצוגה</button>
+          <span class="lock-badge unlocked" id="lockBadge">פתוח לעריכה</span>
+          <button class="btn gray" onclick="clearAllPins()">🗑️ נקה תחנות</button>
+          <button class="btn" onclick="window.open('/c/'+activeCompanyId+'/map','_blank')">↗️ תצוגת שחקן</button>
+          <span class="saved" id="mapSaved" style="display:none">נשמר ✓</span>
+        </div>
+        <div class="map-frame-wrap">
+          <img class="frame" src="/map-frame.png" alt="">
+          <div class="map-edit-window">
+            <div id="editMap"></div>
+            <div class="edit-title" id="editTitle">המפה שלך</div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:12px;text-align:center">בחרו תחנה למיקום:</p>
+        <div class="station-chips" id="stationChips"></div>
+      </div>
+    </div>
 
     <div id="board" class="copanel" style="display:none">
       <div class="card2 noprint" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
@@ -174,7 +226,11 @@
         <h3>🔗 קישורים</h3>
         <p>📊 לוח תוצאות: <a id="boardLink" href="#" target="_blank">פתח</a></p>
         <p style="margin-top:8px">🎮 עמוד החברה: <a id="coLink" href="#" target="_blank">פתח</a></p>
+        <p style="margin-top:8px">🧭 מפת המשחק: <a id="mapLinkS" href="#" target="_blank">פתח</a></p>
       </div>
+      <div class="station-card">
+        <h3>✉️ משחקים נוספים</h3>
+        <p>למשחקים נוספים פנו ל-<a href="mailto:mishak.hevra@gmail.com" style="color:#3b7dd8;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
       <div class="station-card">
         <h3 style="color:#c0392b">⚠️ איפוס משחק</h3>
         <p class="hint">מוחק שחקנים ותשובות של חברה זו (השאלות נשמרות).</p>
@@ -187,6 +243,7 @@
   </div>
 </div>
 
+<script src="/leaflet.js"></script>
 <script>
 let TOKEN='', ROLE='', activeCompanyId=null, activeCompanyName='';
 function H() { return { 'x-admin-token': TOKEN }; }
@@ -297,6 +354,7 @@ function coTab(id, el){
   if(id==='qr') generateAllQR();
   if(id==='pending') loadPending();
   if(id==='board') loadBoardFrame();
+  if(id==='mapedit') loadMapEditor();
 }
 function loadBoardFrame(){
   const f=document.getElementById('boardFrame');
@@ -331,6 +389,7 @@ async function loadCompanyData() {
   document.getElementById('sbWindow').value=(d.speedBonus&&d.speedBonus.windowSec)??60;
   document.getElementById('boardLink').href='/c/'+activeCompanyId+'/board';
   document.getElementById('coLink').href='/c/'+activeCompanyId;
+  var mls=document.getElementById('mapLinkS'); if(mls) mls.href='/c/'+activeCompanyId+'/map';
   renderStations();
 }
 
@@ -482,6 +541,120 @@ async function resetGame() {
   if(!confirm('בטוח? כל השחקנים והתשובות של חברה זו יימחקו')) return;
   await fetch('/api/admin/company/'+activeCompanyId+'/reset',{method:'POST',headers:H()});
   alert('המשחק אופס');
+}
+
+// ===== עורך מפה =====
+let editMap=null, edMarkers={}, edLocked=false, edPlacing=null, edMapLoadedFor=null;
+
+function buildEdPin(id, placing){
+  return L.divIcon({ className:'', html:`<div class="ed-pin ${placing?'placing':''}">${id}</div>`,
+    iconSize:[28,28], iconAnchor:[14,14] });
+}
+
+async function loadMapEditor(){
+  // טען קונפיג מהשרת
+  const r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{headers:H()});
+  const d=await r.json();
+  const cfg=d.mapConfig||{center:{lat:31.8133,lng:34.7780},zoom:16,markers:[],locked:false};
+  document.getElementById('editTitle').textContent = d.gameName || d.companyName || 'המפה שלך';
+  edLocked = !!cfg.locked;
+
+  // אתחל את המפה (פעם אחת לכל חברה)
+  if(!editMap){
+    editMap = L.map('editMap', { center:[cfg.center.lat,cfg.center.lng], zoom:cfg.zoom, maxZoom:21, zoomControl:true });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom:21, maxNativeZoom:19, attribution:'Esri' }).addTo(editMap);
+    // לחיצה על המפה ממקמת את התחנה שנבחרה
+    editMap.on('click', e=>{
+      if(edPlacing==null) return;
+      placePin(edPlacing, e.latlng.lat, e.latlng.lng);
+      edPlacing=null; renderChips();
+    });
+  }
+  setTimeout(()=>editMap.invalidateSize(),60);
+  if(edMapLoadedFor!==activeCompanyId){
+    editMap.setView([cfg.center.lat,cfg.center.lng], cfg.zoom);
+    edMapLoadedFor=activeCompanyId;
+  }
+
+  // נקה סיכות קיימות וצייר מחדש
+  Object.values(edMarkers).forEach(m=>editMap.removeLayer(m)); edMarkers={};
+  (cfg.markers||[]).forEach(mk=>placePin(mk.id, mk.lat, mk.lng));
+  applyLockUI();
+  renderChips();
+}
+
+function placePin(id, lat, lng){
+  if(edMarkers[id]){ edMarkers[id].setLatLng([lat,lng]); return; }
+  const m = L.marker([lat,lng], { icon:buildEdPin(id,false), draggable:true }).addTo(editMap);
+  m.on('dragend', ()=>{ /* מיקום מתעדכן אוטומטית; שמירה בלחיצה */ });
+  edMarkers[id]=m;
+}
+
+function selectStationForPlacing(id){
+  if(edMarkers[id]){
+    // כבר ממוקמת — מרכז עליה
+    editMap.panTo(edMarkers[id].getLatLng());
+    edPlacing=null;
+  } else {
+    edPlacing = (edPlacing===id) ? null : id;
+  }
+  renderChips();
+}
+
+function removePin(id, ev){
+  if(ev) ev.stopPropagation();
+  if(edMarkers[id]){ editMap.removeLayer(edMarkers[id]); delete edMarkers[id]; }
+  if(edPlacing===id) edPlacing=null;
+  renderChips();
+}
+
+function clearAllPins(){
+  if(!confirm('למחוק את כל מיקומי התחנות מהמפה?')) return;
+  Object.keys(edMarkers).forEach(id=>{ editMap.removeLayer(edMarkers[id]); });
+  edMarkers={}; edPlacing=null; renderChips();
+}
+
+function renderChips(){
+  const box=document.getElementById('stationChips');
+  let html='';
+  for(let i=1;i<=10;i++){
+    const placed=!!edMarkers[i];
+    const active=edPlacing===i;
+    html+=`<div class="schip ${placed?'placed':''} ${active?'active':''}" onclick="selectStationForPlacing(${i})">
+      ${placed?'📍':'➕'} תחנה ${i}
+      ${placed?`<span class="x" onclick="removePin(${i},event)">✕</span>`:''}
+    </div>`;
+  }
+  box.innerHTML=html;
+  // הדגשת הסיכה שנבחרת למיקום
+  for(let i=1;i<=10;i++){ if(edMarkers[i]) edMarkers[i].setIcon(buildEdPin(i,false)); }
+}
+
+function toggleLock(){
+  edLocked=!edLocked;
+  applyLockUI();
+}
+function applyLockUI(){
+  const btn=document.getElementById('lockBtn'), badge=document.getElementById('lockBadge');
+  if(edLocked){
+    btn.textContent='🔓 בטל נעילה'; badge.textContent='נעול לשחקנים'; badge.className='lock-badge locked';
+  } else {
+    btn.textContent='🔒 נעל תצוגה'; badge.textContent='פתוח לעריכה'; badge.className='lock-badge unlocked';
+  }
+}
+
+async function saveMap(){
+  if(!editMap){ alert('המפה לא נטענה'); return; }
+  const c=editMap.getCenter();
+  const markers=Object.keys(edMarkers).map(id=>{
+    const ll=edMarkers[id].getLatLng();
+    return { id:Number(id), lat:ll.lat, lng:ll.lng };
+  });
+  const body={ center:{lat:c.lat,lng:c.lng}, zoom:editMap.getZoom(), locked:edLocked, markers };
+  const r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ alert('שגיאה בשמירה'); return; }
+  const s=document.getElementById('mapSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2500);
 }
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
