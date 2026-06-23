@@ -85,6 +85,7 @@ function defaultMapConfig() {
     locked: false,
     center: { lat: 31.8133, lng: 34.7780 }, // גדרה כברירת מחדל
     zoom: 16,
+    markerSize: 30,  // קוטר עיגול התחנה בפיקסלים (16-64)
     markers: []  // [{id:1..10, lat, lng}]
   };
 }
@@ -142,6 +143,7 @@ async function loadDB() {
     if (!c.submissions) c.submissions = [];
     if (!c.mapConfig) c.mapConfig = defaultMapConfig();
     if (!Array.isArray(c.mapConfig.markers)) c.mapConfig.markers = [];
+    if (!isFinite(c.mapConfig.markerSize)) c.mapConfig.markerSize = 30;
   });
 }
 
@@ -370,7 +372,7 @@ app.get('/api/company/:cid/map', (req, res) => {
   });
   res.json({
     gameName: c.gameName, companyName: c.name,
-    mapConfig: { center: cfg.center, zoom: cfg.zoom, locked: cfg.locked, markers: cfg.markers || [] },
+    mapConfig: { center: cfg.center, zoom: cfg.zoom, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [] },
     stations: statusById,
     name: player ? player.name : '', team: player ? player.team : ''
   });
@@ -576,6 +578,7 @@ app.post('/api/admin/company/:cid/import', auth, (req, res) => {
     const m = data.mapConfig, cfg = defaultMapConfig();
     if (m.center && isFinite(m.center.lat) && isFinite(m.center.lng)) cfg.center = { lat: Number(m.center.lat), lng: Number(m.center.lng) };
     if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
+    if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
     cfg.locked = !!m.locked;
     if (Array.isArray(m.markers)) cfg.markers = m.markers.filter(x => x && isFinite(x.lat) && isFinite(x.lng) && Number(x.id) >= 1 && Number(x.id) <= 10).map(x => ({ id: Number(x.id), lat: Number(x.lat), lng: Number(x.lng) })).slice(0, 10);
     c.mapConfig = cfg;
@@ -645,6 +648,7 @@ app.post('/api/admin/company/:cid/map', auth, (req, res) => {
     cfg.center = { lat: Number(m.center.lat), lng: Number(m.center.lng) };
   }
   if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
+  if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
   cfg.locked = !!m.locked;
   if (Array.isArray(m.markers)) {
     cfg.markers = m.markers

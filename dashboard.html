@@ -78,16 +78,23 @@
   /* ===== עורך המפה ===== */
   .map-frame-wrap{position:relative;width:100%;max-width:560px;margin:0 auto;aspect-ratio:1054/1492;}
   .map-frame-wrap img.frame{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;border-radius:10px;}
-  .map-edit-window{position:absolute;left:25.5%;top:26.2%;right:26.2%;bottom:20.5%;
+  .map-edit-window{position:absolute;left:26.5%;top:24.8%;right:24.8%;bottom:16.2%;
     border-radius:5px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(120,80,20,.4);}
   #editMap{width:100%;height:100%;background:#1a1a1a;}
   .edit-title{position:absolute;top:6px;left:50%;transform:translateX(-50%);z-index:600;
     background:linear-gradient(135deg,rgba(43,29,14,.92),rgba(80,55,20,.92));color:#fff;
     padding:4px 12px;border-radius:999px;font-weight:800;font-size:13px;white-space:nowrap;
     max-width:90%;overflow:hidden;text-overflow:ellipsis;border:1.5px solid #f0a500;}
+  .edit-mail{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);z-index:600;
+    background:linear-gradient(135deg,rgba(43,29,14,.92),rgba(80,55,20,.92));color:#f4ecd6;
+    padding:3px 12px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap;
+    max-width:92%;overflow:hidden;text-overflow:ellipsis;border:1px solid #f0a500;}
+  .edit-mail a{color:#f0a500;font-weight:800;text-decoration:none;}
   .ed-pin{display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;
     border-radius:50%;border:2.5px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);
-    width:28px;height:28px;font-size:14px;background:linear-gradient(135deg,#f0a500,#c47f00);cursor:move;}
+    width:var(--pin,28px);height:var(--pin,28px);font-size:calc(var(--pin,28px)*0.5);background:linear-gradient(135deg,#f0a500,#c47f00);cursor:move;}
+  .size-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;background:#f0f3fa;padding:8px 14px;border-radius:12px;}
+  .size-bar input[type=range]{flex:1;max-width:280px;accent-color:#3b7dd8;cursor:pointer;}
   .ed-pin.placing{background:linear-gradient(135deg,#3b7dd8,#1a2a6c);}
   .station-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
   .schip{padding:7px 12px;border-radius:10px;font-weight:700;cursor:pointer;border:2px solid #d5deef;
@@ -161,13 +168,20 @@
           <span class="lock-badge unlocked" id="lockBadge">פתוח לעריכה</span>
           <button class="btn gray" onclick="clearAllPins()">🗑️ נקה תחנות</button>
           <button class="btn" onclick="window.open('/c/'+activeCompanyId+'/map','_blank')">↗️ תצוגת שחקן</button>
+          <button class="btn gold" onclick="printMap()">🖨️ הדפס מפה (A4)</button>
           <span class="saved" id="mapSaved" style="display:none">נשמר ✓</span>
+        </div>
+        <div class="size-bar">
+          <label style="margin:0">📏 גודל העיגולים:</label>
+          <input type="range" id="markerSizeRange" min="16" max="64" value="30" oninput="onSizeChange(this.value)">
+          <span id="markerSizeVal" style="font-weight:800;color:#1a2a6c;min-width:42px">30px</span>
         </div>
         <div class="map-frame-wrap">
           <img class="frame" src="/map-frame.png" alt="">
           <div class="map-edit-window">
             <div id="editMap"></div>
             <div class="edit-title" id="editTitle">המפה שלך</div>
+            <div class="edit-mail">למשחקים נוספים: <a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a></div>
           </div>
         </div>
         <p class="hint" style="margin-top:12px;text-align:center">בחרו תחנה למיקום:</p>
@@ -545,20 +559,34 @@ async function resetGame() {
 }
 
 // ===== עורך מפה =====
-let editMap=null, edMarkers={}, edLocked=false, edPlacing=null, edMapLoadedFor=null;
+let editMap=null, edMarkers={}, edLocked=false, edPlacing=null, edMapLoadedFor=null, edMarkerSize=30;
 
 function buildEdPin(id, placing){
-  return L.divIcon({ className:'', html:`<div class="ed-pin ${placing?'placing':''}">${id}</div>`,
-    iconSize:[28,28], iconAnchor:[14,14] });
+  const sz = edMarkerSize, anc = sz/2;
+  return L.divIcon({ className:'', html:`<div class="ed-pin ${placing?'placing':''}" style="--pin:${sz}px">${id}</div>`,
+    iconSize:[sz,sz], iconAnchor:[anc,anc] });
+}
+
+// שינוי גודל חי — כל העיגולים משתנים יחד
+function onSizeChange(val){
+  edMarkerSize = Number(val);
+  document.getElementById('markerSizeVal').textContent = edMarkerSize + 'px';
+  Object.keys(edMarkers).forEach(id=>{ edMarkers[id].setIcon(buildEdPin(Number(id), false)); });
 }
 
 async function loadMapEditor(){
   // טען קונפיג מהשרת
-  const r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{headers:H()});
+  let r;
+  try { r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{headers:H()}); }
+  catch(e){ alert('שגיאת רשת בטעינת המפה'); return; }
+  if(r.status===401){ alert('פג תוקף ההתחברות (השרת כנראה התאתחל). מתחבר מחדש...'); localStorage.removeItem('fg_token'); location.reload(); return; }
   const d=await r.json();
   const cfg=d.mapConfig||{center:{lat:31.8133,lng:34.7780},zoom:16,markers:[],locked:false};
-  document.getElementById('editTitle').textContent = d.gameName || d.companyName || 'המפה שלך';
+  document.getElementById('editTitle').textContent = d.companyName || 'המפה שלך';
   edLocked = !!cfg.locked;
+  edMarkerSize = isFinite(cfg.markerSize) ? Number(cfg.markerSize) : 30;
+  document.getElementById('markerSizeRange').value = edMarkerSize;
+  document.getElementById('markerSizeVal').textContent = edMarkerSize + 'px';
 
   // אתחל את המפה (פעם אחת לכל חברה)
   if(!editMap){
@@ -653,10 +681,22 @@ async function saveMap(){
     const ll=edMarkers[id].getLatLng();
     return { id:Number(id), lat:ll.lat, lng:ll.lng };
   });
-  const body={ center:{lat:c.lat,lng:c.lng}, zoom:editMap.getZoom(), locked:edLocked, markers };
-  const r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
-  if(!r.ok){ alert('שגיאה בשמירה'); return; }
+  const body={ center:{lat:c.lat,lng:c.lng}, zoom:editMap.getZoom(), locked:edLocked, markerSize:edMarkerSize, markers };
+  let r;
+  try {
+    r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  } catch(e){ alert('שגיאת רשת בשמירה. בדוק חיבור ונסה שוב.'); return; }
+  if(r.status===401){ alert('פג תוקף ההתחברות (השרת כנראה התאתחל). התחבר מחדש ונסה לשמור שוב.'); return; }
+  if(!r.ok){ let msg='שגיאה בשמירה'; try{ const e=await r.json(); if(e.error) msg=e.error; }catch(_){} alert(msg); return; }
   const s=document.getElementById('mapSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2500);
+}
+
+// הדפסת המפה על A4 — שומר קודם, ואז פותח את תצוגת השחקן הנקייה להדפסה
+async function printMap(){
+  if(!editMap){ alert('המפה לא נטענה'); return; }
+  await saveMap();
+  const w=window.open('/c/'+activeCompanyId+'/map?print=1','_blank');
+  // המפה תיטען בטאב החדש; ההדפסה מופעלת שם אוטומטית כשמוכן
 }
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
