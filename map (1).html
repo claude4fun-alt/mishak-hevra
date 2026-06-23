@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מפת המשחק</title>
+<link rel="stylesheet" href="/leaflet.css"/>
+<style>
+  :root{
+    --ink:#2b1d0e; --gold:#f0a500; --gold-deep:#c47f00; --paper:#efe2bf;
+    --green:#27a844; --green-d:#1e7f34; --red:#ff6b5e; --red-d:#d94436; --gray:#9c9488; --gray-d:#6f685d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{font-family:'Heebo','Segoe UI',Arial,sans-serif;background:#1c160d;color:var(--ink);
+    -webkit-text-size-adjust:100%;overflow:hidden;}
+
+  /* במה: שומרת על יחס התמונה של המסגרת */
+  #stage{position:relative;width:100vw;height:100vh;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;}
+  #frameBox{position:relative;}
+  #frameImg{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;}
+
+  /* חלון המפה — ממוקם בתוך אזור הקרם של המסגרת (אחוזים יחסית ל-frameBox) */
+  #mapWindow{position:absolute;left:25.5%;top:26.2%;width:48.3%;height:53.3%;
+    border-radius:6px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(120,80,20,.35), 0 8px 26px rgba(0,0,0,.35);}
+  #map{width:100%;height:100%;background:#1a1a1a;}
+
+  /* כותרת שם החברה/המשחק על המפה */
+  #mapTitle{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:600;
+    background:linear-gradient(135deg,rgba(43,29,14,.92),rgba(80,55,20,.92));
+    color:#fff;padding:6px 16px;border-radius:999px;font-weight:800;
+    font-size:clamp(12px,2.4vw,18px);white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;
+    box-shadow:0 4px 14px rgba(0,0,0,.4);border:1.5px solid var(--gold);}
+
+  /* סיכת תחנה */
+  .pin{display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;
+    border-radius:50%;border:2.5px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.45);
+    width:30px;height:30px;font-size:15px;transition:transform .15s, background .2s;}
+  .pin.none{background:linear-gradient(135deg,var(--gray),var(--gray-d));}
+  .pin.correct{background:linear-gradient(135deg,var(--green),var(--green-d));}
+  .pin.wrong{background:linear-gradient(135deg,var(--red),var(--red-d));}
+  .pin.pending{background:linear-gradient(135deg,#ffd23f,#e0a800);color:#3a2a00;
+    animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
+
+  /* מקרא */
+  #legend{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);z-index:600;
+    display:flex;gap:10px;flex-wrap:wrap;justify-content:center;
+    background:rgba(43,29,14,.85);padding:6px 12px;border-radius:12px;border:1px solid rgba(240,165,0,.5);}
+  #legend .it{display:flex;align-items:center;gap:5px;color:#f4ecd6;font-size:clamp(9px,1.8vw,12px);font-weight:600;white-space:nowrap;}
+  #legend .dot{width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;}
+  .dot.none{background:var(--gray);} .dot.correct{background:var(--green);}
+  .dot.wrong{background:var(--red);} .dot.pending{background:#ffd23f;}
+
+  /* פוטר מייל — מתחת לבמה אם יש מקום, אחרת צף */
+  #mailBar{position:absolute;bottom:10px;right:14px;z-index:700;
+    background:rgba(43,29,14,.9);border:1px solid var(--gold);border-radius:12px;
+    padding:7px 12px;font-size:clamp(10px,1.9vw,13px);color:#f4ecd6;text-align:center;line-height:1.5;}
+  #mailBar a{color:var(--gold);font-weight:800;text-decoration:none;}
+  #mailBar a:hover{text-decoration:underline;}
+
+  /* מצב טעינה / שגיאה */
+  #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:900;
+    background:#1c160d;color:#f4ecd6;font-size:18px;font-weight:700;text-align:center;padding:24px;}
+  .leaflet-control-attribution{font-size:9px !important;}
+
+  /* התאמה לרוחב מסך טלפון — לתת למסגרת למלא לגובה */
+  @media (max-aspect-ratio:1054/1492){
+    #frameBox{height:100vh;width:auto;}
+  }
+  @media (min-aspect-ratio:1054/1492){
+    #frameBox{width:auto;height:100vh;}
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="frameBox">
+    <img id="frameImg" src="/map-frame.png" alt="">
+    <div id="mapWindow">
+      <div id="map"></div>
+      <div id="mapTitle">טוען…</div>
+      <div id="legend">
+        <span class="it"><span class="dot none"></span> טרם נסרק</span>
+        <span class="it"><span class="dot correct"></span> נכון</span>
+        <span class="it"><span class="dot wrong"></span> לא נכון</span>
+        <span class="it"><span class="dot pending"></span> ממתין</span>
+      </div>
+    </div>
+    <div id="mailBar">
+      למשחקים נוספים פנו ל:<br>
+      <a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a>
+    </div>
+  </div>
+</div>
+<div id="msg">טוען מפה…</div>
+
+<script src="/leaflet.js"></script>
+<script>
+const parts = location.pathname.split('/');
+const CID = parts[2];
+const PLAYER = new URLSearchParams(location.search).get('player') || '';
+
+let map = null, pinLayers = {}, frameBoxSized = false;
+
+// התאמת גודל frameBox כדי שהמסגרת תתאים ל-viewport תוך שמירת יחס
+function sizeFrame(){
+  const img = document.getElementById('frameImg');
+  const box = document.getElementById('frameBox');
+  const ar = 1054/1492; // יחס המסגרת
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let w,h;
+  if (vw/vh > ar){ h = vh; w = vh*ar; }   // מסך רחב — הגבל לגובה
+  else { w = vw; h = vw/ar; }              // מסך צר — הגבל לרוחב
+  box.style.width = w+'px'; box.style.height = h+'px';
+  if (map) map.invalidateSize();
+}
+window.addEventListener('resize', sizeFrame);
+
+function buildPin(id, status){
+  return L.divIcon({ className:'', html:`<div class="pin ${status}">${id}</div>`,
+    iconSize:[30,30], iconAnchor:[15,15] });
+}
+
+async function load(){
+  let d;
+  try {
+    const r = await fetch(`/api/company/${CID}/map?player=${encodeURIComponent(PLAYER)}`);
+    if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.error||'שגיאה'); }
+    d = await r.json();
+  } catch(e){
+    document.getElementById('msg').textContent = e.message || 'לא ניתן לטעון את המפה';
+    return;
+  }
+
+  const cfg = d.mapConfig || {};
+  document.getElementById('mapTitle').textContent = d.gameName || d.companyName || 'מפת המשחק';
+  document.title = (d.gameName || 'מפת המשחק');
+
+  if(!cfg.markers || !cfg.markers.length){
+    document.getElementById('msg').textContent = 'המנהל עדיין לא הגדיר את מפת התחנות';
+    document.getElementById('msg').style.background = 'rgba(28,22,13,.95)';
+    return;
+  }
+
+  sizeFrame();
+  document.getElementById('msg').style.display='none';
+
+  if(!map){
+    map = L.map('map', {
+      center:[cfg.center.lat, cfg.center.lng], zoom: cfg.zoom,
+      zoomControl:false, attributionControl:true, maxZoom:21,
+      // נעילת אינטראקציה אם המנהל נעל את המפה — השחקן רואה רק את התצוגה הקבועה
+      dragging: !cfg.locked, scrollWheelZoom: !cfg.locked, doubleClickZoom: !cfg.locked,
+      touchZoom: !cfg.locked, boxZoom: !cfg.locked, keyboard: !cfg.locked, tap: !cfg.locked
+    });
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom:21, maxNativeZoom:19, attribution:'Esri' }).addTo(map);
+    if(!cfg.locked) L.control.zoom({position:'topleft'}).addTo(map);
+    // קריאות חוזרות כדי שהמפה תצייר אריחים גם אם נולדה לפני שהמיכל קיבל גובה
+    [60,200,500,900,1500].forEach(ms=>setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} }, ms));
+  }
+
+  // ציור / עדכון סיכות
+  cfg.markers.forEach(mk=>{
+    const stStatus = (d.stations && d.stations[mk.id]) ? d.stations[mk.id].status : 'none';
+    const title = (d.stations && d.stations[mk.id] && d.stations[mk.id].title) ? d.stations[mk.id].title : ('תחנה '+mk.id);
+    if(pinLayers[mk.id]){
+      pinLayers[mk.id].setIcon(buildPin(mk.id, stStatus));
+    } else {
+      const m = L.marker([mk.lat, mk.lng], { icon: buildPin(mk.id, stStatus), interactive:true })
+        .addTo(map).bindTooltip(`תחנה ${mk.id}: ${title}`, {direction:'top'});
+      pinLayers[mk.id] = m;
+    }
+  });
+
+  // אם נעול — ודא שהמסגרת לא זזה
+  if(cfg.locked){ map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom, {animate:false}); }
+}
+
+load();
+// רענון סטטוס צבעים אוטומטי (רק עדכון צבעים, לא מאפס תצוגה)
+setInterval(load, 5000);
+</script>
+</body>
+</html>
