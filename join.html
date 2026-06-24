@@ -44,6 +44,9 @@
   </select>
   <input id="pTeam" placeholder="שם הקבוצה החדשה" autocomplete="off">
   <button class="btn" onclick="join()">הצטרף למשחק! 🚀</button>
+  <p style="margin-top:14px;padding:10px 12px;background:#fff7e0;border:1px solid #f0c040;border-radius:10px;font-size:13px;color:#5a3d12;line-height:1.6">
+    📷 <b>לפני הסריקות:</b> אם יש בעיה בסריקת ה-QR, ודאו שלדפדפן שבו אתם משתמשים יש <b>הרשאת גישה למצלמה</b> (בהגדרות הדפדפן/הטלפון). בלי הרשאה הסורק לא יעבוד.
+  </p>
 </div>
 
 <!-- מסך אישור -->
@@ -114,21 +117,30 @@ function onTeamSelect() {
   if (sel.value !== '__new__') newInput.value = '';
 }
 
-async function join() {
+async function join(resume) {
   const name = document.getElementById('pName').value.trim();
   const sel = document.getElementById('pTeamSelect');
   const team = (sel.value === '__new__') ? document.getElementById('pTeam').value.trim() : sel.value;
   if (!name) { alert('נא להזין שם'); return; }
   if (sel.value === '__new__' && !team) { alert('נא להזין שם קבוצה או לבחור קבוצה קיימת'); return; }
-  const r = await fetch('/api/company/' + companyId + '/join', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, team }) });
+  const r = await fetch('/api/company/' + companyId + '/join', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, team, resume: !!resume }) });
   const d = await r.json();
+
+  if (r.status === 409 && d.existingPlayerId) {
+    // שחקן כבר קיים עם אותו שם+קבוצה — מציעים להמשיך במקום ליצור כפילות
+    const ok = confirm('שחקן בשם "' + d.name + '" בקבוצה "' + (d.team || '—') + '" כבר רשום.\n\nלהמשיך עם השחקן הקיים? (כדי למנוע כפילות בלוח התוצאות)\n\nאישור = המשך משחק קיים · ביטול = שנה שם/קבוצה');
+    if (ok) { return join(true); }   // המשך עם הקיים
+    return;                          // המשתמש יבחר שם/קבוצה אחרים
+  }
+  if (!r.ok) { alert(d.error || 'שגיאה בהצטרפות'); return; }
+
   player = d;
   localStorage.setItem(PLAYER_KEY, JSON.stringify(player));
-  showDone(name);
+  showDone(name, d.resumed);
 }
 
-function showDone(name) {
-  document.getElementById('welcomeMsg').textContent = 'ברוכים הבאים, ' + name + '!';
+function showDone(name, resumed) {
+  document.getElementById('welcomeMsg').textContent = (resumed ? 'שמחים שחזרת, ' : 'ברוכים הבאים, ') + name + '!';
   document.getElementById('formCard').classList.add('hidden');
   document.getElementById('doneCard').classList.remove('hidden');
 }

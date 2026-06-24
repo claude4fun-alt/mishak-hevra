@@ -53,6 +53,7 @@
   <div class="actions">
     <a class="btn bscan" id="scanLink" href="#">📷 לסריקת תחנה</a>
     <a class="btn bboard" id="boardLink" href="#">📊 לוח תוצאות</a>
+    <a class="btn bboard" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)">🧭 מפת המשחק</a>
   </div>
   <div class="credit">נוצר ע"י Amir Cohen</div>
 </div>
@@ -81,6 +82,7 @@ const player = JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
 
 document.getElementById('scanLink').href = '/c/' + companyId;
 document.getElementById('boardLink').href = '/c/' + companyId + '/board';
+document.getElementById('mapLink').href = '/c/' + companyId + '/map' + (player ? '?player=' + encodeURIComponent(player.playerId) : '');
 
 async function load() {
   if (!player) {

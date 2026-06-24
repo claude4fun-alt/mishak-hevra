@@ -44,50 +44,48 @@
     animation:pulse 1.4s ease-in-out infinite;}
   @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.15);}}
 
-  /* מקרא צבעים — ברצועת הקרם מתחת למפה, לא על הלוויין */
-  #legend{position:absolute;bottom:11%;left:50%;transform:translateX(-50%);z-index:600;
-    display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:48%;
-    background:rgba(43,29,14,.85);padding:5px 10px;border-radius:10px;border:1px solid rgba(240,165,0,.55);}
-  #legend .it{display:flex;align-items:center;gap:4px;color:#f4ecd6;font-size:clamp(8px,1.5vw,11px);font-weight:600;white-space:nowrap;}
-  #legend .dot{width:11px;height:11px;border-radius:50%;border:1.5px solid #fff;}
+  /* מייל — חלק עליון של העמוד, מעל הכל, לא על טקסט הרקע */
+  #topMail{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:1000;
+    background:rgba(43,29,14,.92);border:1px solid var(--gold);border-radius:999px;
+    padding:5px 16px;color:#f4ecd6;font-size:clamp(10px,1.8vw,13px);font-weight:700;white-space:nowrap;
+    max-width:92vw;overflow:hidden;text-overflow:ellipsis;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.4);}
+  #topMail a{color:var(--gold);font-weight:800;text-decoration:none;}
+
+  /* מקרא צבעים — מלבן אנכי צמוד לפינה ימנית-תחתונה */
+  #legend{position:fixed;bottom:10px;right:10px;z-index:1000;
+    display:flex;flex-direction:column;gap:5px;
+    background:rgba(43,29,14,.9);padding:8px 11px;border-radius:12px;border:1px solid rgba(240,165,0,.55);
+    box-shadow:0 3px 10px rgba(0,0,0,.4);}
+  #legend .it{display:flex;align-items:center;gap:6px;color:#f4ecd6;font-size:clamp(9px,1.6vw,12px);font-weight:600;white-space:nowrap;}
+  #legend .dot{width:12px;height:12px;border-radius:50%;border:1.5px solid #fff;flex-shrink:0;}
   .dot.none{background:var(--gray);} .dot.correct{background:var(--green);}
   .dot.wrong{background:var(--red);} .dot.pending{background:#ffd23f;}
 
-  /* כיתוב מייל — ברצועת הקרם מתחת למקרא */
-  #mapMail{position:absolute;bottom:7%;left:50%;transform:translateX(-50%);z-index:600;
-    background:rgba(43,29,14,.85);border:1px solid rgba(240,165,0,.55);border-radius:999px;
-    padding:3px 12px;color:#f4ecd6;font-size:clamp(8px,1.5vw,11px);font-weight:700;white-space:nowrap;max-width:60%;
-    overflow:hidden;text-overflow:ellipsis;text-align:center;}
-  #mapMail a{color:var(--gold);font-weight:800;text-decoration:none;}
-
-  /* פוטר מייל — מתחת לבמה אם יש מקום, אחרת צף */
-  #mailBar{position:absolute;bottom:10px;right:14px;z-index:700;
-    background:rgba(43,29,14,.9);border:1px solid var(--gold);border-radius:12px;
-    padding:7px 12px;font-size:clamp(10px,1.9vw,13px);color:#f4ecd6;text-align:center;line-height:1.5;}
-  #mailBar a{color:var(--gold);font-weight:800;text-decoration:none;}
-  #mailBar a:hover{text-decoration:underline;}
+  /* סרגל ניווט — חזרה / לוח תוצאות / סורק. צמוד לפינה שמאלית-תחתונה */
+  #navBar{position:fixed;bottom:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:6px;}
+  #navBar button{background:rgba(43,29,14,.92);color:#f4ecd6;border:1px solid var(--gold);border-radius:10px;
+    padding:8px 12px;font-weight:800;font-size:clamp(11px,1.8vw,13px);font-family:inherit;cursor:pointer;
+    white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.4);text-align:center;}
+  #navBar button:active{transform:scale(.96);}
+  #navBar button.gold{background:linear-gradient(135deg,#f0a500,#c47f00);color:#1c160d;border:none;}
 
   /* מצב טעינה / שגיאה */
   #msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:900;
     background:#1c160d;color:#f4ecd6;font-size:18px;font-weight:700;text-align:center;padding:24px;}
   .leaflet-control-attribution{font-size:9px !important;}
 
-  /* כפתור הדפסה */
-  #printBtn{position:fixed;top:10px;left:10px;z-index:1000;background:linear-gradient(135deg,#f0a500,#c47f00);
-    color:#1c160d;border:none;border-radius:10px;padding:9px 14px;font-weight:800;font-size:14px;
-    font-family:inherit;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.4);}
-  #printBtn:active{transform:scale(.96);}
-
-  /* הדפסה: דף A4 לאורך, המסגרת ממורכזת וממלאה את העמוד */
+  /* הדפסה: דף A4 לאורך, המסגרת ממורכזת. כל שכבות הניווט מוסתרות */
   @media print{
     @page{ size:A4 portrait; margin:8mm; }
-    #printBtn{display:none !important;}
-    #msg{display:none !important;}
+    #msg,#navBar{display:none !important;}
     body{background:#fff !important;}
     #stage{height:auto !important;display:block !important;}
     #frameBox{width:100% !important;height:auto !important;max-width:190mm;margin:0 auto !important;}
     #frameImg{width:100% !important;height:auto !important;}
     .leaflet-control-zoom{display:none !important;}
+    /* בהדפסה: המייל והמקרא נשארים אבל ממוקמים יחסית לעמוד */
+    #topMail{position:absolute;top:2mm;}
+    #legend{position:absolute;}
   }
 
   /* התאמה לרוחב מסך טלפון — לתת למסגרת למלא לגובה */
@@ -100,7 +98,7 @@
 </style>
 </head>
 <body>
-<button id="printBtn" onclick="window.print()">🖨️ הדפס מפה (A4)</button>
+<div id="topMail">למשחקים נוספים פנו ל-<a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a></div>
 <div id="stage">
   <div id="frameBox">
     <img id="frameImg" src="/map-frame.png" alt="">
@@ -108,15 +106,18 @@
       <div id="map"></div>
       <div id="mapTitle">טוען…</div>
     </div>
-    <div id="legend">
-      <span class="it"><span class="dot none"></span> טרם נסרק</span>
-      <span class="it"><span class="dot correct"></span> נכון</span>
-      <span class="it"><span class="dot wrong"></span> לא נכון</span>
-      <span class="it"><span class="dot pending"></span> ממתין</span>
-    </div>
-    <div id="mapMail">למשחקים נוספים: <a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a></div>
   </div>
-  </div>
+</div>
+<div id="legend">
+  <span class="it"><span class="dot none"></span> טרם נסרק</span>
+  <span class="it"><span class="dot correct"></span> נכון</span>
+  <span class="it"><span class="dot wrong"></span> לא נכון</span>
+  <span class="it"><span class="dot pending"></span> ממתין</span>
+</div>
+<div id="navBar">
+  <button class="gold" id="navBack" onclick="goBack()">↩️ חזרה</button>
+  <button id="navBoard" onclick="goBoard()">📊 לוח תוצאות</button>
+  <button id="navScan" onclick="goScan()">📷 סריקת תחנה</button>
 </div>
 <div id="msg">טוען מפה…</div>
 
@@ -124,7 +125,22 @@
 <script>
 const parts = location.pathname.split('/');
 const CID = parts[2];
-const PLAYER = new URLSearchParams(location.search).get('player') || '';
+const QS = new URLSearchParams(location.search);
+const PLAYER = QS.get('player') || '';
+const PRINT = QS.get('print')==='1';
+
+// ניווט — מבלי להסתיר את טקסט הרקע/מפה (כפתורים בפינה, לא על התוכן)
+function pq(){ return PLAYER ? ('?player='+encodeURIComponent(PLAYER)) : ''; }
+function goBack(){
+  // אם הגענו מעמוד אחר באתר — חזרה אליו; אחרת לעמוד החברה
+  if(document.referrer && document.referrer.indexOf(location.host)>-1){ history.back(); }
+  else { location.href = '/c/'+CID+pq(); }
+}
+function goBoard(){ location.href = '/c/'+CID+'/board'+pq(); }
+function goScan(){ location.href = '/c/'+CID+pq(); }
+
+// במצב הדפסה: הסתר ניווט (כדי שלא יודפס)
+if(PRINT){ const nb=document.getElementById('navBar'); if(nb) nb.style.display='none'; }
 
 let map = null, pinLayers = {}, frameBoxSized = false;
 
@@ -174,6 +190,7 @@ async function load(){
   sizeFrame();
   document.getElementById('msg').style.display='none';
 
+  const hasBounds = cfg.bounds && isFinite(cfg.bounds.north);
   if(!map){
     map = L.map('map', {
       center:[cfg.center.lat, cfg.center.lng], zoom: cfg.zoom,
@@ -185,34 +202,46 @@ async function load(){
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom:21, maxNativeZoom:19, attribution:'Esri' }).addTo(map);
     if(!cfg.locked) L.control.zoom({position:'topleft'}).addTo(map);
-    // קריאות חוזרות כדי שהמפה תצייר אריחים גם אם נולדה לפני שהמיכל קיבל גובה
-    [60,200,500,900,1500].forEach(ms=>setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} }, ms));
+    // הצגת אותו אזור גיאוגרפי תמיד (גם בהדפסה כשהמיכל משנה גודל)
+    const applyView = ()=>{ try{ map.invalidateSize();
+      if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
+      else map.setView([cfg.center.lat,cfg.center.lng], cfg.zoom, {animate:false});
+    }catch(e){} };
+    [60,200,500,900,1500].forEach(ms=>setTimeout(applyView, ms));
   }
 
-  // ציור / עדכון סיכות
+  // ציור / עדכון סיכות — tooltip = כותרת התחנה כפי שהוגדרה (בלי לשכפל "תחנה N")
   cfg.markers.forEach(mk=>{
     const stStatus = (d.stations && d.stations[mk.id]) ? d.stations[mk.id].status : 'none';
-    const title = (d.stations && d.stations[mk.id] && d.stations[mk.id].title) ? d.stations[mk.id].title : ('תחנה '+mk.id);
+    const rawTitle = (d.stations && d.stations[mk.id] && d.stations[mk.id].title) ? d.stations[mk.id].title : '';
+    const tip = rawTitle && rawTitle.trim() ? rawTitle.trim() : ('תחנה ' + mk.id);
     if(pinLayers[mk.id]){
       pinLayers[mk.id].setIcon(buildPin(mk.id, stStatus));
     } else {
       const m = L.marker([mk.lat, mk.lng], { icon: buildPin(mk.id, stStatus), interactive:true })
-        .addTo(map).bindTooltip(`תחנה ${mk.id}: ${title}`, {direction:'top'});
+        .addTo(map).bindTooltip(tip, {direction:'top', offset:[0,-(pinSize/2)-2]});
       pinLayers[mk.id] = m;
     }
   });
 
-  // אם נעול — ודא שהמסגרת לא זזה
-  if(cfg.locked){ map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom, {animate:false}); }
+  // שמירה על האזור הקבוע (גם בעדכוני רענון)
+  if(cfg.locked){
+    if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
+    else map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom, {animate:false});
+  }
 
-  // הדפסה אוטומטית כשמגיעים עם ?print=1 (מהדשבורד)
-  if(new URLSearchParams(location.search).get('print')==='1' && !window._printed){
+  // הדפסה אוטומטית כשמגיעים עם ?print=1 (מהדשבורד) — מיישרת לאותו אזור לפני הדפסה
+  if(PRINT && !window._printed){
     window._printed=true;
-    setTimeout(()=>{ try{ map.invalidateSize(); }catch(e){} window.print(); }, 1800);
+    setTimeout(()=>{ try{ map.invalidateSize();
+      if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
+    }catch(e){}
+      setTimeout(()=>window.print(), 700);
+    }, 1600);
   }
 }
 
-const PRINT_MODE = new URLSearchParams(location.search).get('print')==='1';
+const PRINT_MODE = PRINT;
 load();
 // רענון סטטוס צבעים אוטומטי (מושבת במצב הדפסה כדי לא לרענן באמצע)
 if(!PRINT_MODE) setInterval(load, 5000);

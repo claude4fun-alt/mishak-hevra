@@ -98,6 +98,7 @@
     <p class="muted" id="resSub"></p>
     <a class="link" id="boardLink" href="#" target="_blank">📊 צפו בטבלת התוצאות החיה</a>
     <a class="link" id="progressLink" href="#">🗺️ ההתקדמות שלי</a>
+    <a class="link" id="mapLink" href="#">🧭 מפת המשחק</a>
     <p class="muted" style="margin-top:18px">חפשו את התחנה הבאה!</p>
     <button class="btn sec" style="margin-top:12px" id="scanBtn" onclick="startScan()">📷 סרוק QR של התחנה הבאה</button>
     <div id="qrReader"></div>
@@ -176,6 +177,7 @@ let timerInt = null;
 async function init() {
   document.getElementById('boardLink').href = '/c/' + companyId + '/board';
   document.getElementById('progressLink').href = '/c/' + companyId + '/progress';
+  document.getElementById('mapLink').href = '/c/' + companyId + '/map' + (player ? '?player=' + encodeURIComponent(player.playerId) : '');
   // חותם סריקה: מי שלא הגיע דרך הסורק של התוכנה (?via=app) מקבל מסך הכוונה
   const viaApp = new URLSearchParams(location.search).get('via') === 'app';
   if (!viaApp) {

@@ -85,6 +85,7 @@ function defaultMapConfig() {
     locked: false,
     center: { lat: 31.8133, lng: 34.7780 }, // גדרה כברירת מחדל
     zoom: 16,
+    bounds: null,    // {north,south,east,west} — האזור הגיאוגרפי המדויק שהמנהל מסגר (להדפסה/תצוגה עקבית)
     markerSize: 30,  // קוטר עיגול התחנה בפיקסלים (16-64)
     markers: []  // [{id:1..10, lat, lng}]
   };
@@ -287,7 +288,26 @@ app.post('/api/company/:cid/join', (req, res) => {
   if (!c.enabled) return res.status(403).json({ error: 'החברה מושבתת כרגע' });
   const name = (req.body.name || '').toString().trim();
   const team = (req.body.team || '').toString().trim();
+  const resume = req.body.resume === true || req.body.resume === 'true';
   if (!name) return res.status(400).json({ error: 'נדרש שם' });
+
+  // חיפוש שחקן קיים עם אותו שם + קבוצה (ללא תלות באותיות/רווחים)
+  const norm = s => (s || '').toString().trim().toLowerCase();
+  const existing = Object.values(c.players).find(p => norm(p.name) === norm(name) && norm(p.team) === norm(team));
+
+  if (existing && !resume) {
+    // שחקן כבר קיים — לא יוצרים כפילות. מחזירים 409 כדי שהלקוח יציע "המשך משחק".
+    return res.status(409).json({
+      error: 'שחקן עם שם וקבוצה זהים כבר רשום',
+      existingPlayerId: existing.id,
+      name: existing.name, team: existing.team, companyId: c.id, companyName: c.name
+    });
+  }
+  if (existing && resume) {
+    // המשך משחק עם השחקן הקיים — בלי כפילות
+    return res.json({ playerId: existing.id, name: existing.name, team: existing.team, companyId: c.id, companyName: c.name, resumed: true });
+  }
+
   const id = makeId('p');
   c.players[id] = { id, name, team, joinedAt: Date.now(), answers: {} };
   saveDB(); broadcast(c.id);
@@ -372,7 +392,7 @@ app.get('/api/company/:cid/map', (req, res) => {
   });
   res.json({
     gameName: c.gameName, companyName: c.name,
-    mapConfig: { center: cfg.center, zoom: cfg.zoom, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [] },
+    mapConfig: { center: cfg.center, zoom: cfg.zoom, bounds: cfg.bounds || null, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [] },
     stations: statusById,
     name: player ? player.name : '', team: player ? player.team : ''
   });
@@ -579,6 +599,7 @@ app.post('/api/admin/company/:cid/import', auth, (req, res) => {
     if (m.center && isFinite(m.center.lat) && isFinite(m.center.lng)) cfg.center = { lat: Number(m.center.lat), lng: Number(m.center.lng) };
     if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
     if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
+    if (m.bounds && isFinite(m.bounds.north) && isFinite(m.bounds.south) && isFinite(m.bounds.east) && isFinite(m.bounds.west)) cfg.bounds = { north: Number(m.bounds.north), south: Number(m.bounds.south), east: Number(m.bounds.east), west: Number(m.bounds.west) };
     cfg.locked = !!m.locked;
     if (Array.isArray(m.markers)) cfg.markers = m.markers.filter(x => x && isFinite(x.lat) && isFinite(x.lng) && Number(x.id) >= 1 && Number(x.id) <= 10).map(x => ({ id: Number(x.id), lat: Number(x.lat), lng: Number(x.lng) })).slice(0, 10);
     c.mapConfig = cfg;
@@ -649,6 +670,9 @@ app.post('/api/admin/company/:cid/map', auth, (req, res) => {
   }
   if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
   if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
+  if (m.bounds && isFinite(m.bounds.north) && isFinite(m.bounds.south) && isFinite(m.bounds.east) && isFinite(m.bounds.west)) {
+    cfg.bounds = { north: Number(m.bounds.north), south: Number(m.bounds.south), east: Number(m.bounds.east), west: Number(m.bounds.west) };
+  }
   cfg.locked = !!m.locked;
   if (Array.isArray(m.markers)) {
     cfg.markers = m.markers
