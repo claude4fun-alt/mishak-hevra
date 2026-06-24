@@ -15,9 +15,10 @@
   body{font-family:'Heebo','Segoe UI',Arial,sans-serif;background:#1c160d;color:var(--ink);
     -webkit-text-size-adjust:100%;overflow:hidden;}
 
-  /* במה: שומרת על יחס התמונה של המסגרת */
-  #stage{position:relative;width:100vw;height:100vh;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;}
+  /* במה: שומרת על יחס התמונה של המסגרת. מיושרת למעלה כדי לא לבזבז שטח שחור */
+  #stage{position:relative;width:100vw;min-height:100vh;overflow:hidden;
+    display:flex;align-items:flex-start;justify-content:center;
+    padding-top:var(--mailH,40px);box-sizing:border-box;}
   #frameBox{position:relative;}
   #frameImg{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;}
 
@@ -74,13 +75,7 @@
     background:#1c160d;color:#f4ecd6;font-size:18px;font-weight:700;text-align:center;padding:24px;}
   .leaflet-control-attribution{font-size:9px !important;}
 
-  /* התאמה לרוחב מסך טלפון — לתת למסגרת למלא לגובה */
-  @media screen and (max-aspect-ratio:1054/1492){
-    #frameBox{height:100vh;width:auto;}
-  }
-  @media screen and (min-aspect-ratio:1054/1492){
-    #frameBox{width:auto;height:100vh;}
-  }
+  /* גודל המסגרת מחושב ב-JS (sizeFrame) לפי השטח הזמין מתחת למייל */
 
   /* הדפסה: דף A4 לאורך, המסגרת ממלאה את העמוד. נכתב אחרון כדי לגבור על שאר הכללים */
   @media print{
@@ -93,9 +88,10 @@
     #frameImg{ position:static !important; display:block !important; width:100% !important; height:auto !important; object-fit:fill !important; }
     #mapWindow{ box-shadow:none !important; }
     .leaflet-control-zoom{ display:none !important; }
-    /* מייל ומקרא ממוקמים יחסית למסגרת בהדפסה */
+    /* בהדפסה: המקרא לא רלוונטי (אין סטטוס צבעים בדף מודפס) ועלול לזלוג מהדף — מוסתר. */
+    #legend{ display:none !important; }
+    /* מייל ממוקם יחסית למסגרת */
     #topMail{ position:absolute !important; top:1mm !important; }
-    #legend{ position:absolute !important; bottom:2mm !important; right:2mm !important; }
   }
 </style>
 </head>
@@ -146,16 +142,20 @@ if(PRINT){ const nb=document.getElementById('navBar'); if(nb) nb.style.display='
 
 let map = null, pinLayers = {}, frameBoxSized = false;
 
-// התאמת גודל frameBox כדי שהמסגרת תתאים ל-viewport תוך שמירת יחס
+// התאמת גודל frameBox כדי שהמסגרת תמלא את השטח הזמין מתחת לכיתוב המייל
 function sizeFrame(){
-  const img = document.getElementById('frameImg');
   const box = document.getElementById('frameBox');
-  const ar = 1054/1492; // יחס המסגרת
-  const vw = window.innerWidth, vh = window.innerHeight;
-  let w,h;
-  if (vw/vh > ar){ h = vh; w = vh*ar; }   // מסך רחב — הגבל לגובה
-  else { w = vw; h = vw/ar; }              // מסך צר — הגבל לרוחב
-  box.style.width = w+'px'; box.style.height = h+'px';
+  const mail = document.getElementById('topMail');
+  const ar = 1054/1492; // יחס המסגרת (רוחב/גובה)
+  const mailH = mail ? (mail.getBoundingClientRect().height + 16) : 40; // גובה המייל + מרווח
+  document.documentElement.style.setProperty('--mailH', mailH + 'px');
+  const vw = window.innerWidth;
+  const availH = window.innerHeight - mailH;   // הגובה הזמין מתחת למייל
+  let w, h;
+  // מתאימים לגובה הזמין; אם רחב מדי — מתאימים לרוחב
+  if (availH * ar <= vw){ h = availH; w = availH * ar; }
+  else { w = vw; h = vw / ar; }
+  box.style.width = w + 'px'; box.style.height = h + 'px';
   if (map) map.invalidateSize();
 }
 window.addEventListener('resize', sizeFrame);
