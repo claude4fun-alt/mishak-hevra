@@ -60,6 +60,7 @@
 
 <div class="scan-wrap">
   <button class="scan-btn" id="scanBtn" onclick="startScan()">📷 סרוק QR של תחנה</button>
+  <button class="scan-btn" id="mapBtn" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" onclick="goMap()">🧭 מפת המשחק</button>
   <div id="qrReader"></div>
   <p class="scan-err" id="scanErr"></p>
   <button class="scan-btn" style="display:none;background:#5a6b8a" id="stopScanBtn" onclick="stopScan()">עצור סריקה</button>
@@ -90,6 +91,8 @@ function _tone(f,s,d,t,v){const c=_ctx();if(!c)return;const t0=c.currentTime+s;c
 function playScanSound(){_unlock();_tone(1200,0,0.08,'square',0.22);_tone(660,0.12,0.14,'sine',0.25);_tone(880,0.26,0.2,'sine',0.25);}
 
 const companyId = location.pathname.split('/')[2]; // /c/:cid/board
+const _player = new URLSearchParams(location.search).get('player') || '';
+function goMap(){ location.href = '/c/' + companyId + '/map' + (_player ? '?player=' + encodeURIComponent(_player) : ''); }
 let prevFloors = {};
 
 // --- סורק QR מובנה ---

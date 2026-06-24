@@ -74,26 +74,28 @@
     background:#1c160d;color:#f4ecd6;font-size:18px;font-weight:700;text-align:center;padding:24px;}
   .leaflet-control-attribution{font-size:9px !important;}
 
-  /* הדפסה: דף A4 לאורך, המסגרת ממורכזת. כל שכבות הניווט מוסתרות */
-  @media print{
-    @page{ size:A4 portrait; margin:8mm; }
-    #msg,#navBar{display:none !important;}
-    body{background:#fff !important;}
-    #stage{height:auto !important;display:block !important;}
-    #frameBox{width:100% !important;height:auto !important;max-width:190mm;margin:0 auto !important;}
-    #frameImg{width:100% !important;height:auto !important;}
-    .leaflet-control-zoom{display:none !important;}
-    /* בהדפסה: המייל והמקרא נשארים אבל ממוקמים יחסית לעמוד */
-    #topMail{position:absolute;top:2mm;}
-    #legend{position:absolute;}
-  }
-
   /* התאמה לרוחב מסך טלפון — לתת למסגרת למלא לגובה */
-  @media (max-aspect-ratio:1054/1492){
+  @media screen and (max-aspect-ratio:1054/1492){
     #frameBox{height:100vh;width:auto;}
   }
-  @media (min-aspect-ratio:1054/1492){
+  @media screen and (min-aspect-ratio:1054/1492){
     #frameBox{width:auto;height:100vh;}
+  }
+
+  /* הדפסה: דף A4 לאורך, המסגרת ממלאה את העמוד. נכתב אחרון כדי לגבור על שאר הכללים */
+  @media print{
+    @page{ size:A4 portrait; margin:6mm; }
+    *{ -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important; }
+    html,body{ background:#fff !important; width:auto !important; height:auto !important; overflow:visible !important; }
+    #msg,#navBar{ display:none !important; }
+    #stage{ position:static !important; width:100% !important; height:auto !important; display:block !important; overflow:visible !important; }
+    #frameBox{ position:relative !important; width:100% !important; max-width:190mm !important; height:auto !important; margin:0 auto !important; }
+    #frameImg{ position:static !important; display:block !important; width:100% !important; height:auto !important; object-fit:fill !important; }
+    #mapWindow{ box-shadow:none !important; }
+    .leaflet-control-zoom{ display:none !important; }
+    /* מייל ומקרא ממוקמים יחסית למסגרת בהדפסה */
+    #topMail{ position:absolute !important; top:1mm !important; }
+    #legend{ position:absolute !important; bottom:2mm !important; right:2mm !important; }
   }
 </style>
 </head>
@@ -233,12 +235,36 @@ async function load(){
   // הדפסה אוטומטית כשמגיעים עם ?print=1 (מהדשבורד) — מיישרת לאותו אזור לפני הדפסה
   if(PRINT && !window._printed){
     window._printed=true;
-    setTimeout(()=>{ try{ map.invalidateSize();
-      if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
-    }catch(e){}
-      setTimeout(()=>window.print(), 700);
+    setTimeout(()=>{
+      // מנקים גדלים אינליין כדי שכללי ההדפסה ישלטו, ואז מחשבים מחדש את גודל המפה
+      const box=document.getElementById('frameBox');
+      if(box){ box.style.width=''; box.style.height=''; }
+      try{
+        map.invalidateSize();
+        if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
+      }catch(e){}
+      // קריאה נוספת אחרי שהפריסה התייצבה, ואז הדפסה
+      setTimeout(()=>{ try{ map.invalidateSize();
+        if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
+      }catch(e){}
+        setTimeout(()=>window.print(), 600);
+      }, 500);
     }, 1600);
   }
+
+  // לפני כל הדפסה (גם ידנית/Ctrl+P) — נקה גדלים אינליין ורענן את המפה
+  if(!window._printHooked){
+    window._printHooked=true;
+    window.addEventListener('beforeprint', ()=>{
+      const box=document.getElementById('frameBox');
+      if(box){ box.style.width=''; box.style.height=''; }
+      try{ map.invalidateSize();
+        if(window._lastBounds) map.fitBounds([[window._lastBounds.south,window._lastBounds.west],[window._lastBounds.north,window._lastBounds.east]],{animate:false});
+      }catch(e){}
+    });
+    window.addEventListener('afterprint', ()=>{ sizeFrame(); });
+  }
+  window._lastBounds = hasBounds ? cfg.bounds : null;
 }
 
 const PRINT_MODE = PRINT;
