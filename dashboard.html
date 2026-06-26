@@ -408,15 +408,13 @@ function enterApp(d) {
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   if (ROLE==='super') {
-    document.getElementById('hdrTitle').textContent=t('dash.hdrSuper');
-    document.getElementById('hdrSub').textContent=t('dash.hdrSuperSub');
+    updateHeader();
     document.getElementById('superView').style.display='block';
     document.getElementById('companyView').style.display='none';
     loadCompanies();
   } else {
     activeCompanyId=d.companyId; activeCompanyName=d.companyName;
-    document.getElementById('hdrTitle').textContent=t('dash.hdrCompany',{name:d.companyName});
-    document.getElementById('hdrSub').textContent=t('dash.hdrCompanySub');
+    updateHeader();
     openCompany(d.companyId, false);
   }
 }
@@ -487,8 +485,8 @@ async function deleteCompany(cid, name) {
 function backToSuper() {
   document.getElementById('superView').style.display='block';
   document.getElementById('companyView').style.display='none';
-  document.getElementById('hdrTitle').textContent=t('dash.hdrSuper');
-  document.getElementById('hdrSub').textContent=t('dash.hdrSuperSub');
+  activeCompanyId=null;
+  updateHeader();
   loadCompanies();
 }
 
@@ -529,7 +527,7 @@ async function loadCompanyData() {
   const d=await r.json();
   stations=d.stations;
   activeCompanyName=d.name;
-  if(ROLE==='super') document.getElementById('hdrSub').textContent=t('dash.editingSub',{name:d.name});
+  updateHeader();
   document.getElementById('gameName').value=d.gameName||'';
   var dl=document.getElementById('defaultLang'); if(dl) dl.value=d.defaultLang||'he';
   document.getElementById('sbEnabled').checked=!!(d.speedBonus&&d.speedBonus.enabled);
@@ -841,6 +839,18 @@ async function printMap(){
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+// קובע את כותרת הראש לפי המצב הנוכחי (תפקיד + האם בתוך חברה) — קריאה אחת, מקור אמת יחיד
+function updateHeader(){
+  const inCompany = !!activeCompanyId && document.getElementById('companyView').style.display!=='none';
+  if (ROLE==='super') {
+    document.getElementById('hdrTitle').textContent = t('dash.hdrSuper');
+    document.getElementById('hdrSub').textContent = inCompany ? t('dash.editingSub',{name:activeCompanyName}) : t('dash.hdrSuperSub');
+  } else if (ROLE==='company') {
+    document.getElementById('hdrTitle').textContent = t('dash.hdrCompany',{name:activeCompanyName});
+    document.getElementById('hdrSub').textContent = t('dash.hdrCompanySub');
+  }
+}
+
 // ===== ספריית חבילות =====
 let libraryPacks = [];
 let editingPackId = null;
@@ -1134,22 +1144,16 @@ function applyEditorFrame(){
 }
 document.addEventListener('langchange', () => {
   applyEditorFrame();
-  // עדכון כותרות הדינמיות
+  updateHeader();
   if (ROLE==='super' && document.getElementById('superView').style.display!=='none') {
-    document.getElementById('hdrTitle').textContent=t('dash.hdrSuper');
-    document.getElementById('hdrSub').textContent=t('dash.hdrSuperSub');
-    // אם טאב ספריית-העל פתוח, בנה אותו מחדש בשפה הנכונה; אחרת רשימת חברות
     if (document.getElementById('sv_superlib') && document.getElementById('sv_superlib').style.display !== 'none') {
       loadSuperLibrary();
     } else {
       loadCompanies();
     }
   } else if (activeCompanyId) {
-    if (ROLE==='super') document.getElementById('hdrSub').textContent=t('dash.editingSub',{name:activeCompanyName});
-    else { document.getElementById('hdrTitle').textContent=t('dash.hdrCompany',{name:activeCompanyName}); document.getElementById('hdrSub').textContent=t('dash.hdrCompanySub'); }
     if (stations && stations.length) renderStations();
     applyLockUI(); renderChips();
-    // אם טאב הספרייה פתוח — רענן את כרטיסי החבילות (הכפתורים נוצרים דינמית)
     if (document.getElementById('library') && document.getElementById('library').style.display !== 'none') {
       populateLibFilters(); renderLibrary();
     }
