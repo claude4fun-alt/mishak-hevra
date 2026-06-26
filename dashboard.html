@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>דשבורד ניהול - משחק חברה</title>
+<title data-i18n="dash.title">דשבורד ניהול - משחק חברה</title>
 <link rel="stylesheet" href="/leaflet.css"/>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -111,72 +111,76 @@
 <body class="login-mode">
 
 <div id="login" class="login">
-  <h2 style="margin-bottom:16px">🔐 כניסת מנהל</h2>
-  <input id="user" placeholder="שם משתמש / שם חברה" autocomplete="username" style="margin-bottom:10px">
-  <input id="pass" type="password" placeholder="סיסמה" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
-  <button class="btn" style="width:100%;margin-top:12px" onclick="doLogin()">כניסה</button>
+  <div style="display:flex;justify-content:center;margin-bottom:14px"><span id="langPicker"></span></div>
+  <h2 style="margin-bottom:16px" data-i18n="dash.loginTitle">🔐 כניסת מנהל</h2>
+  <input id="user" data-i18n-ph="dash.userPh" placeholder="שם משתמש / שם חברה" autocomplete="username" style="margin-bottom:10px">
+  <input id="pass" type="password" data-i18n-ph="dash.passPh" placeholder="סיסמה" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+  <button class="btn" style="width:100%;margin-top:12px" onclick="doLogin()" data-i18n="dash.loginBtn">כניסה</button>
   <p class="hint" id="loginErr" style="margin-top:10px;color:#c0392b"></p>
 </div>
 
 <div id="app" class="wrap" style="display:none">
   <header>
-    <h1 id="hdrTitle">🎮 דשבורד ניהול</h1>
-    <p id="hdrSub"></p>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+      <div><h1 id="hdrTitle">🎮 דשבורד ניהול</h1>
+      <p id="hdrSub"></p></div>
+      <span id="langPickerApp" class="noprint" style="flex-shrink:0"></span>
+    </div>
   </header>
 
   <!-- ===== מנהל-על: ניהול חברות ===== -->
   <div id="superView" style="display:none">
     <div class="tabs noprint">
-      <div class="tab active" onclick="superTab('companies',this)">🏢 חברות</div>
+      <div class="tab active" onclick="superTab('companies',this)" data-i18n="dash.tabCompanies">🏢 חברות</div>
     </div>
     <div class="card2">
-      <h3 style="color:#1a2a6c;margin-bottom:10px">➕ הוספת חברה חדשה</h3>
+      <h3 style="color:#1a2a6c;margin-bottom:10px" data-i18n="dash.addCompany">➕ הוספת חברה חדשה</h3>
       <div class="row">
-        <div><label>שם החברה</label><input id="newCoName" placeholder="למשל: משפחת כהן"></div>
-        <div><label>סיסמה למנהל החברה</label><input id="newCoPass" placeholder="לפחות 4 תווים"></div>
+        <div><label data-i18n="dash.coName">שם החברה</label><input id="newCoName" data-i18n-ph="dash.coNamePh" placeholder="למשל: משפחת כהן"></div>
+        <div><label data-i18n="dash.coPass">סיסמה למנהל החברה</label><input id="newCoPass" data-i18n-ph="dash.coPassPh" placeholder="לפחות 4 תווים"></div>
       </div>
-      <button class="btn green" style="margin-top:12px" onclick="createCompany()">צור חברה</button>
-      <span class="saved" id="coCreated" style="display:none">נוצר ✓</span>
+      <button class="btn green" style="margin-top:12px" onclick="createCompany()" data-i18n="dash.createCo">צור חברה</button>
+      <span class="saved" id="coCreated" style="display:none" data-i18n="dash.created">נוצר ✓</span>
     </div>
     <div id="companiesList"></div>
   </div>
 
   <!-- ===== ניהול תוכן חברה (גם מנהל-על וגם מנהל חברה) ===== -->
   <div id="companyView" style="display:none">
-    <button class="btn gray noprint" id="backToCompanies" style="margin-bottom:14px;display:none" onclick="backToSuper()">↩ חזרה לרשימת החברות</button>
-    <div class="noprint" style="margin-bottom:14px;padding:12px 16px;background:linear-gradient(135deg,#fff3cd,#ffe9a8);border:2px solid #f0a500;border-radius:12px;color:#5a3d12;font-weight:600;line-height:1.6;font-size:14px">
+    <button class="btn gray noprint" id="backToCompanies" style="margin-bottom:14px;display:none" onclick="backToSuper()" data-i18n="dash.backToCompanies">↩ חזרה לרשימת החברות</button>
+    <div class="noprint" style="margin-bottom:14px;padding:12px 16px;background:linear-gradient(135deg,#fff3cd,#ffe9a8);border:2px solid #f0a500;border-radius:12px;color:#5a3d12;font-weight:600;line-height:1.6;font-size:14px" data-i18n-html="dash.signalWarn">
       📡 <b>מנהל, שים לב:</b> לפני האירוע בדוק שיש <b>קליטה טובה לטלפונים (בייחוד לנתונים סלולריים)</b> במקום שבחרת לשחק! בלי קליטה טובה השחקנים לא יוכלו לסרוק תחנות, לראות את המפה או לענות.
     </div>
     <div class="tabs noprint">
-      <div class="tab" onclick="coTab('questions',this)">📝 שאלות</div>
-      <div class="tab" onclick="coTab('mapedit',this)">🗺️ מפת תחנות</div>
-      <div class="tab" onclick="coTab('board',this)">📊 לוח תוצאות</div>
-      <div class="tab" onclick="coTab('qr',this)">🔲 קודי QR</div>
-      <div class="tab" onclick="coTab('pending',this)">📸 אישור תמונות</div>
-      <div class="tab" onclick="coTab('settings',this)">⚙️ הגדרות</div>
+      <div class="tab" onclick="coTab('questions',this)" data-i18n="dash.tabQuestions">📝 שאלות</div>
+      <div class="tab" onclick="coTab('mapedit',this)" data-i18n="dash.tabMap">🗺️ מפת תחנות</div>
+      <div class="tab" onclick="coTab('board',this)" data-i18n="dash.tabBoard">📊 לוח תוצאות</div>
+      <div class="tab" onclick="coTab('qr',this)" data-i18n="dash.tabQR">🔲 קודי QR</div>
+      <div class="tab" onclick="coTab('pending',this)" data-i18n="dash.tabPending">📸 אישור תמונות</div>
+      <div class="tab" onclick="coTab('settings',this)" data-i18n="dash.tabSettings">⚙️ הגדרות</div>
     </div>
 
     <div id="questions" class="copanel"></div>
 
     <div id="mapedit" class="copanel" style="display:none">
       <div class="card2">
-        <h3 style="color:#1a2a6c;margin-bottom:6px">🗺️ מפת התחנות</h3>
-        <p class="hint" style="margin-bottom:12px">
+        <h3 style="color:#1a2a6c;margin-bottom:6px" data-i18n="dash.mapTitle">🗺️ מפת התחנות</h3>
+        <p class="hint" style="margin-bottom:12px" data-i18n="dash.mapHelp">
           1) הזיזו וזמזמו את מפת הלוויין עד לתצוגה הרצויה.
           2) לחצו על מספר תחנה ואז על המפה כדי למקם אותה (גרירה להזזה, לחיצה חוזרת על ✕ למחיקה).
           3) "נעלו" את התצוגה כדי שהשחקנים יראו מפה קבועה, ולחצו "שמור".
         </p>
         <div class="map-toolbar">
-          <button class="btn green" onclick="saveMap()">💾 שמור מפה ותחנות</button>
-          <button class="btn gold" id="lockBtn" onclick="toggleLock()">🔒 נעל תצוגה</button>
-          <span class="lock-badge unlocked" id="lockBadge">פתוח לעריכה</span>
-          <button class="btn gray" onclick="clearAllPins()">🗑️ נקה תחנות</button>
-          <button class="btn" onclick="window.open('/c/'+activeCompanyId+'/map','_blank')">↗️ תצוגת שחקן</button>
-          <button class="btn gold" onclick="printMap()">🖨️ הדפס מפה (A4)</button>
-          <span class="saved" id="mapSaved" style="display:none">נשמר ✓</span>
+          <button class="btn green" onclick="saveMap()" data-i18n="dash.mapSaveBtn">💾 שמור מפה ותחנות</button>
+          <button class="btn gold" id="lockBtn" onclick="toggleLock()" data-i18n="dash.mapLock">🔒 נעל תצוגה</button>
+          <span class="lock-badge unlocked" id="lockBadge" data-i18n="dash.mapUnlockedBadge">פתוח לעריכה</span>
+          <button class="btn gray" onclick="clearAllPins()" data-i18n="dash.mapClear">🗑️ נקה תחנות</button>
+          <button class="btn" onclick="window.open('/c/'+activeCompanyId+'/map','_blank')" data-i18n="dash.mapPlayerView">↗️ תצוגת שחקן</button>
+          <button class="btn gold" onclick="printMap()" data-i18n="dash.mapPrint">🖨️ הדפס מפה (A4)</button>
+          <span class="saved" id="mapSaved" style="display:none" data-i18n="dash.saved">נשמר ✓</span>
         </div>
         <div class="size-bar">
-          <label style="margin:0">📏 גודל העיגולים:</label>
+          <label style="margin:0" data-i18n="dash.markerSize">📏 גודל העיגולים:</label>
           <input type="range" id="markerSizeRange" min="16" max="64" value="30" oninput="onSizeChange(this.value)">
           <span id="markerSizeVal" style="font-weight:800;color:#1a2a6c;min-width:42px">30px</span>
         </div>
@@ -184,21 +188,21 @@
           <img class="frame" src="/map-frame.png" alt="">
           <div class="map-edit-window">
             <div id="editMap"></div>
-            <div class="edit-title" id="editTitle">המפה שלך</div>
-            <div class="edit-mail">למשחקים נוספים: <a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a></div>
+            <div class="edit-title" id="editTitle" data-i18n="dash.myMap">המפה שלך</div>
+            <div class="edit-mail"><span data-i18n="dash.mapMailLabel">למשחקים נוספים: </span><a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a></div>
           </div>
         </div>
-        <p class="hint" style="margin-top:12px;text-align:center">בחרו תחנה למיקום:</p>
+        <p class="hint" style="margin-top:12px;text-align:center" data-i18n="dash.choosePin">בחרו תחנה למיקום:</p>
         <div class="station-chips" id="stationChips"></div>
       </div>
     </div>
 
     <div id="board" class="copanel" style="display:none">
       <div class="card2 noprint" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-        <div style="font-weight:700;color:#1a2a6c">📊 לוח התוצאות החי של החברה</div>
+        <div style="font-weight:700;color:#1a2a6c" data-i18n="dash.boardLiveTitle">📊 לוח התוצאות החי של החברה</div>
         <div style="display:flex;gap:8px">
-          <button class="btn" onclick="openBoardTab()">↗️ פתח בחלון מלא</button>
-          <button class="btn gray" onclick="reloadBoard()">🔄 רענן</button>
+          <button class="btn" onclick="openBoardTab()" data-i18n="dash.openFull">↗️ פתח בחלון מלא</button>
+          <button class="btn gray" onclick="reloadBoard()" data-i18n="dash.refresh">🔄 רענן</button>
         </div>
       </div>
       <iframe id="boardFrame" src="about:blank" style="width:100%;height:70vh;border:none;border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.08);background:#0e1a14"></iframe>
@@ -206,62 +210,75 @@
 
     <div id="qr" class="copanel" style="display:none">
       <div class="noprint card2">
-        <label>כתובת בסיס (ה-URL של האתר)</label>
+        <label data-i18n="dash.baseUrl">כתובת בסיס (ה-URL של האתר)</label>
         <input id="baseUrl" placeholder="https://family-game-12r6.onrender.com">
-        <p class="hint">השאר ריק לכתובת הנוכחית. ה-QR הראשי (הצהוב) הוא נקודת הכניסה לשחקנים — תלה אותו בכניסה. שאר ה-QR לתחנות.</p>
+        <p class="hint" data-i18n="dash.qrHelp">השאר ריק לכתובת הנוכחית. ה-QR הראשי (הצהוב) הוא נקודת הכניסה לשחקנים — תלה אותו בכניסה. שאר ה-QR לתחנות.</p>
         <div style="margin-top:10px;display:flex;gap:8px">
-          <button class="btn" onclick="generateAllQR()">🔄 צור הכל</button>
-          <button class="btn gold" onclick="window.print()">🖨️ הדפס</button>
+          <button class="btn" onclick="generateAllQR()" data-i18n="dash.genAll">🔄 צור הכל</button>
+          <button class="btn gold" onclick="window.print()" data-i18n="dash.print">🖨️ הדפס</button>
         </div>
       </div>
       <div class="qr-grid" id="qrGrid"></div>
     </div>
 
     <div id="pending" class="copanel" style="display:none">
-      <button class="btn noprint" onclick="loadPending()">🔄 רענן</button>
+      <button class="btn noprint" onclick="loadPending()" data-i18n="dash.refresh">🔄 רענן</button>
       <div id="pendingList" style="margin-top:14px"></div>
     </div>
 
     <div id="settings" class="copanel" style="display:none">
       <div class="station-card">
-        <label>שם המשחק (מוצג לשחקנים)</label>
+        <label data-i18n="dash.gameNameLabel">שם המשחק (מוצג לשחקנים)</label>
         <input id="gameName">
-        <button class="btn" style="margin-top:10px" onclick="saveGameName()">שמור שם</button>
+        <button class="btn" style="margin-top:10px" onclick="saveGameName()" data-i18n="dash.saveName">שמור שם</button>
       </div>
       <div class="station-card">
-        <h3>⚡ בונוס מהירות</h3>
-        <p class="hint">תשובה נכונה מהירה מזכה בבונוס שיורד בהדרגה למשך חלון הזמן.</p>
+        <label data-i18n="dash.defaultLangLabel">שפת ברירת מחדל לשחקנים</label>
+        <p class="hint" data-i18n="dash.defaultLangHint">השפה שבה ייפתח הממשק לשחקנים שלא בחרו שפה. השחקן תמיד יכול לשנות.</p>
+        <select id="defaultLang" style="margin-top:6px">
+          <option value="he">🇮🇱 עברית</option>
+          <option value="en">🇺🇸 English</option>
+          <option value="it">🇮🇹 Italiano</option>
+        </select>
+        <button class="btn" style="margin-top:10px" onclick="saveDefaultLang()" data-i18n="dash.saveLang">שמור שפה</button>
+        <span class="saved" id="langSaved" style="display:none" data-i18n="dash.saved">נשמר ✓</span>
+      </div>
+      <div class="station-card">
+        <h3 data-i18n="dash.speedBonus">⚡ בונוס מהירות</h3>
+        <p class="hint" data-i18n="dash.speedBonusHint">תשובה נכונה מהירה מזכה בבונוס שיורד בהדרגה למשך חלון הזמן.</p>
         <div style="display:flex;align-items:center;gap:8px;margin:12px 0">
-          <input type="checkbox" id="sbEnabled" style="width:auto"> <label style="margin:0">הפעל בונוס מהירות</label>
+          <input type="checkbox" id="sbEnabled" style="width:auto"> <label style="margin:0" data-i18n="dash.sbEnable">הפעל בונוס מהירות</label>
         </div>
         <div class="row">
-          <div><label>בונוס מקסימלי</label><input type="number" id="sbMax" min="0" value="10"></div>
-          <div><label>חלון זמן (שניות)</label><input type="number" id="sbWindow" min="1" value="60"></div>
+          <div><label data-i18n="dash.sbMax">בונוס מקסימלי</label><input type="number" id="sbMax" min="0" value="10"></div>
+          <div><label data-i18n="dash.sbWindow">חלון זמן (שניות)</label><input type="number" id="sbWindow" min="1" value="60"></div>
         </div>
-        <button class="btn" style="margin-top:10px" onclick="saveSpeedBonus()">שמור בונוס</button>
-        <span class="saved" id="sbSaved" style="display:none">נשמר ✓</span>
+        <button class="btn" style="margin-top:10px" onclick="saveSpeedBonus()" data-i18n="dash.saveBonus">שמור בונוס</button>
+        <span class="saved" id="sbSaved" style="display:none" data-i18n="dash.saved">נשמר ✓</span>
       </div>
       <div class="station-card">
-        <h3>🔗 קישורים</h3>
-        <p>📊 לוח תוצאות: <a id="boardLink" href="#" target="_blank">פתח</a></p>
-        <p style="margin-top:8px">🎮 עמוד החברה: <a id="coLink" href="#" target="_blank">פתח</a></p>
-        <p style="margin-top:8px">🧭 מפת המשחק: <a id="mapLinkS" href="#" target="_blank">פתח</a></p>
+        <h3 data-i18n="dash.linksTitle">🔗 קישורים</h3>
+        <p><span data-i18n="dash.linkBoard">📊 לוח תוצאות: </span><a id="boardLink" href="#" target="_blank" data-i18n="dash.open">פתח</a></p>
+        <p style="margin-top:8px"><span data-i18n="dash.linkCompany">🎮 עמוד החברה: </span><a id="coLink" href="#" target="_blank" data-i18n="dash.open">פתח</a></p>
+        <p style="margin-top:8px"><span data-i18n="dash.linkMap">🧭 מפת המשחק: </span><a id="mapLinkS" href="#" target="_blank" data-i18n="dash.open">פתח</a></p>
       </div>
       <div class="station-card">
-        <h3>✉️ משחקים נוספים</h3>
-        <p>למשחקים נוספים פנו ל-<a href="mailto:mishak.hevra@gmail.com" style="color:#3b7dd8;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
-      <div class="station-card">
-        <h3 style="color:#c0392b">⚠️ איפוס משחק</h3>
-        <p class="hint">מוחק שחקנים ותשובות של חברה זו (השאלות נשמרות).</p>
-        <button class="btn red" style="margin-top:10px" onclick="resetGame()">אפס משחק</button>
+        <h3 data-i18n="dash.moreGamesTitle">✉️ משחקים נוספים</h3>
+        <p><span data-i18n="common.moreGames">למשחקים נוספים פנו ל-</span><a href="mailto:mishak.hevra@gmail.com" style="color:#3b7dd8;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
       </div>
       <div class="station-card">
-        <button class="btn gray" onclick="logout()">🚪 יציאה</button>
+        <h3 style="color:#c0392b" data-i18n="dash.resetTitle">⚠️ איפוס משחק</h3>
+        <p class="hint" data-i18n="dash.resetHint">מוחק שחקנים ותשובות של חברה זו (השאלות נשמרות).</p>
+        <button class="btn red" style="margin-top:10px" onclick="resetGame()" data-i18n="dash.resetBtn">אפס משחק</button>
+      </div>
+      <div class="station-card">
+        <button class="btn gray" onclick="logout()" data-i18n="dash.logout">🚪 יציאה</button>
       </div>
     </div>
   </div>
 </div>
 
+<script src="/i18n.js"></script>
 <script src="/leaflet.js"></script>
 <script>
 let TOKEN='', ROLE='', activeCompanyId=null, activeCompanyName='';
@@ -273,12 +290,12 @@ async function doLogin() {
   const errEl=document.getElementById('loginErr'); errEl.textContent='';
   try {
     const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user,pass})});
-    if(!r.ok){ errEl.textContent='שם או סיסמה שגויים'; return; }
+    if(!r.ok){ errEl.textContent=t('dash.loginBad'); return; }
     const d=await r.json();
     TOKEN=d.token; ROLE=d.role;
     localStorage.setItem('fg_token',TOKEN);
     enterApp(d);
-  } catch(e){ errEl.textContent='שגיאת חיבור'; }
+  } catch(e){ errEl.textContent=t('common.connErr'); }
 }
 
 function enterApp(d) {
@@ -286,16 +303,15 @@ function enterApp(d) {
   document.getElementById('login').style.display='none';
   document.getElementById('app').style.display='block';
   if (ROLE==='super') {
-    document.getElementById('hdrTitle').textContent='🎮 דשבורד מנהל ראשי';
-    document.getElementById('hdrSub').textContent='ניהול כל החברות';
+    document.getElementById('hdrTitle').textContent=t('dash.hdrSuper');
+    document.getElementById('hdrSub').textContent=t('dash.hdrSuperSub');
     document.getElementById('superView').style.display='block';
     document.getElementById('companyView').style.display='none';
     loadCompanies();
   } else {
-    // מנהל חברה - ישר לתוכן החברה שלו
     activeCompanyId=d.companyId; activeCompanyName=d.companyName;
-    document.getElementById('hdrTitle').textContent='🎮 דשבורד: '+d.companyName;
-    document.getElementById('hdrSub').textContent='ניהול השאלות והתוצאות';
+    document.getElementById('hdrTitle').textContent=t('dash.hdrCompany',{name:d.companyName});
+    document.getElementById('hdrSub').textContent=t('dash.hdrCompanySub');
     openCompany(d.companyId, false);
   }
 }
@@ -313,24 +329,24 @@ async function loadCompanies() {
   const r=await fetch('/api/admin/companies',{headers:H()});
   const d=await r.json();
   const c=document.getElementById('companiesList');
-  if(!d.companies.length){ c.innerHTML='<p class="hint" style="padding:20px;text-align:center">עדיין אין חברות. צור חברה ראשונה למעלה.</p>'; return; }
+  if(!d.companies.length){ c.innerHTML='<p class="hint" style="padding:20px;text-align:center">'+t('dash.noCompanies')+'</p>'; return; }
   c.innerHTML=d.companies.map(co=>`
     <div class="company-row">
       <div class="top">
         <div>
           <span class="cname">${esc(co.name)}</span>
-          <span class="${co.enabled?'badge-on':'badge-off'}">${co.enabled?'פעיל':'מושבת'}</span>
+          <span class="${co.enabled?'badge-on':'badge-off'}">${co.enabled?t('dash.active'):t('dash.inactive')}</span>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn" onclick="openCompany('${co.id}',true)">✏️ ערוך שאלות</button>
-          <button class="btn" style="background:#16a085" onclick="window.open('/c/${co.id}/board','_blank')">📊 לוח תוצאות</button>
-          <button class="btn ${co.enabled?'gray':'green'}" onclick="toggleCompany('${co.id}',${!co.enabled})">${co.enabled?'השבת':'הפעל'}</button>
+          <button class="btn" onclick="openCompany('${co.id}',true)">${t('dash.editQuestions')}</button>
+          <button class="btn" style="background:#16a085" onclick="window.open('/c/${co.id}/board','_blank')">${t('dash.tabBoard')}</button>
+          <button class="btn ${co.enabled?'gray':'green'}" onclick="toggleCompany('${co.id}',${!co.enabled})">${co.enabled?t('dash.disable'):t('dash.enable')}</button>
           <button class="btn red" onclick="deleteCompany('${co.id}','${esc(co.name)}')">🗑️</button>
         </div>
       </div>
       <div class="meta">
-        סיסמת מנהל: <span class="pwbox">${esc(co.password)}</span> ·
-        ${co.questionsSet}/${co.stationCount} שאלות הוגדרו · ${co.playerCount} שחקנים
+        ${t('dash.coPassword')} <span class="pwbox">${esc(co.password)}</span> ·
+        ${t('dash.questionsSet',{set:co.questionsSet,total:co.stationCount})} · ${t('dash.playersCount',{n:co.playerCount})}
       </div>
     </div>`).join('');
 }
@@ -338,10 +354,10 @@ async function loadCompanies() {
 async function createCompany() {
   const name=document.getElementById('newCoName').value.trim();
   const password=document.getElementById('newCoPass').value.trim();
-  if(!name||!password){ alert('נא למלא שם וסיסמה'); return; }
+  if(!name||!password){ alert(t('dash.fillNamePass')); return; }
   const r=await fetch('/api/admin/companies',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({name,password})});
   const d=await r.json();
-  if(!r.ok){ alert(d.error||'שגיאה'); return; }
+  if(!r.ok){ alert(d.error||t('dash.saveErr')); return; }
   document.getElementById('newCoName').value=''; document.getElementById('newCoPass').value='';
   const s=document.getElementById('coCreated'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
   loadCompanies();
@@ -352,7 +368,7 @@ async function toggleCompany(cid, enabled) {
   loadCompanies();
 }
 async function deleteCompany(cid, name) {
-  if(!confirm('למחוק את החברה "'+name+'"? כל השאלות, השחקנים והתוצאות יימחקו לצמיתות.')) return;
+  if(!confirm(t('dash.deleteCoConfirm',{name}))) return;
   await fetch('/api/admin/companies/'+cid,{method:'DELETE',headers:H()});
   loadCompanies();
 }
@@ -360,8 +376,8 @@ async function deleteCompany(cid, name) {
 function backToSuper() {
   document.getElementById('superView').style.display='block';
   document.getElementById('companyView').style.display='none';
-  document.getElementById('hdrTitle').textContent='🎮 דשבורד מנהל ראשי';
-  document.getElementById('hdrSub').textContent='ניהול כל החברות';
+  document.getElementById('hdrTitle').textContent=t('dash.hdrSuper');
+  document.getElementById('hdrSub').textContent=t('dash.hdrSuperSub');
   loadCompanies();
 }
 
@@ -401,8 +417,9 @@ async function loadCompanyData() {
   const d=await r.json();
   stations=d.stations;
   activeCompanyName=d.name;
-  if(ROLE==='super') document.getElementById('hdrSub').textContent='עורך את: '+d.name;
+  if(ROLE==='super') document.getElementById('hdrSub').textContent=t('dash.editingSub',{name:d.name});
   document.getElementById('gameName').value=d.gameName||'';
+  var dl=document.getElementById('defaultLang'); if(dl) dl.value=d.defaultLang||'he';
   document.getElementById('sbEnabled').checked=!!(d.speedBonus&&d.speedBonus.enabled);
   document.getElementById('sbMax').value=(d.speedBonus&&d.speedBonus.maxBonus)??10;
   document.getElementById('sbWindow').value=(d.speedBonus&&d.speedBonus.windowSec)??60;
@@ -415,11 +432,11 @@ async function loadCompanyData() {
 function renderStations() {
   const toolbar = `
     <div class="card2 noprint">
-      <h3 style="color:#1a2a6c;margin-bottom:6px">📁 סטים של שאלות</h3>
-      <p class="hint" style="margin-bottom:12px">גבו את השאלות לקובץ במחשב, טענו סט שמור, או ערכו קובץ חיצונית וטענו אותו. הטעינה מחליפה את כל 10 השאלות.</p>
+      <h3 style="color:#1a2a6c;margin-bottom:6px">${t('dash.qSetsTitle')}</h3>
+      <p class="hint" style="margin-bottom:12px">${t('dash.qSetsHint')}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" onclick="exportQuestions()">⬇️ ייצוא לקובץ</button>
-        <button class="btn green" onclick="document.getElementById('importFile').click()">⬆️ טעינה מקובץ</button>
+        <button class="btn" onclick="exportQuestions()">${t('dash.exportFile')}</button>
+        <button class="btn green" onclick="document.getElementById('importFile').click()">${t('dash.importFile')}</button>
         <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importQuestions(event)">
       </div>
       <span class="saved" id="importMsg" style="display:none"></span>
@@ -428,29 +445,29 @@ function renderStations() {
     <div class="station-card">
       <h3><span class="num">${st.id}</span> <input style="font-size:16px;font-weight:700" value="${esc(st.title)}" id="title-${st.id}"></h3>
       <div class="row">
-        <div><label>סוג שאלה</label>
+        <div><label>${t('dash.qType')}</label>
           <select id="type-${st.id}" onchange="toggleType(${st.id})">
-            <option value="text" ${st.questionType==='text'?'selected':''}>תשובת טקסט</option>
-            <option value="photo" ${st.questionType==='photo'?'selected':''}>תשובת תמונה (משימה)</option>
+            <option value="text" ${st.questionType==='text'?'selected':''}>${t('dash.qTypeText')}</option>
+            <option value="photo" ${st.questionType==='photo'?'selected':''}>${t('dash.qTypePhoto')}</option>
           </select>
         </div>
-        <div><label>נקודות</label><input type="number" id="points-${st.id}" value="${st.points}"></div>
+        <div><label>${t('dash.qPoints')}</label><input type="number" id="points-${st.id}" value="${st.points}"></div>
       </div>
-      <label>השאלה / המשימה</label>
+      <label>${t('dash.qText')}</label>
       <textarea id="qtext-${st.id}">${esc(st.questionText)}</textarea>
       <div id="ans-${st.id}" style="${st.questionType==='photo'?'display:none':''}">
-        <label>תשובה נכונה <span class="hint">(מילות מפתח מופרדות בפסיק)</span></label>
+        <label>${t('dash.qCorrect')} <span class="hint">${t('dash.qCorrectHint')}</span></label>
         <input id="correct-${st.id}" value="${esc(st.correctAnswer)}">
       </div>
-      <label>תמונה לשאלה (אופציונלי)</label>
+      <label>${t('dash.qImage')}</label>
       <div class="row">
         <input type="file" id="imgfile-${st.id}" accept="image/*">
-        <input id="imglink-${st.id}" placeholder="או לינק לתמונה">
+        <input id="imglink-${st.id}" placeholder="${t('dash.qImageLink')}">
       </div>
-      ${st.imageUrl?`<img class="imgprev" src="${st.imageUrl}"><br><button class="btn gray" style="margin-top:6px" onclick="clearImg(${st.id})">הסר תמונה</button>`:''}
+      ${st.imageUrl?`<img class="imgprev" src="${st.imageUrl}"><br><button class="btn gray" style="margin-top:6px" onclick="clearImg(${st.id})">${t('dash.qRemoveImage')}</button>`:''}
       <div style="margin-top:14px;display:flex;align-items:center">
-        <button class="btn green" onclick="saveStation(${st.id})">💾 שמור תחנה ${st.id}</button>
-        <span class="saved" id="saved-${st.id}" style="display:none">נשמר ✓</span>
+        <button class="btn green" onclick="saveStation(${st.id})">${t('dash.qSaveStation',{n:st.id})}</button>
+        <span class="saved" id="saved-${st.id}" style="display:none">${t('dash.saved')}</span>
       </div>
     </div>`).join('');
 }
@@ -480,7 +497,7 @@ async function clearImg(id) {
 // ייצוא סט שאלות לקובץ (כולל תמונות מוטמעות)
 async function exportQuestions() {
   const r=await fetch('/api/admin/company/'+activeCompanyId+'/export',{headers:H()});
-  if(!r.ok){ alert('שגיאה בייצוא'); return; }
+  if(!r.ok){ alert(t('dash.exportErr')); return; }
   const data=await r.json();
   const safeName=(data.gameName||'questions').replace(/[^\w\u0590-\u05FF -]/g,'').trim()||'questions';
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -496,34 +513,34 @@ async function importQuestions(e) {
   const file=e.target.files[0];
   if(!file) return;
   e.target.value=''; // אפשר לטעון אותו קובץ שוב בעתיד
-  if(!confirm('הטעינה תחליף את כל 10 השאלות הנוכחיות בחברה זו. להמשיך?')) return;
+  if(!confirm(t('dash.importConfirm'))) return;
   let data;
   try { data=JSON.parse(await file.text()); }
-  catch(err){ alert('הקובץ אינו JSON תקין'); return; }
-  if(!data.stations || !Array.isArray(data.stations)){ alert('קובץ לא תקין - חסרה רשימת שאלות (stations)'); return; }
+  catch(err){ alert(t('dash.importBadJson')); return; }
+  if(!data.stations || !Array.isArray(data.stations)){ alert(t('dash.importNoStations')); return; }
   const r=await fetch('/api/admin/company/'+activeCompanyId+'/import',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(data)});
   const d=await r.json();
-  if(!r.ok){ alert(d.error||'שגיאה בטעינה'); return; }
+  if(!r.ok){ alert(d.error||t('dash.importErr')); return; }
   // רענן את התצוגה מהשרת
   await loadCompanyData();
   const m=document.getElementById('importMsg');
-  if(m){ m.textContent='נטען בהצלחה ✓'; m.style.display='inline'; setTimeout(()=>m.style.display='none',2500); }
+  if(m){ m.textContent=t('dash.importOk'); m.style.display='inline'; setTimeout(()=>m.style.display='none',2500); }
 }
 
 async function generateAllQR() {
   const base=document.getElementById('baseUrl').value.trim();
-  const grid=document.getElementById('qrGrid'); grid.innerHTML='יוצר קודים...';
+  const grid=document.getElementById('qrGrid'); grid.innerHTML=t('dash.qrGenerating');
   const q=base?'?base='+encodeURIComponent(base):'';
   let html='';
   // QR ראשי
   const rm=await fetch('/api/admin/company/'+activeCompanyId+'/qr/main'+q,{headers:H()});
   const dm=await rm.json();
-  html+=`<div class="qr-cell main-qr"><h4>${esc(activeCompanyName)}</h4><div class="print-sub" style="font-size:13px;color:#5a6b8a;margin-bottom:6px">⭐ QR ראשי - כניסה למשחק</div><img src="${dm.qr}"><div class="url">${dm.url}</div></div>`;
+  html+=`<div class="qr-cell main-qr"><h4>${esc(activeCompanyName)}</h4><div class="print-sub" style="font-size:13px;color:#5a6b8a;margin-bottom:6px">${t('dash.qrMainSub')}</div><img src="${dm.qr}"><div class="url">${dm.url}</div></div>`;
   // QR לכל תחנה
   for(const st of stations){
     const r=await fetch('/api/admin/company/'+activeCompanyId+'/qr/'+st.id+q,{headers:H()});
     const d=await r.json();
-    html+=`<div class="qr-cell"><h4>${esc(activeCompanyName)} - תחנה ${st.id}</h4><div class="print-sub" style="font-size:13px;color:#5a6b8a;margin-bottom:6px">${esc(st.title)}</div><img src="${d.qr}"><div class="url">${d.url}</div></div>`;
+    html+=`<div class="qr-cell"><h4>${esc(activeCompanyName)} - ${t('common.station')} ${st.id}</h4><div class="print-sub" style="font-size:13px;color:#5a6b8a;margin-bottom:6px">${esc(st.title)}</div><img src="${d.qr}"><div class="url">${d.url}</div></div>`;
   }
   grid.innerHTML=html;
 }
@@ -532,14 +549,14 @@ async function loadPending() {
   const r=await fetch('/api/admin/company/'+activeCompanyId+'/pending',{headers:H()});
   const d=await r.json();
   const c=document.getElementById('pendingList');
-  if(!d.pending.length){ c.innerHTML='<p class="hint">אין תשובות תמונה הממתינות לאישור</p>'; return; }
+  if(!d.pending.length){ c.innerHTML='<p class="hint">'+t('dash.pendingNone')+'</p>'; return; }
   c.innerHTML=d.pending.map(p=>`
     <div class="pending-card">
       <img src="${p.photoUrl}">
-      <div style="flex:1"><strong>${esc(p.name)}</strong> ${p.team?('('+esc(p.team)+')'):''} - תחנה ${p.stationId}
-        ${p.answerText?('<div class="hint">כיתוב: '+esc(p.answerText)+'</div>'):''}</div>
-      <button class="btn green" onclick="review('${p.playerId}',${p.stationId},true)">✓ נכון</button>
-      <button class="btn gray" onclick="review('${p.playerId}',${p.stationId},false)">✗ לא</button>
+      <div style="flex:1"><strong>${esc(p.name)}</strong> ${p.team?('('+esc(p.team)+')'):''} - ${t('common.station')} ${p.stationId}
+        ${p.answerText?('<div class="hint">'+t('dash.pendingCaption')+esc(p.answerText)+'</div>'):''}</div>
+      <button class="btn green" onclick="review('${p.playerId}',${p.stationId},true)">${t('dash.approveYes')}</button>
+      <button class="btn gray" onclick="review('${p.playerId}',${p.stationId},false)">${t('dash.approveNo')}</button>
     </div>`).join('');
 }
 async function review(playerId, stationId, approve) {
@@ -549,7 +566,12 @@ async function review(playerId, stationId, approve) {
 
 async function saveGameName() {
   await fetch('/api/admin/company/'+activeCompanyId+'/game-name',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({gameName:document.getElementById('gameName').value})});
-  alert('שם המשחק נשמר');
+  alert(t('dash.gameNameSaved'));
+}
+async function saveDefaultLang() {
+  const lang=document.getElementById('defaultLang').value;
+  await fetch('/api/admin/company/'+activeCompanyId+'/default-lang',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({defaultLang:lang})});
+  const s=document.getElementById('langSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
 }
 async function saveSpeedBonus() {
   const body={enabled:document.getElementById('sbEnabled').checked,maxBonus:Number(document.getElementById('sbMax').value),windowSec:Number(document.getElementById('sbWindow').value)};
@@ -557,9 +579,9 @@ async function saveSpeedBonus() {
   const s=document.getElementById('sbSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
 }
 async function resetGame() {
-  if(!confirm('בטוח? כל השחקנים והתשובות של חברה זו יימחקו')) return;
+  if(!confirm(t('dash.resetConfirm'))) return;
   await fetch('/api/admin/company/'+activeCompanyId+'/reset',{method:'POST',headers:H()});
-  alert('המשחק אופס');
+  alert(t('dash.resetDone'));
 }
 
 // ===== עורך מפה =====
@@ -582,11 +604,11 @@ async function loadMapEditor(){
   // טען קונפיג מהשרת
   let r;
   try { r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{headers:H()}); }
-  catch(e){ alert('שגיאת רשת בטעינת המפה'); return; }
-  if(r.status===401){ alert('פג תוקף ההתחברות (השרת כנראה התאתחל). מתחבר מחדש...'); localStorage.removeItem('fg_token'); location.reload(); return; }
+  catch(e){ alert(t('dash.mapNetErr')); return; }
+  if(r.status===401){ alert(t('dash.sessionExpired')); localStorage.removeItem('fg_token'); location.reload(); return; }
   const d=await r.json();
   const cfg=d.mapConfig||{center:{lat:31.8133,lng:34.7780},zoom:16,markers:[],locked:false};
-  document.getElementById('editTitle').textContent = d.companyName || 'המפה שלך';
+  document.getElementById('editTitle').textContent = d.companyName || t('dash.myMap');
   edLocked = !!cfg.locked;
   edMarkerSize = isFinite(cfg.markerSize) ? Number(cfg.markerSize) : 30;
   document.getElementById('markerSizeRange').value = edMarkerSize;
@@ -644,7 +666,7 @@ function removePin(id, ev){
 }
 
 function clearAllPins(){
-  if(!confirm('למחוק את כל מיקומי התחנות מהמפה?')) return;
+  if(!confirm(t('dash.clearPinsConfirm'))) return;
   Object.keys(edMarkers).forEach(id=>{ editMap.removeLayer(edMarkers[id]); });
   edMarkers={}; edPlacing=null; renderChips();
 }
@@ -656,7 +678,7 @@ function renderChips(){
     const placed=!!edMarkers[i];
     const active=edPlacing===i;
     html+=`<div class="schip ${placed?'placed':''} ${active?'active':''}" onclick="selectStationForPlacing(${i})">
-      ${placed?'📍':'➕'} תחנה ${i}
+      ${placed?'📍':'➕'} ${t('dash.stationChip',{n:i})}
       ${placed?`<span class="x" onclick="removePin(${i},event)">✕</span>`:''}
     </div>`;
   }
@@ -672,14 +694,14 @@ function toggleLock(){
 function applyLockUI(){
   const btn=document.getElementById('lockBtn'), badge=document.getElementById('lockBadge');
   if(edLocked){
-    btn.textContent='🔓 בטל נעילה'; badge.textContent='נעול לשחקנים'; badge.className='lock-badge locked';
+    btn.textContent=t('dash.mapUnlock'); badge.textContent=t('dash.mapLockedBadge'); badge.className='lock-badge locked';
   } else {
-    btn.textContent='🔒 נעל תצוגה'; badge.textContent='פתוח לעריכה'; badge.className='lock-badge unlocked';
+    btn.textContent=t('dash.mapLock'); badge.textContent=t('dash.mapUnlockedBadge'); badge.className='lock-badge unlocked';
   }
 }
 
 async function saveMap(){
-  if(!editMap){ alert('המפה לא נטענה'); return; }
+  if(!editMap){ alert(t('dash.mapNotLoaded')); return; }
   const c=editMap.getCenter();
   const markers=Object.keys(edMarkers).map(id=>{
     const ll=edMarkers[id].getLatLng();
@@ -691,15 +713,15 @@ async function saveMap(){
   let r;
   try {
     r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
-  } catch(e){ alert('שגיאת רשת בשמירה. בדוק חיבור ונסה שוב.'); return; }
-  if(r.status===401){ alert('פג תוקף ההתחברות (השרת כנראה התאתחל). התחבר מחדש ונסה לשמור שוב.'); return; }
-  if(!r.ok){ let msg='שגיאה בשמירה'; try{ const e=await r.json(); if(e.error) msg=e.error; }catch(_){} alert(msg); return; }
+  } catch(e){ alert(t('dash.mapSaveNetErr')); return; }
+  if(r.status===401){ alert(t('dash.sessionExpiredSave')); return; }
+  if(!r.ok){ let msg=t('dash.saveErr'); try{ const e=await r.json(); if(e.error) msg=e.error; }catch(_){} alert(msg); return; }
   const s=document.getElementById('mapSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2500);
 }
 
 // הדפסת המפה על A4 — שומר קודם, ואז פותח את תצוגת השחקן הנקייה להדפסה
 async function printMap(){
-  if(!editMap){ alert('המפה לא נטענה'); return; }
+  if(!editMap){ alert(t('dash.mapNotLoaded')); return; }
   await saveMap();
   const w=window.open('/c/'+activeCompanyId+'/map?print=1','_blank');
   // המפה תיטען בטאב החדש; ההדפסה מופעלת שם אוטומטית כשמוכן
@@ -707,8 +729,32 @@ async function printMap(){
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+// ===== בורר שפת ממשק למנהל =====
+I18N.renderLangPicker('langPicker', {compact:true});
+I18N.renderLangPicker('langPickerApp', {compact:true});
+function applyEditorFrame(){
+  document.querySelectorAll('.map-frame-wrap img.frame, #frameImg').forEach(img=>{
+    img.src = '/map-frame.png?lang=' + getLang();
+  });
+}
+document.addEventListener('langchange', () => {
+  applyEditorFrame();
+  // עדכון כותרות הדינמיות
+  if (ROLE==='super' && document.getElementById('superView').style.display!=='none') {
+    document.getElementById('hdrTitle').textContent=t('dash.hdrSuper');
+    document.getElementById('hdrSub').textContent=t('dash.hdrSuperSub');
+    loadCompanies();
+  } else if (activeCompanyId) {
+    if (ROLE==='super') document.getElementById('hdrSub').textContent=t('dash.editingSub',{name:activeCompanyName});
+    else { document.getElementById('hdrTitle').textContent=t('dash.hdrCompany',{name:activeCompanyName}); document.getElementById('hdrSub').textContent=t('dash.hdrCompanySub'); }
+    if (stations && stations.length) renderStations();
+    applyLockUI(); renderChips();
+  }
+});
+
 // כניסה אוטומטית
 (async()=>{
+  applyEditorFrame();
   const saved=localStorage.getItem('fg_token');
   if(!saved) return;
   TOKEN=saved;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מפת המשחק</title>
+<title data-i18n="map.title">מפת המשחק</title>
 <link rel="stylesheet" href="/leaflet.css"/>
 <style>
   :root{
@@ -96,29 +96,30 @@
 </style>
 </head>
 <body>
-<div id="topMail">למשחקים נוספים פנו ל-<a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a></div>
+<div id="topMail"><span data-i18n="common.moreGames">למשחקים נוספים פנו ל-</span><a href="mailto:mishak.hevra@gmail.com">mishak.hevra@gmail.com</a></div>
 <div id="stage">
   <div id="frameBox">
     <img id="frameImg" src="/map-frame.png" alt="">
     <div id="mapWindow">
       <div id="map"></div>
-      <div id="mapTitle">טוען…</div>
+      <div id="mapTitle" data-i18n="map.loading">טוען…</div>
     </div>
   </div>
 </div>
 <div id="legend">
-  <span class="it"><span class="dot none"></span> טרם נסרק</span>
-  <span class="it"><span class="dot correct"></span> נכון</span>
-  <span class="it"><span class="dot wrong"></span> לא נכון</span>
-  <span class="it"><span class="dot pending"></span> ממתין</span>
+  <span class="it"><span class="dot none"></span> <span data-i18n="map.legNone">טרם נסרק</span></span>
+  <span class="it"><span class="dot correct"></span> <span data-i18n="map.legCorrect">נכון</span></span>
+  <span class="it"><span class="dot wrong"></span> <span data-i18n="map.legWrong">לא נכון</span></span>
+  <span class="it"><span class="dot pending"></span> <span data-i18n="map.legPending">ממתין</span></span>
 </div>
 <div id="navBar">
-  <button class="gold" id="navBack" onclick="goBack()">↩️ חזרה</button>
-  <button id="navBoard" onclick="goBoard()">📊 לוח תוצאות</button>
-  <button id="navScan" onclick="goScan()">📷 סריקת תחנה</button>
+  <button class="gold" id="navBack" onclick="goBack()" data-i18n="map.back">↩️ חזרה</button>
+  <button id="navBoard" onclick="goBoard()" data-i18n="map.navBoard">📊 לוח תוצאות</button>
+  <button id="navScan" onclick="goScan()" data-i18n="map.navScan">📷 סריקת תחנה</button>
 </div>
-<div id="msg">טוען מפה…</div>
+<div id="msg" data-i18n="map.loading">טוען מפה…</div>
 
+<script src="/i18n.js"></script>
 <script src="/leaflet.js"></script>
 <script>
 const parts = location.pathname.split('/');
@@ -141,6 +142,12 @@ function goScan(){ location.href = '/c/'+CID+pq(); }
 if(PRINT){ const nb=document.getElementById('navBar'); if(nb) nb.style.display='none'; }
 
 let map = null, pinLayers = {}, frameBoxSized = false;
+
+// טעינת מסגרת המפה לפי שפה (map-frame-en.png וכו', עם נפילה לעברית בשרת)
+function applyFrame(){
+  var img = document.getElementById('frameImg');
+  if(img) img.src = '/map-frame.png?lang=' + getLang();
+}
 
 // התאמת גודל frameBox כדי שהמסגרת תמלא את השטח הזמין מתחת לכיתוב המייל
 function sizeFrame(){
@@ -171,20 +178,24 @@ async function load(){
   let d;
   try {
     const r = await fetch(`/api/company/${CID}/map?player=${encodeURIComponent(PLAYER)}`);
-    if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.error||'שגיאה'); }
+    if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(e.error||t('map.loadErr')); }
     d = await r.json();
   } catch(e){
-    document.getElementById('msg').textContent = e.message || 'לא ניתן לטעון את המפה';
+    document.getElementById('msg').textContent = e.message || t('map.loadErr');
     return;
   }
 
+  // שפת ברירת-מחדל של החברה + מסגרת לפי שפה
+  if(d.defaultLang){ window.FG_DEFAULT_LANG = d.defaultLang; I18N.applyLang(); }
+  applyFrame();
+
   const cfg = d.mapConfig || {};
   pinSize = isFinite(cfg.markerSize) ? Number(cfg.markerSize) : 30;
-  document.getElementById('mapTitle').textContent = d.companyName || d.gameName || 'מפת המשחק';
-  document.title = (d.companyName || 'מפת המשחק');
+  document.getElementById('mapTitle').textContent = d.companyName || d.gameName || t('map.title');
+  document.title = (d.companyName || t('map.title'));
 
   if(!cfg.markers || !cfg.markers.length){
-    document.getElementById('msg').textContent = 'המנהל עדיין לא הגדיר את מפת התחנות';
+    document.getElementById('msg').textContent = t('map.notSet');
     document.getElementById('msg').style.background = 'rgba(28,22,13,.95)';
     return;
   }
@@ -216,7 +227,7 @@ async function load(){
   cfg.markers.forEach(mk=>{
     const stStatus = (d.stations && d.stations[mk.id]) ? d.stations[mk.id].status : 'none';
     const rawTitle = (d.stations && d.stations[mk.id] && d.stations[mk.id].title) ? d.stations[mk.id].title : '';
-    const tip = rawTitle && rawTitle.trim() ? rawTitle.trim() : ('תחנה ' + mk.id);
+    const tip = rawTitle && rawTitle.trim() ? rawTitle.trim() : (t('common.station') + ' ' + mk.id);
     if(pinLayers[mk.id]){
       pinLayers[mk.id].setIcon(buildPin(mk.id, stStatus));
     } else {

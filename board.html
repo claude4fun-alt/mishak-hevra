@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>לוח תוצאות חי</title>
+<title data-i18n="board.titleDefault">לוח תוצאות חי</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -14,14 +14,13 @@
   header { text-align:center; padding:18px; }
   header h1 { font-size:28px; text-shadow:0 2px 10px rgba(0,0,0,.4); }
   header .live { display:inline-block; background:#ff3b3b; padding:3px 12px; border-radius:20px; font-size:13px; font-weight:700; margin-top:6px; animation:pulse 1.5s infinite; }
+  header .langWrap { display:flex; justify-content:center; margin-top:12px; }
   @keyframes pulse { 50%{opacity:.5;} }
 
-  /* פס פרסים */
   .awards { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:0 16px 14px; }
   .award { background:rgba(255,255,255,.12); border-radius:14px; padding:10px 18px; text-align:center; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.15); }
   .award .lbl { font-size:12px; opacity:.8; } .award .val { font-size:18px; font-weight:800; color:#ffd23f; }
 
-  /* עיר הבניינים */
   .city { display:flex; align-items:flex-end; justify-content:center; gap:18px; padding:20px 16px; min-height:340px; flex-wrap:wrap; }
   .building-wrap { display:flex; flex-direction:column; align-items:center; width:90px; transition:all .5s; }
   .rank-medal { font-size:24px; height:30px; }
@@ -34,11 +33,10 @@
   .pscore { font-size:13px; color:#ffd23f; font-weight:800; }
   .floornum { position:absolute; top:-26px; left:50%; transform:translateX(-50%); background:#fff; color:#1a2a4a; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; box-shadow:0 3px 8px rgba(0,0,0,.3); }
 
-  /* טבלה */
   .panel { background:rgba(255,255,255,.07); margin:14px; border-radius:18px; padding:16px; backdrop-filter:blur(6px); }
   .panel h2 { font-size:18px; margin-bottom:12px; color:#ffd23f; }
   table { width:100%; border-collapse:collapse; }
-  th, td { padding:10px; text-align:right; border-bottom:1px solid rgba(255,255,255,.1); }
+  th, td { padding:10px; text-align:start; border-bottom:1px solid rgba(255,255,255,.1); }
   th { font-size:13px; opacity:.7; }
   tr.gold td { color:#ffd23f; font-weight:800; }
   .teams { display:flex; gap:12px; flex-wrap:wrap; }
@@ -54,33 +52,40 @@
 </head>
 <body>
 <header>
-  <h1 id="gameName">לוח תוצאות חי</h1>
+  <h1 id="gameName" data-i18n="board.titleDefault">לוח תוצאות חי</h1>
   <span class="live">● LIVE</span>
+  <div class="langWrap"><span id="langPicker"></span></div>
 </header>
 
 <div class="scan-wrap">
-  <button class="scan-btn" id="scanBtn" onclick="startScan()">📷 סרוק QR של תחנה</button>
-  <button class="scan-btn" id="mapBtn" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" onclick="goMap()">🧭 מפת המשחק</button>
+  <button class="scan-btn" id="scanBtn" onclick="startScan()" data-i18n="common.scanStation">📷 סרוק QR של תחנה</button>
+  <button class="scan-btn" id="mapBtn" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" onclick="goMap()" data-i18n="common.gameMap">🧭 מפת המשחק</button>
   <div id="qrReader"></div>
   <p class="scan-err" id="scanErr"></p>
-  <button class="scan-btn" style="display:none;background:#5a6b8a" id="stopScanBtn" onclick="stopScan()">עצור סריקה</button>
+  <button class="scan-btn" style="display:none;background:#5a6b8a" id="stopScanBtn" onclick="stopScan()" data-i18n="common.stopScan">עצור סריקה</button>
 </div>
 
 <div class="awards" id="awards"></div>
-<div class="city" id="city"><div class="empty">ממתינים למתחרים... 🎮</div></div>
+<div class="city" id="city"><div class="empty" data-i18n="board.waiting">ממתינים למתחרים... 🎮</div></div>
 
 <div class="panel">
-  <h2>🏆 טבלת דירוג</h2>
-  <table id="rankTable"><thead><tr><th>#</th><th>שם</th><th>קבוצה</th><th>נכונות</th><th>נקודות</th><th>⚡ בונוס</th><th>זמן ממוצע</th></tr></thead><tbody id="rankBody"></tbody></table>
+  <h2 data-i18n="board.rankTable">🏆 טבלת דירוג</h2>
+  <table id="rankTable"><thead><tr>
+    <th data-i18n="board.colRank">#</th><th data-i18n="board.colName">שם</th>
+    <th data-i18n="board.colTeam">קבוצה</th><th data-i18n="board.colCorrect">נכונות</th>
+    <th data-i18n="board.colPoints">נקודות</th><th data-i18n="board.colBonus">⚡ בונוס</th>
+    <th data-i18n="board.colAvgTime">זמן ממוצע</th>
+  </tr></thead><tbody id="rankBody"></tbody></table>
 </div>
 
 <div class="panel" id="teamsPanel" style="display:none">
-  <h2>👥 דירוג קבוצות</h2>
+  <h2 data-i18n="board.teamsTitle">👥 דירוג קבוצות</h2>
   <div class="teams" id="teams"></div>
 </div>
 
-<p style="text-align:center;color:rgba(255,255,255,.55);font-size:13px;padding:10px 0 24px">נוצר ע"י Amir Cohen</p>
+<p style="text-align:center;color:rgba(255,255,255,.55);font-size:13px;padding:10px 0 24px" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
 
+<script src="/i18n.js"></script>
 <script>
 // ===== צליל סריקה =====
 let _ac=null,_unlocked=false;
@@ -93,7 +98,9 @@ function playScanSound(){_unlock();_tone(1200,0,0.08,'square',0.22);_tone(660,0.
 const companyId = location.pathname.split('/')[2]; // /c/:cid/board
 const _player = new URLSearchParams(location.search).get('player') || '';
 function goMap(){ location.href = '/c/' + companyId + '/map' + (_player ? '?player=' + encodeURIComponent(_player) : ''); }
+function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
 let prevFloors = {};
+let lastData = null;
 
 // --- סורק QR מובנה ---
 let qrScanner = null;
@@ -103,14 +110,9 @@ async function startScan() {
   document.getElementById('stopScanBtn').style.display = 'inline-block';
   try {
     qrScanner = new Html5Qrcode('qrReader');
-    await qrScanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 220, height: 220 } },
-      onScanSuccess,
-      () => {}
-    );
+    await qrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, onScanSuccess, () => {});
   } catch (e) {
-    err.textContent = 'לא ניתן לגשת למצלמה. ודאו שאישרתם הרשאה, או סרקו עם אפליקציית המצלמה.';
+    err.textContent = t('common.camErrPerm');
     document.getElementById('scanBtn').style.display = 'inline-block';
     document.getElementById('stopScanBtn').style.display = 'none';
   }
@@ -118,10 +120,7 @@ async function startScan() {
 function onScanSuccess(decodedText) {
   playScanSound();
   stopScan();
-  try {
-    const url = new URL(decodedText);
-    if (/\/c\/[^/]+\/station\/\d+/.test(url.pathname)) { location.href = url.pathname + '?via=app'; return; }
-  } catch (e) {}
+  try { const url = new URL(decodedText); if (/\/c\/[^/]+\/station\/\d+/.test(url.pathname)) { location.href = url.pathname + '?via=app'; return; } } catch (e) {}
   location.href = decodedText;
 }
 async function stopScan() {
@@ -131,26 +130,27 @@ async function stopScan() {
 }
 
 function render(data) {
-  document.getElementById('gameName').textContent = (data.companyName ? data.companyName + ' · ' : '') + (data.gameName || 'לוח תוצאות חי');
+  lastData = data;
+  if (data.defaultLang) { window.FG_DEFAULT_LANG = data.defaultLang; }
+  document.getElementById('gameName').textContent = (data.companyName ? data.companyName + ' · ' : '') + (data.gameName || t('board.titleDefault'));
 
   // פרסים
   const aw = document.getElementById('awards');
   let awHtml = '';
-  if (data.awards.fastest) awHtml += `<div class="award"><div class="lbl">⚡ הכי מהיר</div><div class="val">${esc(data.awards.fastest)}</div></div>`;
-  if (data.awards.mostCorrect) awHtml += `<div class="award"><div class="lbl">🎯 הכי הרבה נכונות</div><div class="val">${esc(data.awards.mostCorrect)}</div></div>`;
-  if (data.players.length) awHtml += `<div class="award"><div class="lbl">👑 מוביל</div><div class="val">${esc(data.players[0].name)}</div></div>`;
+  if (data.awards.fastest) awHtml += `<div class="award"><div class="lbl">${t('board.awFastest')}</div><div class="val">${esc(data.awards.fastest)}</div></div>`;
+  if (data.awards.mostCorrect) awHtml += `<div class="award"><div class="lbl">${t('board.awMostCorrect')}</div><div class="val">${esc(data.awards.mostCorrect)}</div></div>`;
+  if (data.players.length) awHtml += `<div class="award"><div class="lbl">${t('board.awLeader')}</div><div class="val">${esc(data.players[0].name)}</div></div>`;
   aw.innerHTML = awHtml;
 
   // עיר הבניינים
   const city = document.getElementById('city');
-  if (!data.players.length) { city.innerHTML = '<div class="empty">ממתינים למתחרים... 🎮</div>'; }
+  if (!data.players.length) { city.innerHTML = `<div class="empty">${t('board.waiting')}</div>`; }
   else {
     const medals = ['🥇','🥈','🥉'];
     city.innerHTML = data.players.map((p,i) => {
       const h = Math.max(0, p.floor) * 22;
       let floors = '';
       for (let f=0; f<p.floor; f++) floors += '<div class="floor"></div>';
-      // זיהוי גידול לאנימציית קונפטי
       if (prevFloors[p.id] !== undefined && p.floor > prevFloors[p.id]) confetti();
       prevFloors[p.id] = p.floor;
       return `<div class="building-wrap">
@@ -161,7 +161,7 @@ function render(data) {
         </div>
         <div class="pname">${esc(p.name)}</div>
         ${p.team?`<div class="pteam">${esc(p.team)}</div>`:''}
-        <div class="pscore">${p.points} נק'</div>
+        <div class="pscore">${p.points} ${t('common.pts')}</div>
       </div>`;
     }).join('');
   }
@@ -175,11 +175,11 @@ function render(data) {
     </tr>`).join('');
 
   // קבוצות
-  const realTeams = data.teams.filter(t => t.team !== 'ללא קבוצה');
+  const realTeams = data.teams.filter(tm => tm.team !== 'ללא קבוצה' && tm.team !== t('board.noTeam'));
   if (realTeams.length) {
     document.getElementById('teamsPanel').style.display = 'block';
-    document.getElementById('teams').innerHTML = data.teams.map(t => `
-      <div class="team-card"><div class="tn">${esc(t.team)}</div><div class="tp">${t.points} נק'</div><div style="opacity:.7;font-size:13px">${t.correct} נכונות · ${t.members} משתתפים</div></div>`).join('');
+    document.getElementById('teams').innerHTML = data.teams.map(tm => `
+      <div class="team-card"><div class="tn">${esc(tm.team)}</div><div class="tp">${tm.points} ${t('common.pts')}</div><div style="opacity:.7;font-size:13px">${tm.correct} ${t('board.correctWord')} · ${tm.members} ${t('board.members')}</div></div>`).join('');
   }
 }
 
@@ -202,7 +202,6 @@ function confetti() {
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// SSE עם נפילה לפולינג
 function connect() {
   try {
     const es = new EventSource('/api/stream?company=' + companyId);
@@ -214,6 +213,10 @@ async function poll() {
   try { const r = await fetch('/api/company/' + companyId + '/leaderboard'); render(await r.json()); } catch(e){}
   setTimeout(poll, 3000);
 }
+
+I18N.renderLangPicker('langPicker');
+document.addEventListener('langchange', () => { applyPoster(); if (lastData) render(lastData); });
+applyPoster();
 connect();
 </script>
 </body>

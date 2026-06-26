@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>משחק חברה</title>
+<title data-i18n="common.gameName">משחק חברה</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
@@ -16,8 +16,10 @@
   @keyframes bob { 50% { transform:translateY(-8px); } }
   #welcome .startBtn:active { transform:scale(.96); }
   #welcome .hint { margin-top:14px; font-size:14px; color:rgba(255,255,255,.85); text-shadow:0 2px 8px rgba(0,0,0,.8); }
+  #welcome .langWrap { margin-bottom:18px; }
   #menu { position:relative; z-index:2; min-height:100vh; display:none; align-items:center; justify-content:center; padding:20px; }
   .card { background:rgba(255,255,255,.97); color:#1a2a4a; border-radius:24px; padding:32px 28px; max-width:420px; width:100%; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,.5); }
+  .card .langWrap { display:flex; justify-content:center; margin-bottom:14px; }
   .card .logo { font-size:28px; font-weight:900; margin-bottom:2px; }
   .card .sub { color:#5a6b8a; margin-bottom:22px; font-size:15px; }
   .btn { display:block; width:100%; padding:16px; border:none; border-radius:14px; font-weight:800; font-size:17px; text-decoration:none; margin-bottom:12px; color:#fff; cursor:pointer; font-family:inherit; }
@@ -38,28 +40,31 @@
 
 <div id="welcome" style="display:none">
   <div class="companyName" id="companyNameTop"></div>
-  <button class="startBtn" onclick="enter()">התחל ▶</button>
-  <div class="hint">לחצו כדי להתחיל את ההרפתקה</div>
+  <div class="langWrap"><span id="langPickerW"></span></div>
+  <button class="startBtn" onclick="enter()" data-i18n="company.start">התחל ▶</button>
+  <div class="hint" data-i18n="company.startHint">לחצו כדי להתחיל את ההרפתקה</div>
 </div>
 
 <div class="overlay" id="ov" style="display:none"></div>
 <div id="menu">
   <div class="card">
-    <div class="logo" id="gameName">משחק חברה</div>
+    <div class="langWrap"><span id="langPickerM"></span></div>
+    <div class="logo" id="gameName" data-i18n="common.gameName">משחק חברה</div>
     <div class="sub" id="companyNameMenu"></div>
-    <a class="btn bjoin" id="joinLink" href="#">🙋 הצטרף למשחק</a>
-    <button class="btn bscan" id="scanBtn" onclick="startScan()">📷 סרוק QR של תחנה</button>
+    <a class="btn bjoin" id="joinLink" href="#" data-i18n="company.join">🙋 הצטרף למשחק</a>
+    <button class="btn bscan" id="scanBtn" onclick="startScan()" data-i18n="common.scanStation">📷 סרוק QR של תחנה</button>
     <div id="qrReader"></div>
     <p class="scan-err" id="scanErr"></p>
-    <button class="btn b2" style="display:none" id="stopScanBtn" onclick="stopScan()">עצור סריקה</button>
-    <a class="btn b2" id="boardLink" href="#">📊 לוח תוצאות חי</a>
-    <a class="btn b2" id="progressLink" href="#" style="background:linear-gradient(135deg,#22a06b,#16c79a)">🗺️ ההתקדמות שלי</a>
-    <a class="btn b2" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)">🧭 מפת המשחק</a>
-    <p class="credit">נוצר ע"י Amir Cohen</p>
-    <p class="credit" style="margin-top:6px">למשחקים נוספים פנו ל-<a href="mailto:mishak.hevra@gmail.com" style="color:#c47f00;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
+    <button class="btn b2" style="display:none" id="stopScanBtn" onclick="stopScan()" data-i18n="common.stopScan">עצור סריקה</button>
+    <a class="btn b2" id="boardLink" href="#" data-i18n="common.board">📊 לוח תוצאות חי</a>
+    <a class="btn b2" id="progressLink" href="#" style="background:linear-gradient(135deg,#22a06b,#16c79a)" data-i18n="common.progress">🗺️ ההתקדמות שלי</a>
+    <a class="btn b2" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" data-i18n="common.gameMap">🧭 מפת המשחק</a>
+    <p class="credit" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
+    <p class="credit" style="margin-top:6px"><span data-i18n="common.moreGames">למשחקים נוספים פנו ל-</span><a href="mailto:mishak.hevra@gmail.com" style="color:#c47f00;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
   </div>
 </div>
 
+<script src="/i18n.js"></script>
 <script>
 // ===== צליל סריקה =====
 let _ac=null,_unlocked=false;
@@ -72,21 +77,27 @@ function playScanSound(){_unlock();_tone(1200,0,0.08,'square',0.22);_tone(660,0.
 const companyId = location.pathname.split('/')[2]; // /c/:cid
 let company = null;
 
+function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
+
 async function init() {
   try {
     const r = await fetch('/api/company/' + companyId);
-    if (r.status === 403) { showErr('המשחק של חברה זו מושבת כרגע'); return; }
-    if (!r.ok) { showErr('חברה לא נמצאה'); return; }
+    if (r.status === 403) { showErr(t('company.disabled')); return; }
+    if (!r.ok) { showErr(t('company.notFound')); return; }
     company = await r.json();
+    // שפת ברירת-מחדל של החברה (אם השחקן לא בחר שפה בעצמו)
+    window.FG_DEFAULT_LANG = company.defaultLang || 'he';
+    I18N.applyLang();
+    applyPoster();
     document.getElementById('companyNameTop').textContent = company.name;
-    document.getElementById('gameName').textContent = company.gameName || 'משחק חברה';
+    document.getElementById('gameName').textContent = company.gameName || t('common.gameName');
     document.getElementById('companyNameMenu').textContent = company.name;
     document.getElementById('joinLink').href = '/c/' + companyId + '/join';
     document.getElementById('boardLink').href = '/c/' + companyId + '/board';
     document.getElementById('progressLink').href = '/c/' + companyId + '/progress';
     document.getElementById('mapLink').href = '/c/' + companyId + '/map';
     document.getElementById('welcome').style.display = 'flex';
-  } catch(e) { showErr('שגיאת חיבור'); }
+  } catch(e) { showErr(t('common.connErr')); }
 }
 function showErr(msg) {
   document.getElementById('welcome').style.display = 'none';
@@ -109,22 +120,31 @@ async function startScan() {
     qrScanner = new Html5Qrcode('qrReader');
     await qrScanner.start({ facingMode:'environment' }, { fps:10, qrbox:{width:220,height:220} }, onScanSuccess, ()=>{});
   } catch(e) {
-    err.textContent = 'לא ניתן לגשת למצלמה. סרקו עם אפליקציית המצלמה.';
+    err.textContent = t('common.camErr');
     document.getElementById('scanBtn').style.display = 'block';
     document.getElementById('stopScanBtn').style.display = 'none';
   }
 }
-function onScanSuccess(t) {
+function onScanSuccess(txt) {
   playScanSound();
   stopScan();
-  try { const u = new URL(t); if (/\/c\/[^/]+\/station\/\d+/.test(u.pathname)) { location.href = u.pathname + '?via=app'; return; } } catch(e){}
-  location.href = t;
+  try { const u = new URL(txt); if (/\/c\/[^/]+\/station\/\d+/.test(u.pathname)) { location.href = u.pathname + '?via=app'; return; } } catch(e){}
+  location.href = txt;
 }
 async function stopScan() {
   if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch(e){} qrScanner = null; }
   document.getElementById('stopScanBtn').style.display = 'none';
   document.getElementById('scanBtn').style.display = 'block';
 }
+
+// בוררי דגלים (גם במסך הפתיחה וגם בתפריט)
+I18N.renderLangPicker('langPickerW', {compact:true});
+I18N.renderLangPicker('langPickerM');
+document.addEventListener('langchange', () => {
+  applyPoster();
+  if (company) document.getElementById('gameName').textContent = company.gameName || t('common.gameName');
+});
+
 init();
 </script>
 </body>

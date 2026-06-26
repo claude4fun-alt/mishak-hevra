@@ -99,6 +99,7 @@ function newCompany(name, password) {
     password: password || '',
     enabled: true,
     gameName: name || 'משחק חברה',
+    defaultLang: 'he',   // שפת ברירת-מחדל לממשק השחקנים (he|en|it)
     stations: defaultStations(),
     players: {},        // playerId -> {id, name, team, joinedAt, answers:{}}
     submissions: [],
@@ -145,6 +146,7 @@ async function loadDB() {
     if (!c.mapConfig) c.mapConfig = defaultMapConfig();
     if (!Array.isArray(c.mapConfig.markers)) c.mapConfig.markers = [];
     if (!isFinite(c.mapConfig.markerSize)) c.mapConfig.markerSize = 30;
+    if (!['he', 'en', 'it'].includes(c.defaultLang)) c.defaultLang = 'he';
   });
 }
 
@@ -170,8 +172,19 @@ const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(UPLOADS_DIR));
-app.get('/poster.png', (req, res) => res.sendFile(path.join(__dirname, 'poster.png')));
-app.get('/map-frame.png', (req, res) => res.sendFile(path.join(__dirname, 'map-frame.png')));
+app.get('/i18n.js', (req, res) => res.sendFile(path.join(__dirname, 'i18n.js')));
+
+// פוסטר ומסגרת-מפה לפי שפה: poster-en.png / map-frame-it.png וכו'.
+// אם קובץ שפה חסר — נופלים לגרסה העברית (poster.png / map-frame.png).
+function langAsset(res, base, lang) {
+  const allowed = ['he', 'en', 'it'].includes(lang) ? lang : 'he';
+  const heFile = path.join(__dirname, base + '.png');
+  if (allowed === 'he') return res.sendFile(heFile);
+  const langFile = path.join(__dirname, base + '-' + allowed + '.png');
+  fs.access(langFile, fs.constants.R_OK, err => res.sendFile(err ? heFile : langFile));
+}
+app.get('/poster.png', (req, res) => langAsset(res, 'poster', req.query.lang));
+app.get('/map-frame.png', (req, res) => langAsset(res, 'map-frame', req.query.lang));
 app.get('/leaflet.js', (req, res) => res.sendFile(path.join(__dirname, 'leaflet.js')));
 app.get('/leaflet.css', (req, res) => res.sendFile(path.join(__dirname, 'leaflet.css')));
 
@@ -250,7 +263,7 @@ function buildLeaderboard(companyId) {
     });
     if (best) stationSpeed[st.id] = best;
   });
-  return { gameName: company.gameName, companyName: company.name, players, awards, stationSpeed, stationCount, teams: groupByTeam(players) };
+  return { gameName: company.gameName, companyName: company.name, defaultLang: company.defaultLang || 'he', players, awards, stationSpeed, stationCount, teams: groupByTeam(players) };
 }
 function groupByTeam(players) {
   const map = {};
@@ -270,7 +283,7 @@ app.get('/api/company/:cid', (req, res) => {
   const c = getCompany(req.params.cid);
   if (!c) return res.status(404).json({ error: 'חברה לא קיימת' });
   if (!c.enabled) return res.status(403).json({ error: 'החברה מושבתת כרגע' });
-  res.json({ id: c.id, name: c.name, gameName: c.gameName, stationCount: c.stations.length });
+  res.json({ id: c.id, name: c.name, gameName: c.gameName, defaultLang: c.defaultLang || 'he', stationCount: c.stations.length });
 });
 
 // קבוצות פעילות בחברה מסוימת
@@ -324,7 +337,7 @@ app.get('/api/company/:cid/station/:id', (req, res) => {
   const pid = req.query.player;
   const player = pid ? c.players[pid] : null;
   const already = player && player.answers[st.id] ? player.answers[st.id] : null;
-  res.json({ id: st.id, title: st.title, questionType: st.questionType, questionText: st.questionText, imageUrl: st.imageUrl, points: st.points, gameName: c.gameName, companyName: c.name, alreadyAnswered: !!already, previousResult: already ? { correct: already.correct, pending: already.correct === null } : null });
+  res.json({ id: st.id, title: st.title, questionType: st.questionType, questionText: st.questionText, imageUrl: st.imageUrl, points: st.points, gameName: c.gameName, companyName: c.name, defaultLang: c.defaultLang || 'he', alreadyAnswered: !!already, previousResult: already ? { correct: already.correct, pending: already.correct === null } : null });
 });
 
 // הגשת תשובה
@@ -369,7 +382,7 @@ app.get('/api/company/:cid/progress', (req, res) => {
     }
     return { id: st.id, status };
   });
-  res.json({ stationCount: c.stations.length, stations, name: player ? player.name : '', team: player ? player.team : '' });
+  res.json({ stationCount: c.stations.length, stations, defaultLang: c.defaultLang || 'he', name: player ? player.name : '', team: player ? player.team : '' });
 });
 
 // מפת התחנות לשחקן - קונפיג + סטטוס צבע לכל תחנה
@@ -391,7 +404,7 @@ app.get('/api/company/:cid/map', (req, res) => {
     statusById[st.id] = { status, title: st.title };
   });
   res.json({
-    gameName: c.gameName, companyName: c.name,
+    gameName: c.gameName, companyName: c.name, defaultLang: c.defaultLang || 'he',
     mapConfig: { center: cfg.center, zoom: cfg.zoom, bounds: cfg.bounds || null, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [] },
     stations: statusById,
     name: player ? player.name : '', team: player ? player.team : ''
@@ -510,7 +523,7 @@ app.delete('/api/admin/companies/:cid', auth, superOnly, (req, res) => {
 // פרטי החברה לעריכה (שאלות + הגדרות)
 app.get('/api/admin/company/:cid/data', auth, (req, res) => {
   const c = resolveCompany(req, res); if (!c) return;
-  res.json({ id: c.id, name: c.name, gameName: c.gameName, enabled: c.enabled, stations: c.stations, speedBonus: c.speedBonus });
+  res.json({ id: c.id, name: c.name, gameName: c.gameName, defaultLang: c.defaultLang || 'he', enabled: c.enabled, stations: c.stations, speedBonus: c.speedBonus });
 });
 
 app.post('/api/admin/company/:cid/game-name', auth, (req, res) => {
@@ -518,6 +531,16 @@ app.post('/api/admin/company/:cid/game-name', auth, (req, res) => {
   c.gameName = (req.body.gameName || c.name).toString();
   saveDB(); broadcast(c.id);
   res.json({ ok: true });
+});
+
+// שמירת שפת ברירת-מחדל לחברה
+app.post('/api/admin/company/:cid/default-lang', auth, (req, res) => {
+  const c = resolveCompany(req, res); if (!c) return;
+  const lang = (req.body.defaultLang || '').toString();
+  if (!['he', 'en', 'it'].includes(lang)) return res.status(400).json({ error: 'שפה לא תקינה' });
+  c.defaultLang = lang;
+  saveDB();
+  res.json({ ok: true, defaultLang: lang });
 });
 
 // עדכון תחנה (כולל תמונה מוטמעת)
@@ -559,6 +582,7 @@ app.get('/api/admin/company/:cid/export', auth, (req, res) => {
     format: 'mishak-hevra-questions',
     version: 1,
     gameName: c.gameName,
+    defaultLang: c.defaultLang || 'he',
     exportedAt: new Date().toISOString(),
     mapConfig: c.mapConfig || defaultMapConfig(),
     stations: c.stations.map(s => ({
@@ -594,6 +618,7 @@ app.post('/api/admin/company/:cid/import', auth, (req, res) => {
   }
   c.stations = newStations;
   if (data.gameName != null && String(data.gameName).trim()) c.gameName = String(data.gameName).trim().slice(0, 100);
+  if (['he', 'en', 'it'].includes(data.defaultLang)) c.defaultLang = data.defaultLang;
   if (data.mapConfig && typeof data.mapConfig === 'object') {
     const m = data.mapConfig, cfg = defaultMapConfig();
     if (m.center && isFinite(m.center.lat) && isFinite(m.center.lng)) cfg.center = { lat: Number(m.center.lat), lng: Number(m.center.lng) };

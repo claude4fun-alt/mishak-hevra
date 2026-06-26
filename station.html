@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>תחנה</title>
+<title data-i18n="common.station">תחנה</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -33,60 +33,56 @@
   #qrReader { width:100%; max-width:340px; margin:14px auto 0; border-radius:14px; overflow:hidden; }
   #qrReader video { border-radius:14px; }
   .scan-err { color:#c0392b; font-size:13px; margin-top:10px; }
+  label.teamlbl { display:block;text-align:start;font-size:13px;color:#5a6b8a;margin:4px 2px; }
 </style>
 </head>
 <body>
 
-<!-- מסך חסימה: הגיעו בלי סריקה דרך התוכנה -->
+<!-- מסך חסימה -->
 <div id="gateScreen" class="card hidden">
-  <span class="badge">⚠️ עצרו רגע</span>
-  <h1 style="margin-top:10px">כדי לשחק, סרקו דרך התוכנה</h1>
-  <p class="muted" style="margin:12px 0 18px">נראה שהגעתם לתחנה בלי לסרוק דרך כפתור הסריקה במשחק. כדי לשחק נכון ולצבור נקודות, פתחו את עמוד המשחק וסרקו את ה-QR מתוך התוכנה.</p>
-  <button class="btn" id="gateBtn">▶ פתחו את עמוד המשחק</button>
+  <span class="badge" data-i18n="station.gateBadge">⚠️ עצרו רגע</span>
+  <h1 style="margin-top:10px" data-i18n="station.gateTitle">כדי לשחק, סרקו דרך התוכנה</h1>
+  <p class="muted" style="margin:12px 0 18px" data-i18n="station.gateText">נראה שהגעתם לתחנה בלי לסרוק דרך כפתור הסריקה במשחק. כדי לשחק נכון ולצבור נקודות, פתחו את עמוד המשחק וסרקו את ה-QR מתוך התוכנה.</p>
+  <button class="btn" id="gateBtn" data-i18n="station.gateBtn">▶ פתחו את עמוד המשחק</button>
 </div>
 
 <!-- מסך הצטרפות -->
 <div id="joinScreen" class="card hidden">
-  <span class="badge" id="joinBadge">תחנה</span>
-  <h1 id="joinGameName">המשחק המשפחתי</h1>
-  <p class="muted" style="margin:10px 0 16px">ברוכים הבאים! הזינו פרטים כדי להתחיל לשחק</p>
-  <input id="pName" placeholder="השם שלך" autocomplete="off">
-
-  <!-- בחירת קבוצה: רשימה קיימת או חדשה -->
-  <label style="display:block;text-align:right;font-size:13px;color:#5a6b8a;margin:4px 2px">קבוצה</label>
+  <span class="badge" id="joinBadge" data-i18n="common.station">תחנה</span>
+  <h1 id="joinGameName" data-i18n="common.gameName">המשחק המשפחתי</h1>
+  <p class="muted" style="margin:10px 0 16px" data-i18n="station.joinWelcome">ברוכים הבאים! הזינו פרטים כדי להתחיל לשחק</p>
+  <input id="pName" data-i18n-ph="common.yourName" placeholder="השם שלך" autocomplete="off">
+  <label class="teamlbl" data-i18n="common.team">קבוצה</label>
   <select id="pTeamSelect" onchange="onTeamSelect()" style="width:100%;padding:14px;border:2px solid #c9d6f0;border-radius:12px;font-size:16px;font-family:inherit;margin-bottom:12px">
-    <option value="__new__">➕ קבוצה חדשה...</option>
+    <option value="__new__" data-i18n="common.newTeam">➕ קבוצה חדשה...</option>
   </select>
-  <input id="pTeam" placeholder="שם הקבוצה החדשה" autocomplete="off">
-
-  <button class="btn" onclick="join()">בואו נתחיל! 🚀</button>
+  <input id="pTeam" data-i18n-ph="common.newTeamPh" placeholder="שם הקבוצה החדשה" autocomplete="off">
+  <button class="btn" onclick="join()" data-i18n="station.joinStart">בואו נתחיל! 🚀</button>
 </div>
 
 <!-- מסך שאלה -->
 <div id="qScreen" class="card hidden">
-  <span class="badge" id="qBadge">תחנה</span>
+  <span class="badge" id="qBadge" data-i18n="common.station">תחנה</span>
   <p class="muted" id="playerLine" style="margin-top:4px"></p>
   <h1 id="qTitle"></h1>
-  <div class="timer" id="timer">⏱️ 0 שניות</div>
+  <div class="timer" id="timer"></div>
   <h2 id="qText"></h2>
   <img id="qImg" class="qimg hidden">
 
-  <!-- תשובת טקסט -->
   <div id="textAnswer">
-    <textarea id="answerText" placeholder="כתבו את התשובה כאן..."></textarea>
+    <textarea id="answerText" data-i18n-ph="station.answerPh" placeholder="כתבו את התשובה כאן..."></textarea>
   </div>
 
-  <!-- תשובת תמונה -->
   <div id="photoAnswer" class="hidden">
-    <label class="photo-zone" id="photoZone">
+    <label class="photo-zone" id="photoZone" data-i18n="station.photoZone">
       📸 לחצו לצילום / העלאת תמונה
       <input type="file" id="photoInput" accept="image/*" capture="environment" class="hidden" onchange="previewPhoto(event)">
       <img id="photoPreview" class="hidden">
     </label>
-    <textarea id="photoCaption" placeholder="הוסיפו כיתוב (אופציונלי)"></textarea>
+    <textarea id="photoCaption" data-i18n-ph="station.captionPh" placeholder="הוסיפו כיתוב (אופציונלי)"></textarea>
   </div>
 
-  <button class="btn" id="submitBtn" onclick="submitAnswer()">שליחת תשובה ✓</button>
+  <button class="btn" id="submitBtn" onclick="submitAnswer()" data-i18n="station.submit">שליחת תשובה ✓</button>
   <p class="muted" style="text-align:center" id="alreadyMsg"></p>
 </div>
 
@@ -96,43 +92,37 @@
     <div class="emoji" id="resEmoji">🎉</div>
     <h1 id="resTitle"></h1>
     <p class="muted" id="resSub"></p>
-    <a class="link" id="boardLink" href="#" target="_blank">📊 צפו בטבלת התוצאות החיה</a>
-    <a class="link" id="progressLink" href="#">🗺️ ההתקדמות שלי</a>
-    <a class="link" id="mapLink" href="#">🧭 מפת המשחק</a>
-    <p class="muted" style="margin-top:18px">חפשו את התחנה הבאה!</p>
-    <button class="btn sec" style="margin-top:12px" id="scanBtn" onclick="startScan()">📷 סרוק QR של התחנה הבאה</button>
+    <a class="link" id="boardLink" href="#" target="_blank" data-i18n="common.viewBoard">📊 צפו בטבלת התוצאות החיה</a>
+    <a class="link" id="progressLink" href="#" data-i18n="common.progress">🗺️ ההתקדמות שלי</a>
+    <a class="link" id="mapLink" href="#" data-i18n="common.gameMap">🧭 מפת המשחק</a>
+    <p class="muted" style="margin-top:18px" data-i18n="station.findNext">חפשו את התחנה הבאה!</p>
+    <button class="btn sec" style="margin-top:12px" id="scanBtn" onclick="startScan()" data-i18n="common.scanNext">📷 סרוק QR של התחנה הבאה</button>
     <div id="qrReader"></div>
     <p class="scan-err" id="scanErr"></p>
-    <button class="btn" style="margin-top:8px;display:none" id="stopScanBtn" onclick="stopScan()">עצור סריקה</button>
+    <button class="btn" style="margin-top:8px;display:none" id="stopScanBtn" onclick="stopScan()" data-i18n="common.stopScan">עצור סריקה</button>
   </div>
 </div>
 
-<p style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;margin-top:14px">נוצר ע"י Amir Cohen</p>
+<p style="text-align:center;color:rgba(255,255,255,.6);font-size:12px;margin-top:14px" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
 
+<script src="/i18n.js"></script>
 <script>
-// ===== צלילים (Web Audio - בלי קבצים חיצוניים) =====
+// ===== צלילים =====
 let _audioCtx = null;
 function audioCtx() {
   if (!_audioCtx) { try { _audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return null; } }
   if (_audioCtx && _audioCtx.state === 'suspended') { _audioCtx.resume().catch(()=>{}); }
   return _audioCtx;
 }
-// פתיחת שמע במגע ראשון (דרישת דפדפנים בטלפון)
 let _audioUnlocked = false;
 function unlockAudio() {
   const ctx = audioCtx(); if (!ctx) return;
   if (ctx.state === 'suspended') ctx.resume().catch(()=>{});
   if (!_audioUnlocked) {
-    try {
-      const b = ctx.createBuffer(1, 1, 22050);
-      const s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0);
-      _audioUnlocked = true;
-    } catch(e){}
+    try { const b = ctx.createBuffer(1, 1, 22050); const s = ctx.createBufferSource(); s.buffer = b; s.connect(ctx.destination); s.start(0); _audioUnlocked = true; } catch(e){}
   }
 }
-['pointerdown','touchstart','click','keydown'].forEach(ev =>
-  document.addEventListener(ev, unlockAudio, { passive: true }));
-
+['pointerdown','touchstart','click','keydown'].forEach(ev => document.addEventListener(ev, unlockAudio, { passive: true }));
 function tone(freq, start, dur, type, vol) {
   const ctx = audioCtx(); if (!ctx) return;
   const t0 = ctx.currentTime + start;
@@ -144,41 +134,31 @@ function tone(freq, start, dur, type, vol) {
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
   osc.start(t0); osc.stop(t0 + dur + 0.05);
 }
-// צליל "ביפ" של סריקה ואז צליל הצלחה קצר ונעים
-function playScanSound() {
-  unlockAudio();
-  tone(1200, 0, 0.08, 'square', 0.22);          // ביפ סריקה
-  tone(660, 0.12, 0.14, 'sine', 0.25);          // נעים עולה
-  tone(880, 0.26, 0.2, 'sine', 0.25);
-}
-// צליל חצוצרות מנצח לתשובה נכונה
+function playScanSound() { unlockAudio(); tone(1200, 0, 0.08, 'square', 0.22); tone(660, 0.12, 0.14, 'sine', 0.25); tone(880, 0.26, 0.2, 'sine', 0.25); }
 function playSuccessFanfare() {
   unlockAudio();
-  const notes = [523.25, 659.25, 783.99, 1046.50]; // דו מי סול דו (אקורד עולה)
+  const notes = [523.25, 659.25, 783.99, 1046.50];
   notes.forEach((f, i) => tone(f, i * 0.12, 0.3, 'triangle', 0.32));
-  tone(1046.50, 0.5, 0.55, 'triangle', 0.34);     // נימה אחרונה ארוכה
+  tone(1046.50, 0.5, 0.55, 'triangle', 0.34);
   tone(783.99, 0.5, 0.55, 'sine', 0.2);
 }
-// צליל עדין לתשובה לא נכונה / ממתינה
-function playSoftBeep() {
-  unlockAudio();
-  tone(330, 0, 0.18, 'sine', 0.2);
-}
+function playSoftBeep() { unlockAudio(); tone(330, 0, 0.18, 'sine', 0.2); }
 
 const pathParts = location.pathname.split('/'); // /c/:cid/station/:id
 const companyId = pathParts[2];
 const stationId = pathParts[4];
-const PLAYER_KEY = 'fg_player_' + companyId; // זיהוי שחקן נפרד לכל חברה
+const PLAYER_KEY = 'fg_player_' + companyId;
 let player = JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
 let station = null;
 let startedAt = Date.now();
 let timerInt = null;
 
+function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
+
 async function init() {
   document.getElementById('boardLink').href = '/c/' + companyId + '/board';
   document.getElementById('progressLink').href = '/c/' + companyId + '/progress';
   document.getElementById('mapLink').href = '/c/' + companyId + '/map' + (player ? '?player=' + encodeURIComponent(player.playerId) : '');
-  // חותם סריקה: מי שלא הגיע דרך הסורק של התוכנה (?via=app) מקבל מסך הכוונה
   const viaApp = new URLSearchParams(location.search).get('via') === 'app';
   if (!viaApp) {
     document.getElementById('gateBtn').onclick = () => location.href = '/c/' + companyId;
@@ -186,9 +166,9 @@ async function init() {
     return;
   }
   if (!player) {
-    document.getElementById('joinBadge').textContent = 'תחנה ' + stationId;
+    document.getElementById('joinBadge').textContent = t('common.station') + ' ' + stationId;
     show('joinScreen');
-    try { const r = await fetch('/api/company/' + companyId + '/station/' + stationId); const d = await r.json(); document.getElementById('joinGameName').textContent = d.gameName || 'משחק חברה'; } catch(e){}
+    try { const r = await fetch('/api/company/' + companyId + '/station/' + stationId); const d = await r.json(); if(d.defaultLang){window.FG_DEFAULT_LANG=d.defaultLang;I18N.applyLang();applyPoster();} document.getElementById('joinGameName').textContent = d.gameName || t('common.gameName'); } catch(e){}
     loadTeams();
     return;
   }
@@ -200,17 +180,15 @@ async function loadTeams() {
     const r = await fetch('/api/company/' + companyId + '/teams');
     const d = await r.json();
     const sel = document.getElementById('pTeamSelect');
-    // נקה אופציות קודמות חוץ מ"חדשה"
     sel.innerHTML = '';
-    (d.teams || []).forEach(t => {
+    (d.teams || []).forEach(tm => {
       const o = document.createElement('option');
-      o.value = t; o.textContent = '👥 ' + t;
+      o.value = tm; o.textContent = '👥 ' + tm;
       sel.appendChild(o);
     });
     const newOpt = document.createElement('option');
-    newOpt.value = '__new__'; newOpt.textContent = '➕ קבוצה חדשה...';
+    newOpt.value = '__new__'; newOpt.textContent = t('common.newTeam');
     sel.appendChild(newOpt);
-    // אם אין קבוצות קיימות - ברירת מחדל "חדשה" והצג תיבת טקסט
     if (!d.teams || !d.teams.length) sel.value = '__new__';
     onTeamSelect();
   } catch(e) {
@@ -229,11 +207,9 @@ function onTeamSelect() {
 async function join() {
   const name = document.getElementById('pName').value.trim();
   const sel = document.getElementById('pTeamSelect');
-  const team = (sel.value === '__new__')
-    ? document.getElementById('pTeam').value.trim()
-    : sel.value;
-  if (!name) { alert('נא להזין שם'); return; }
-  if (sel.value === '__new__' && !team) { alert('נא להזין שם קבוצה או לבחור קבוצה קיימת'); return; }
+  const team = (sel.value === '__new__') ? document.getElementById('pTeam').value.trim() : sel.value;
+  if (!name) { alert(t('common.enterName')); return; }
+  if (sel.value === '__new__' && !team) { alert(t('common.enterTeam')); return; }
   const r = await fetch('/api/company/' + companyId + '/join', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, team }) });
   const d = await r.json();
   player = d;
@@ -245,24 +221,22 @@ async function join() {
 async function loadStation() {
   const r = await fetch('/api/company/' + companyId + '/station/' + stationId + '?player=' + player.playerId);
   station = await r.json();
-  // איפוס מצב מלא (חשוב במיוחד אחרי החלפת שחקן)
+  if (station.defaultLang) { window.FG_DEFAULT_LANG = station.defaultLang; I18N.applyLang(); applyPoster(); }
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.disabled = false; submitBtn.style.opacity = 1;
   document.getElementById('alreadyMsg').textContent = '';
-  const ta = document.getElementById('textAnswer'); if (ta) ta.value = '';
-  document.getElementById('qBadge').textContent = 'תחנה ' + station.id;
-  // שורת שחקן נוכחי + אפשרות החלפה
-  const teamTxt = player.team ? (' · קבוצה: ' + player.team) : '';
+  const ta = document.getElementById('answerText'); if (ta) ta.value = '';
+  document.getElementById('qBadge').textContent = t('common.station') + ' ' + station.id;
+  const teamTxt = player.team ? t('station.teamLabel', {team: player.team}) : '';
   document.getElementById('playerLine').innerHTML =
     '👤 ' + escapeHtml(player.name) + escapeHtml(teamTxt) +
-    ' <a href="#" onclick="switchPlayer(event)" style="color:#2a4d9e;font-weight:700">(החלף שחקן)</a>';
+    ' <a href="#" onclick="switchPlayer(event)" style="color:#2a4d9e;font-weight:700">' + escapeHtml(t('station.switch')) + '</a>';
   document.getElementById('qTitle').textContent = station.title;
-  document.getElementById('qText').textContent = station.questionText || '(לא הוגדרה שאלה לתחנה זו)';
+  document.getElementById('qText').textContent = station.questionText || t('station.noQuestion');
   const im = document.getElementById('qImg');
   if (station.imageUrl) { im.src = station.imageUrl; im.classList.remove('hidden'); }
   else { im.src = ''; im.classList.add('hidden'); }
 
-  // איפוס סוג תשובה
   document.getElementById('textAnswer').classList.remove('hidden');
   document.getElementById('photoAnswer').classList.add('hidden');
   if (station.questionType === 'photo') {
@@ -274,15 +248,17 @@ async function loadStation() {
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitBtn').style.opacity = .5;
     const pr = station.previousResult;
-    document.getElementById('alreadyMsg').textContent = pr.pending ? 'כבר שלחת תשובה לתחנה זו (ממתינה לאישור)' : (pr.correct ? 'כבר ענית נכון על תחנה זו ✓' : 'כבר ענית על תחנה זו');
+    document.getElementById('alreadyMsg').textContent = pr.pending ? t('station.alreadyPending') : (pr.correct ? t('station.alreadyCorrect') : t('station.alreadyDone'));
   }
 
   show('qScreen');
   startedAt = Date.now();
   clearInterval(timerInt);
-  timerInt = setInterval(() => {
-    document.getElementById('timer').textContent = '⏱️ ' + Math.floor((Date.now()-startedAt)/1000) + ' שניות';
-  }, 1000);
+  updateTimer();
+  timerInt = setInterval(updateTimer, 1000);
+}
+function updateTimer() {
+  document.getElementById('timer').textContent = t('station.timer', { n: Math.floor((Date.now()-startedAt)/1000) });
 }
 
 let photoFile = null;
@@ -296,19 +272,19 @@ function previewPhoto(e) {
 
 async function submitAnswer() {
   const btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = 'שולח...';
+  btn.disabled = true; btn.textContent = t('station.submitting');
   const fd = new FormData();
   fd.append('playerId', player.playerId);
   fd.append('stationId', stationId);
   fd.append('startedAt', startedAt);
   if (station.questionType === 'photo') {
-    if (!photoFile) { alert('נא לצרף תמונה'); btn.disabled=false; btn.textContent='שליחת תשובה ✓'; return; }
+    if (!photoFile) { alert(t('station.needPhoto')); btn.disabled=false; btn.textContent=t('station.submit'); return; }
     fd.append('photo', photoFile);
     fd.append('answerText', document.getElementById('photoCaption').value);
   } else {
-    const t = document.getElementById('answerText').value.trim();
-    if (!t) { alert('נא להזין תשובה'); btn.disabled=false; btn.textContent='שליחת תשובה ✓'; return; }
-    fd.append('answerText', t);
+    const txt = document.getElementById('answerText').value.trim();
+    if (!txt) { alert(t('station.needAnswer')); btn.disabled=false; btn.textContent=t('station.submit'); return; }
+    fd.append('answerText', txt);
   }
   try {
     const r = await fetch('/api/company/' + companyId + '/answer', { method:'POST', body: fd });
@@ -316,8 +292,8 @@ async function submitAnswer() {
     clearInterval(timerInt);
     showResult(d);
   } catch(e) {
-    alert('שגיאה בשליחה, נסו שוב');
-    btn.disabled=false; btn.textContent='שליחת תשובה ✓';
+    alert(t('station.sendErr'));
+    btn.disabled=false; btn.textContent=t('station.submit');
   }
 }
 
@@ -325,15 +301,19 @@ function showResult(d) {
   const emoji = d.correct === true ? '🎉' : d.pending ? '📸' : '💪';
   if (d.correct === true) playSuccessFanfare(); else playSoftBeep();
   document.getElementById('resEmoji').textContent = emoji;
-  document.getElementById('resTitle').textContent = d.message;
-  document.getElementById('resSub').textContent = d.points ? ('+' + d.points + ' נקודות') : (d.pending ? 'התשובה שלך תיבדק על ידי המנהל' : '');
+  // בניית ההודעה בצד הלקוח כדי לתרגם
+  let msg;
+  if (d.correct === true) msg = (d.bonus > 0) ? t('station.resCorrectBonus', {points: d.points, bonus: d.bonus}) : t('station.resCorrect');
+  else if (d.correct === false) msg = t('station.resWrong');
+  else msg = t('station.resPending');
+  document.getElementById('resTitle').textContent = msg;
+  document.getElementById('resSub').textContent = d.points ? t('station.pointsGained', {n: d.points}) : (d.pending ? t('station.pendingReview') : '');
   show('resultScreen');
 }
 
-// החלפת שחקן - מנקה את הזיהוי המקומי ומחזיר למסך ההצטרפות
 function switchPlayer(e) {
   if (e) e.preventDefault();
-  if (!confirm('להחליף שחקן? תצטרכו להזין שם וקבוצה מחדש.')) return;
+  if (!confirm(t('station.switchConfirm'))) return;
   localStorage.removeItem(PLAYER_KEY);
   player = null;
   clearInterval(timerInt);
@@ -356,52 +336,31 @@ async function startScan() {
   document.getElementById('stopScanBtn').style.display = 'inline-block';
   try {
     qrScanner = new Html5Qrcode('qrReader');
-    await qrScanner.start(
-      { facingMode: 'environment' },           // מצלמה אחורית
-      { fps: 10, qrbox: { width: 220, height: 220 } },
-      onScanSuccess,
-      () => {}                                   // התעלם מכישלונות סריקה רגעיים
-    );
+    await qrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, onScanSuccess, () => {});
   } catch (e) {
-    err.textContent = 'לא ניתן לגשת למצלמה. ודאו שאישרתם הרשאה, או סרקו עם אפליקציית המצלמה הרגילה.';
+    err.textContent = t('common.camErrPerm');
     document.getElementById('scanBtn').style.display = 'inline-block';
     document.getElementById('stopScanBtn').style.display = 'none';
   }
 }
-
 function onScanSuccess(decodedText) {
-  // ה-QR מכיל כתובת מלאה לתחנה, למשל https://.../station/4
   playScanSound();
   stopScan();
-  try {
-    const url = new URL(decodedText);
-    // ודא שזה אכן קישור לתחנה
-    if (/\/c\/[^/]+\/station\/\d+/.test(url.pathname)) {
-      location.href = url.pathname + '?via=app';   // חותם סריקה מהתוכנה
-      return;
-    }
-  } catch (e) {}
-  // אם זה לא נראה כמו קישור תחנה תקין, נסה לנווט ישירות
+  try { const url = new URL(decodedText); if (/\/c\/[^/]+\/station\/\d+/.test(url.pathname)) { location.href = url.pathname + '?via=app'; return; } } catch (e) {}
   location.href = decodedText;
 }
-
 async function stopScan() {
-  if (qrScanner) {
-    try { await qrScanner.stop(); qrScanner.clear(); } catch (e) {}
-    qrScanner = null;
-  }
+  if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch (e) {} qrScanner = null; }
   document.getElementById('stopScanBtn').style.display = 'none';
   document.getElementById('scanBtn').style.display = 'inline-block';
 }
 
 // ===== קול "קבוצה אחרת ענתה נכון" =====
 function speakOtherGroup() {
-  // צליל התראה ברור (Web Audio - אמין אחרי unlock) - "דינג דונג" יורד
   unlockAudio();
   tone(784, 0, 0.18, 'triangle', 0.3);
   tone(587, 0.2, 0.28, 'triangle', 0.3);
   tone(440, 0.45, 0.35, 'sine', 0.25);
-  // ניסיון דיבור (עובד בדפדפנים מסוימים; במובייל לפעמים חסום ללא מחווה)
   try {
     if (window.speechSynthesis) {
       const u = new SpeechSynthesisUtterance('The other group answered correctly');
@@ -410,18 +369,10 @@ function speakOtherGroup() {
     }
   } catch(e){}
 }
-// חימום מנוע הדיבור במגע ראשון (כדי שיהיה מוכן מאוחר יותר)
 function _warmSpeech() {
-  try {
-    if (window.speechSynthesis) {
-      const w = new SpeechSynthesisUtterance(''); w.volume = 0;
-      speechSynthesis.speak(w);
-      speechSynthesis.getVoices();
-    }
-  } catch(e){}
+  try { if (window.speechSynthesis) { const w = new SpeechSynthesisUtterance(''); w.volume = 0; speechSynthesis.speak(w); speechSynthesis.getVoices(); } } catch(e){}
 }
-['pointerdown','touchstart','click'].forEach(ev =>
-  document.addEventListener(ev, _warmSpeech, { once: true, passive: true }));
+['pointerdown','touchstart','click'].forEach(ev => document.addEventListener(ev, _warmSpeech, { once: true, passive: true }));
 let _streamConnected = false;
 function connectStream() {
   if (!player || _streamConnected) return;
@@ -441,6 +392,7 @@ function connectStream() {
 }
 connectStream();
 
+applyPoster();
 init();
 </script>
 </body>

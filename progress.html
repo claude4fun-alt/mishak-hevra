@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ההתקדמות שלי</title>
+<title data-i18n="progress.title">ההתקדמות שלי</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
   body { font-family:'Segoe UI',Arial,sans-serif; min-height:100vh; color:#fff; padding:20px;
@@ -12,6 +12,7 @@
   .wrap { position:relative; z-index:1; max-width:520px; margin:0 auto; }
   .top { text-align:center; margin-bottom:18px; }
   .top h1 { font-size:26px; text-shadow:0 2px 10px rgba(0,0,0,.7); }
+  .top .langWrap { display:flex; justify-content:center; margin-bottom:12px; }
   .top .me { margin-top:6px; font-size:15px; background:rgba(0,0,0,.45); display:inline-block; padding:6px 16px; border-radius:20px; backdrop-filter:blur(4px); }
   .summary { text-align:center; margin:14px 0 20px; font-size:16px; background:rgba(255,255,255,.95); color:#1a2a4a; border-radius:14px; padding:12px; font-weight:700; }
   .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:16px; }
@@ -39,26 +40,28 @@
 <body>
 <div class="wrap">
   <div class="top">
-    <h1>🗺️ ההתקדמות שלי</h1>
+    <div class="langWrap"><span id="langPicker"></span></div>
+    <h1 data-i18n="progress.title">🗺️ ההתקדמות שלי</h1>
     <div class="me" id="me"></div>
   </div>
-  <div class="summary" id="summary">טוען...</div>
+  <div class="summary" id="summary" data-i18n="common.loading">טוען...</div>
   <div class="grid" id="grid"></div>
   <div class="legend">
-    <span><i class="dot g"></i> נכון</span>
-    <span><i class="dot y"></i> ממתין לאישור</span>
-    <span><i class="dot r"></i> לא נכון</span>
-    <span><i class="dot x"></i> טרם נסרק</span>
+    <span><i class="dot g"></i> <span data-i18n="progress.legendCorrect">נכון</span></span>
+    <span><i class="dot y"></i> <span data-i18n="progress.legendPending">ממתין לאישור</span></span>
+    <span><i class="dot r"></i> <span data-i18n="progress.legendWrong">לא נכון</span></span>
+    <span><i class="dot x"></i> <span data-i18n="progress.legendNone">טרם נסרק</span></span>
   </div>
   <div class="actions">
-    <a class="btn bscan" id="scanLink" href="#">📷 לסריקת תחנה</a>
-    <a class="btn bboard" id="boardLink" href="#">📊 לוח תוצאות</a>
-    <a class="btn bboard" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)">🧭 מפת המשחק</a>
+    <a class="btn bscan" id="scanLink" href="#" data-i18n="progress.scanLink">📷 לסריקת תחנה</a>
+    <a class="btn bboard" id="boardLink" href="#" data-i18n="common.boardShort">📊 לוח תוצאות</a>
+    <a class="btn bboard" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" data-i18n="common.gameMap">🧭 מפת המשחק</a>
   </div>
-  <div class="credit">נוצר ע"י Amir Cohen</div>
+  <div class="credit" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</div>
 </div>
 <div class="notice" id="notice"></div>
 
+<script src="/i18n.js"></script>
 <script>
 // ===== צלילים =====
 let _ac=null,_unlocked=false;
@@ -67,7 +70,6 @@ function _unlock(){const c=_ctx();if(!c)return;if(c.state==='suspended')c.resume
 ['pointerdown','touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev,_unlock,{passive:true}));
 function _tone(f,s,d,t,v){const c=_ctx();if(!c)return;const t0=c.currentTime+s;const o=c.createOscillator(),g=c.createGain();o.type=t||'sine';o.frequency.value=f;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v||0.25,t0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);o.start(t0);o.stop(t0+d+0.05);}
 function speakOtherGroup(){
-  // קול אנגלי + צליל גיבוי
   try {
     const u = new SpeechSynthesisUtterance('The other group answered correctly');
     u.lang = 'en-US'; u.rate = 1; u.pitch = 1;
@@ -79,6 +81,9 @@ function speakOtherGroup(){
 const companyId = location.pathname.split('/')[2]; // /c/:cid/progress
 const PLAYER_KEY = 'fg_player_' + companyId;
 const player = JSON.parse(localStorage.getItem(PLAYER_KEY) || 'null');
+let lastData = null;
+
+function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
 
 document.getElementById('scanLink').href = '/c/' + companyId;
 document.getElementById('boardLink').href = '/c/' + companyId + '/board';
@@ -86,22 +91,29 @@ document.getElementById('mapLink').href = '/c/' + companyId + '/map' + (player ?
 
 async function load() {
   if (!player) {
-    document.getElementById('summary').textContent = 'עדיין לא נרשמת למשחק';
+    document.getElementById('summary').textContent = t('progress.notJoined');
     document.getElementById('me').textContent = '';
     renderGrid([], 10);
     return;
   }
-  document.getElementById('me').textContent = player.name + (player.team ? ' · קבוצה: ' + player.team : '');
+  document.getElementById('me').textContent = player.name + (player.team ? t('station.teamLabel', {team: player.team}) : '');
   try {
     const r = await fetch('/api/company/' + companyId + '/progress?player=' + player.playerId);
     const d = await r.json();
-    renderGrid(d.stations, d.stationCount);
-    const correct = d.stations.filter(s => s.status === 'correct').length;
-    const done = d.stations.filter(s => s.status !== 'none').length;
-    document.getElementById('summary').textContent = `סרקת ${done} מתוך ${d.stationCount} תחנות · ${correct} תשובות נכונות`;
+    lastData = d;
+    if (d.defaultLang) { window.FG_DEFAULT_LANG = d.defaultLang; I18N.applyLang(); applyPoster(); }
+    renderSummary(d);
   } catch(e) {
-    document.getElementById('summary').textContent = 'שגיאת חיבור';
+    document.getElementById('summary').textContent = t('common.connErr');
   }
+}
+
+function renderSummary(d) {
+  if (!d) return;
+  renderGrid(d.stations, d.stationCount);
+  const correct = d.stations.filter(s => s.status === 'correct').length;
+  const done = d.stations.filter(s => s.status !== 'none').length;
+  document.getElementById('summary').textContent = t('progress.summary', { done, total: d.stationCount, correct });
 }
 
 function renderGrid(stations, count) {
@@ -122,18 +134,17 @@ function connectStream() {
   es.addEventListener('scored', (ev) => {
     try {
       const data = JSON.parse(ev.data);
-      // אם זו לא הקבוצה שלי (וגם לא אני) - השמע קול
       const myTeam = (player.team || '').trim();
       if ((data.team || '').trim() !== myTeam || !myTeam) {
         if (data.name !== player.name) {
           speakOtherGroup();
-          showNotice('🔔 קבוצה אחרת ענתה נכון!');
+          showNotice(t('progress.otherCorrect'));
         }
       }
-      load(); // רענן את ההתקדמות שלי גם
+      load();
     } catch(e){}
   });
-  es.onerror = () => { /* יתחבר מחדש אוטומטית */ };
+  es.onerror = () => {};
 }
 function showNotice(txt) {
   const n = document.getElementById('notice');
@@ -141,9 +152,19 @@ function showNotice(txt) {
   setTimeout(() => n.classList.remove('show'), 3500);
 }
 
+I18N.renderLangPicker('langPicker');
+document.addEventListener('langchange', () => {
+  applyPoster();
+  if (player && lastData) {
+    document.getElementById('me').textContent = player.name + (player.team ? t('station.teamLabel', {team: player.team}) : '');
+    renderSummary(lastData);
+  } else if (!player) {
+    document.getElementById('summary').textContent = t('progress.notJoined');
+  }
+});
+
 load();
 connectStream();
-// רענון תקופתי ליתר ביטחון
 setInterval(load, 15000);
 </script>
 </body>

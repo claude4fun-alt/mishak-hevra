@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>משחק חברה</title>
+<title data-i18n="common.gameName">משחק חברה</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Segoe UI',Arial,sans-serif; min-height:100vh; display:flex; align-items:center; justify-content:center; color:#fff; padding:20px;
@@ -14,20 +14,30 @@
   .btn { display:block; width:100%; padding:16px; border-radius:14px; font-weight:800; font-size:17px; text-decoration:none; margin-bottom:12px; color:#fff; background:linear-gradient(135deg,#ff6b35,#ff9558); }
   .emoji { font-size:60px; margin-bottom:10px; }
   .note { background:#f0f3fa; border-radius:12px; padding:14px; font-size:13px; color:#5a6b8a; margin-top:8px; line-height:1.6; }
+  .langbar { position:relative; z-index:1; display:flex; justify-content:center; margin-bottom:14px; }
 </style>
 </head>
 <body>
 <div class="card">
+  <div class="langbar"><span id="langPicker"></span></div>
   <div class="emoji">🎮</div>
-  <h1>משחק חברה</h1>
-  <p>מערכת משחק תחנות רב-חברתית</p>
-  <a class="btn" href="/dashboard">📝 כניסת מנהל</a>
-  <div class="note">
+  <h1 data-i18n="common.gameName">משחק חברה</h1>
+  <p data-i18n="index.subtitle">מערכת משחק תחנות רב-חברתית</p>
+  <a class="btn" href="/dashboard" data-i18n="index.adminLogin">📝 כניסת מנהל</a>
+  <div class="note" data-i18n-html="index.note">
     <strong>שחקנים</strong> מצטרפים על ידי סריקת ה-QR הראשי של החברה שלהם — לא דרך עמוד זה.<br>
     <strong>מנהל ראשי</strong> נכנס לדשבורד ליצירת חברות וניהולן.<br>
     <strong>מנהל חברה</strong> נכנס עם שם החברה והסיסמה שקיבל.
   </div>
-  <p style="color:#8a98b5;font-size:13px;margin-top:16px;margin-bottom:0">נוצר ע"י Amir Cohen</p>
+  <p style="color:#8a98b5;font-size:13px;margin-top:16px;margin-bottom:0" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
 </div>
+<script src="/i18n.js"></script>
+<script>
+  I18N.renderLangPicker('langPicker');
+  // עדכון תמונת הרקע לפי שפה
+  function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
+  applyPoster();
+  document.addEventListener('langchange', applyPoster);
+</script>
 </body>
 </html>
