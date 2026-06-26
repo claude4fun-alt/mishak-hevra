@@ -122,6 +122,14 @@
   .pack-modal .qitem{border-bottom:1px solid #eef2f9;padding:10px 0;}
   .pack-modal .qitem b{color:#1a2a6c;}
   .pack-modal .qitem .qa{font-size:13px;color:#5a6b8a;margin-top:3px;}
+  /* ===== מדריך מנהל ===== */
+  .help-intro{background:linear-gradient(135deg,#eef3ff,#f7f0ff);border-radius:14px;padding:16px 18px;color:#3a4a6a;font-size:15px;line-height:1.6;margin-bottom:16px;}
+  .help-step{display:flex;gap:14px;background:#fff;border:2px solid #eef2f9;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 3px 10px rgba(0,0,0,.04);}
+  .help-step .hs-body{flex:1;}
+  .help-step h4{color:#1a2a6c;font-size:16px;margin-bottom:5px;}
+  .help-step p{color:#5a6b8a;font-size:14px;line-height:1.6;}
+  .help-tip{background:linear-gradient(135deg,#fff3cd,#ffe9a8);border:2px solid #f0a500;border-radius:14px;padding:14px 18px;color:#5a3d12;line-height:1.6;margin-top:6px;}
+  .help-tip h4{color:#8a5a00;margin-bottom:4px;}
 </style>
 </head>
 <body class="login-mode">
@@ -148,17 +156,21 @@
   <div id="superView" style="display:none">
     <div class="tabs noprint">
       <div class="tab active" onclick="superTab('companies',this)" data-i18n="dash.tabCompanies">🏢 חברות</div>
+      <div class="tab" onclick="superTab('superlib',this)" data-i18n="dash.tabLibrary">📚 ספריית חבילות</div>
     </div>
-    <div class="card2">
-      <h3 style="color:#1a2a6c;margin-bottom:10px" data-i18n="dash.addCompany">➕ הוספת חברה חדשה</h3>
-      <div class="row">
-        <div><label data-i18n="dash.coName">שם החברה</label><input id="newCoName" data-i18n-ph="dash.coNamePh" placeholder="למשל: משפחת כהן"></div>
-        <div><label data-i18n="dash.coPass">סיסמה למנהל החברה</label><input id="newCoPass" data-i18n-ph="dash.coPassPh" placeholder="לפחות 4 תווים"></div>
+    <div id="sv_companies">
+      <div class="card2">
+        <h3 style="color:#1a2a6c;margin-bottom:10px" data-i18n="dash.addCompany">➕ הוספת חברה חדשה</h3>
+        <div class="row">
+          <div><label data-i18n="dash.coName">שם החברה</label><input id="newCoName" data-i18n-ph="dash.coNamePh" placeholder="למשל: משפחת כהן"></div>
+          <div><label data-i18n="dash.coPass">סיסמה למנהל החברה</label><input id="newCoPass" data-i18n-ph="dash.coPassPh" placeholder="לפחות 4 תווים"></div>
+        </div>
+        <button class="btn green" style="margin-top:12px" onclick="createCompany()" data-i18n="dash.createCo">צור חברה</button>
+        <span class="saved" id="coCreated" style="display:none" data-i18n="dash.created">נוצר ✓</span>
       </div>
-      <button class="btn green" style="margin-top:12px" onclick="createCompany()" data-i18n="dash.createCo">צור חברה</button>
-      <span class="saved" id="coCreated" style="display:none" data-i18n="dash.created">נוצר ✓</span>
+      <div id="companiesList"></div>
     </div>
-    <div id="companiesList"></div>
+    <div id="sv_superlib" style="display:none"></div>
   </div>
 
   <!-- ===== ניהול תוכן חברה (גם מנהל-על וגם מנהל חברה) ===== -->
@@ -175,6 +187,7 @@
       <div class="tab" onclick="coTab('qr',this)" data-i18n="dash.tabQR">🔲 קודי QR</div>
       <div class="tab" onclick="coTab('pending',this)" data-i18n="dash.tabPending">📸 אישור תמונות</div>
       <div class="tab" onclick="coTab('settings',this)" data-i18n="dash.tabSettings">⚙️ הגדרות</div>
+      <div class="tab" onclick="coTab('help',this)" data-i18n="dash.tabHelp">❓ מדריך</div>
     </div>
 
     <div id="questions" class="copanel"></div>
@@ -352,6 +365,21 @@
         <button class="btn gray" onclick="logout()" data-i18n="dash.logout">🚪 יציאה</button>
       </div>
     </div>
+
+    <div id="help" class="copanel" style="display:none">
+      <div class="card2">
+        <h3 style="color:#1a2a6c;margin-bottom:10px" data-i18n="help.title">📖 מדריך למנהל</h3>
+        <div class="help-intro" data-i18n="help.intro">ברוכים הבאים!</div>
+        <div class="help-step"><div class="hs-body"><h4 data-i18n="help.s1Title">1️⃣ בניית השאלות</h4><p data-i18n="help.s1Body"></p></div></div>
+        <div class="help-step"><div class="hs-body"><h4 data-i18n="help.s2Title">2️⃣ חבילות מוכנות</h4><p data-i18n="help.s2Body"></p></div></div>
+        <div class="help-step"><div class="hs-body"><h4 data-i18n="help.s3Title">3️⃣ גיבוי וטעינה</h4><p data-i18n="help.s3Body"></p></div></div>
+        <div class="help-step"><div class="hs-body"><h4 data-i18n="help.s4Title">4️⃣ מפת התחנות</h4><p data-i18n="help.s4Body"></p></div></div>
+        <div class="help-step"><div class="hs-body"><h4 data-i18n="help.s5Title">5️⃣ קודי QR</h4><p data-i18n="help.s5Body"></p></div></div>
+        <div class="help-step"><div class="hs-body"><h4 data-i18n="help.s6Title">6️⃣ תוצאות ואישורים</h4><p data-i18n="help.s6Body"></p></div></div>
+        <div class="help-step"><div class="hs-body"><h4 data-i18n="help.s7Title">7️⃣ הגדרות</h4><p data-i18n="help.s7Body"></p></div></div>
+        <div class="help-tip"><h4 data-i18n="help.tipTitle">💡 טיפ חשוב</h4><p data-i18n="help.tipBody"></p></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -400,7 +428,13 @@ function logout() {
 }
 
 // ===== מנהל-על: חברות =====
-function superTab(id, el){ document.querySelectorAll('#superView .tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+function superTab(id, el){
+  document.querySelectorAll('#superView .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sv_companies').style.display = (id==='companies') ? 'block' : 'none';
+  document.getElementById('sv_superlib').style.display = (id==='superlib') ? 'block' : 'none';
+  if(id==='superlib') loadSuperLibrary();
+}
 
 async function loadCompanies() {
   const r=await fetch('/api/admin/companies',{headers:H()});
@@ -810,16 +844,73 @@ function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&
 // ===== ספריית חבילות =====
 let libraryPacks = [];
 let editingPackId = null;
+// הקשר רינדור: company (בתוך חברה, מותר לטעון) או super (מסך ראשי, ניהול בלבד)
+let libCtx = { grid:'libGrid', fLang:'filterLang', fStyle:'filterStyle', fAge:'filterAge', canLoad:true };
 
+async function fetchLibrary(){
+  try { const r = await fetch('/api/admin/library',{headers:H()}); const d = await r.json(); libraryPacks = d.packs || []; }
+  catch(e){ libraryPacks = []; }
+}
+
+// טאב ספרייה בתוך חברה
 async function loadLibrary(){
-  // הצג כלי ניהול רק למנהל-על
+  libCtx = { grid:'libGrid', fLang:'filterLang', fStyle:'filterStyle', fAge:'filterAge', canLoad:true };
   document.getElementById('libManage').style.display = (ROLE==='super') ? 'block' : 'none';
   closePackEditor();
-  try {
-    const r = await fetch('/api/admin/library',{headers:H()});
-    const d = await r.json();
-    libraryPacks = d.packs || [];
-  } catch(e){ libraryPacks = []; }
+  await fetchLibrary();
+  populateLibFilters();
+  renderLibrary();
+}
+
+// טאב ספרייה במסך הראשי של מנהל-על (ניהול + עיון, בלי טעינה לחברה)
+async function loadSuperLibrary(){
+  const host = document.getElementById('sv_superlib');
+  // בנה את התשתית פעם אחת
+  host.innerHTML = `
+    <div class="card2 noprint">
+      <h3 style="color:#1a2a6c;margin-bottom:6px" data-i18n="lib.manageTitle">📚 ניהול ספריית החבילות</h3>
+      <p class="hint" style="margin-bottom:6px" data-i18n="lib.superManageHint">ערוך מטא-דאטה, מחק או העלה חבילות. כדי לבנות תוכן חדש עם תמונות — היכנס לחברה כלשהי, בנה בטאב "שאלות", ושמור כחבילה.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="document.getElementById('packUploadFileSuper').click()" data-i18n="lib.uploadPack">⬆️ העלאת חבילה מקובץ</button>
+        <input type="file" id="packUploadFileSuper" accept="application/json,.json" style="display:none" onchange="uploadPackFile(event)">
+      </div>
+      <span class="saved" id="libMsgSuper" style="display:none"></span>
+    </div>
+    <div class="card2 noprint" id="packEditorSuper" style="display:none">
+      <h3 style="color:#1a2a6c;margin-bottom:10px" id="packEditorTitleSuper"></h3>
+      <div class="row">
+        <div><label data-i18n="lib.packName">שם החבילה</label><input id="pkNameS"></div>
+        <div><label data-i18n="lib.filterLang">שפה</label>
+          <select id="pkLangS"><option value="he" data-i18n="lib.langHe">עברית 🇮🇱</option><option value="en" data-i18n="lib.langEn">אנגלית 🇺🇸</option><option value="it" data-i18n="lib.langIt">איטלקית 🇮🇹</option></select>
+        </div>
+      </div>
+      <div class="row">
+        <div><label data-i18n="lib.packStyle">סגנון</label><input id="pkStyleS" data-i18n-ph="lib.packStyle"></div>
+        <div><label data-i18n="lib.packAge">גילאים</label><input id="pkAgeS" data-i18n-ph="lib.packAge"></div>
+      </div>
+      <label data-i18n="lib.packDesc">תיאור קצר</label>
+      <input id="pkDescS" data-i18n-ph="lib.packDesc">
+      <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button class="btn green" onclick="savePackSuper()" data-i18n="lib.saveChanges">💾 שמור שינויים</button>
+        <button class="btn gray" onclick="closePackEditorSuper()" data-i18n="lib.cancel">ביטול</button>
+        <span class="saved" id="pkSavedSuper" style="display:none" data-i18n="lib.saved">נשמר ✓</span>
+      </div>
+    </div>
+    <div class="card2">
+      <h3 style="color:#1a2a6c;margin-bottom:6px" data-i18n="lib.browseTitle">📚 חבילות שאלות מוכנות</h3>
+      <p class="hint" style="margin-bottom:12px" data-i18n="lib.superBrowseHint">כל החבילות בספרייה. עיין, צפה בתצוגה מקדימה, ערוך מטא או מחק.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <div><label data-i18n="lib.filterLang">שפה</label>
+          <select id="filterLangSuper" onchange="renderLibrary()"><option value="" data-i18n="lib.all">הכל</option><option value="he" data-i18n="lib.langHe">עברית 🇮🇱</option><option value="en" data-i18n="lib.langEn">אנגלית 🇺🇸</option><option value="it" data-i18n="lib.langIt">איטלקית 🇮🇹</option></select>
+        </div>
+        <div><label data-i18n="lib.filterStyle">סגנון</label><select id="filterStyleSuper" onchange="renderLibrary()"><option value="" data-i18n="lib.all">הכל</option></select></div>
+        <div><label data-i18n="lib.filterAge">גילאים</label><select id="filterAgeSuper" onchange="renderLibrary()"><option value="" data-i18n="lib.all">הכל</option></select></div>
+      </div>
+      <div class="qr-grid" id="libGridSuper"></div>
+    </div>`;
+  I18N.applyLang(); // לתרגם את ה-data-i18n שזה עתה הוזרקו
+  libCtx = { grid:'libGridSuper', fLang:'filterLangSuper', fStyle:'filterStyleSuper', fAge:'filterAgeSuper', canLoad:false };
+  await fetchLibrary();
   populateLibFilters();
   renderLibrary();
 }
@@ -827,26 +918,29 @@ async function loadLibrary(){
 function populateLibFilters(){
   const styles = [...new Set(libraryPacks.map(p=>p.style).filter(Boolean))].sort();
   const ages = [...new Set(libraryPacks.map(p=>p.ageRange).filter(Boolean))].sort();
-  const fill = (sel, vals) => {
+  const fill = (id, vals) => {
+    const sel = document.getElementById(id); if(!sel) return;
     const cur = sel.value;
     sel.innerHTML = '<option value="">'+t('lib.all')+'</option>' + vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
     sel.value = vals.includes(cur) ? cur : '';
   };
-  fill(document.getElementById('filterStyle'), styles);
-  fill(document.getElementById('filterAge'), ages);
+  fill(libCtx.fStyle, styles);
+  fill(libCtx.fAge, ages);
 }
 
 function renderLibrary(){
-  const fl = document.getElementById('filterLang').value;
-  const fs = document.getElementById('filterStyle').value;
-  const fa = document.getElementById('filterAge').value;
-  const grid = document.getElementById('libGrid');
+  const gv = id => { const e=document.getElementById(id); return e?e.value:''; };
+  const fl = gv(libCtx.fLang), fs = gv(libCtx.fStyle), fa = gv(libCtx.fAge);
+  const grid = document.getElementById(libCtx.grid);
+  if(!grid) return;
   if(!libraryPacks.length){ grid.innerHTML = '<p class="hint">'+t('lib.empty')+'</p>'; return; }
   const flag = {he:'🇮🇱', en:'🇺🇸', it:'🇮🇹'};
-  const filtered = libraryPacks.filter(p =>
-    (!fl || p.lang===fl) && (!fs || p.style===fs) && (!fa || p.ageRange===fa));
+  const filtered = libraryPacks.filter(p => (!fl || p.lang===fl) && (!fs || p.style===fs) && (!fa || p.ageRange===fa));
   if(!filtered.length){ grid.innerHTML = '<p class="hint">'+t('lib.noMatch')+'</p>'; return; }
-  grid.innerHTML = filtered.map(p=>`
+  const canLoad = libCtx.canLoad;
+  grid.innerHTML = filtered.map(p=>{
+    const nameEsc = esc(p.name).replace(/'/g,"\\'");
+    return `
     <div class="pack-card">
       <div class="pname">${esc(p.name)}</div>
       <div class="ptags">
@@ -858,12 +952,13 @@ function renderLibrary(){
       </div>
       ${p.description?`<div class="pdesc">${esc(p.description)}</div>`:'<div class="pdesc"></div>'}
       <div class="pactions">
-        <button class="btn green" onclick="loadPack('${p.id}','${esc(p.name).replace(/'/g,"\\'")}')">${t('lib.load')}</button>
+        ${canLoad?`<button class="btn green" onclick="loadPack('${p.id}','${nameEsc}')">${t('lib.load')}</button>`:''}
         <button class="btn gray" onclick="previewPack('${p.id}')">${t('lib.preview')}</button>
-        ${ROLE==='super'?`<button class="btn" onclick="editPack('${p.id}')">${t('lib.editPack')}</button>
-        <button class="btn red" onclick="deletePack('${p.id}','${esc(p.name).replace(/'/g,"\\'")}')">${t('lib.deletePack')}</button>`:''}
+        ${ROLE==='super'?`<button class="btn" onclick="${canLoad?'editPack':'editPackSuper'}('${p.id}')">${t('lib.editPack')}</button>
+        <button class="btn red" onclick="deletePack('${p.id}','${nameEsc}')">${t('lib.deletePack')}</button>`:''}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 async function loadPack(pid, name){
@@ -874,6 +969,40 @@ async function loadPack(pid, name){
     if(!r.ok){ alert(d.error||t('lib.loadErr')); return; }
     await loadCompanyData();   // רענן את השאלות + שפה
     alert(t('lib.loaded',{name}));
+  } catch(e){ alert(t('lib.loadErr')); }
+}
+
+// עריכת מטא במסך הראשי (super)
+function editPackSuper(pid){
+  const meta = libraryPacks.find(p=>p.id===pid); if(!meta) return;
+  editingPackId = pid;
+  document.getElementById('packEditorTitleSuper').textContent = t('lib.editingPack',{name:meta.name});
+  document.getElementById('pkNameS').value=meta.name||'';
+  document.getElementById('pkLangS').value=meta.lang||'he';
+  document.getElementById('pkStyleS').value=meta.style||'';
+  document.getElementById('pkAgeS').value=meta.ageRange||'';
+  document.getElementById('pkDescS').value=meta.description||'';
+  document.getElementById('packEditorSuper').style.display='block';
+  document.getElementById('packEditorSuper').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closePackEditorSuper(){ const e=document.getElementById('packEditorSuper'); if(e) e.style.display='none'; editingPackId=null; }
+async function savePackSuper(){
+  if(!editingPackId) return;
+  const body = {
+    name: document.getElementById('pkNameS').value.trim(),
+    lang: document.getElementById('pkLangS').value,
+    style: document.getElementById('pkStyleS').value.trim(),
+    ageRange: document.getElementById('pkAgeS').value.trim(),
+    description: document.getElementById('pkDescS').value.trim()
+  };
+  if(!body.name){ alert(t('lib.packName')); return; }
+  try {
+    const r = await fetch('/api/admin/library/'+editingPackId,{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json();
+    if(!r.ok){ alert(d.error||t('lib.loadErr')); return; }
+    const s=document.getElementById('pkSavedSuper'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
+    closePackEditorSuper();
+    await fetchLibrary(); populateLibFilters(); renderLibrary();
   } catch(e){ alert(t('lib.loadErr')); }
 }
 
@@ -955,6 +1084,13 @@ async function savePack(){
   } catch(e){ alert(t('lib.loadErr')); }
 }
 
+// רענון תצוגת הספרייה לפי ההקשר הפעיל (חברה או מסך-על)
+async function refreshLibraryView(){
+  await fetchLibrary();
+  populateLibFilters();
+  renderLibrary();
+}
+
 async function uploadPackFile(e){
   const file=e.target.files[0]; if(!file) return; e.target.value='';
   if(!confirm(t('lib.uploadConfirm'))) return;
@@ -975,14 +1111,15 @@ async function uploadPackFile(e){
     const r = await fetch('/api/admin/library',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
     const d = await r.json();
     if(!r.ok){ alert(d.error||t('lib.loadErr')); return; }
-    const m=document.getElementById('libMsg'); m.textContent=t('lib.created'); m.style.display='inline'; setTimeout(()=>m.style.display='none',2500);
-    await loadLibrary();
+    const m=document.getElementById('libMsg')||document.getElementById('libMsgSuper');
+    if(m){ m.textContent=t('lib.created'); m.style.display='inline'; setTimeout(()=>m.style.display='none',2500); }
+    await refreshLibraryView();
   } catch(e){ alert(t('lib.loadErr')); }
 }
 
 async function deletePack(pid, name){
   if(!confirm(t('lib.deleteConfirm',{name}))) return;
-  try { await fetch('/api/admin/library/'+pid,{method:'DELETE',headers:H()}); await loadLibrary(); }
+  try { await fetch('/api/admin/library/'+pid,{method:'DELETE',headers:H()}); await refreshLibraryView(); }
   catch(e){ alert(t('lib.loadErr')); }
 }
 
@@ -1001,12 +1138,21 @@ document.addEventListener('langchange', () => {
   if (ROLE==='super' && document.getElementById('superView').style.display!=='none') {
     document.getElementById('hdrTitle').textContent=t('dash.hdrSuper');
     document.getElementById('hdrSub').textContent=t('dash.hdrSuperSub');
-    loadCompanies();
+    // אם טאב ספריית-העל פתוח, בנה אותו מחדש בשפה הנכונה; אחרת רשימת חברות
+    if (document.getElementById('sv_superlib') && document.getElementById('sv_superlib').style.display !== 'none') {
+      loadSuperLibrary();
+    } else {
+      loadCompanies();
+    }
   } else if (activeCompanyId) {
     if (ROLE==='super') document.getElementById('hdrSub').textContent=t('dash.editingSub',{name:activeCompanyName});
     else { document.getElementById('hdrTitle').textContent=t('dash.hdrCompany',{name:activeCompanyName}); document.getElementById('hdrSub').textContent=t('dash.hdrCompanySub'); }
     if (stations && stations.length) renderStations();
     applyLockUI(); renderChips();
+    // אם טאב הספרייה פתוח — רענן את כרטיסי החבילות (הכפתורים נוצרים דינמית)
+    if (document.getElementById('library') && document.getElementById('library').style.display !== 'none') {
+      populateLibFilters(); renderLibrary();
+    }
   }
 });
 

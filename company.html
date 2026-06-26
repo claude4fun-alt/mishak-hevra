@@ -30,6 +30,7 @@
   .scan-err { color:#c0392b; font-size:13px; margin-bottom:10px; }
   .credit { color:#8a98b5; font-size:13px; margin-top:16px; }
   .err-screen { position:relative; z-index:2; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .ph-step { background:#f0f3fa; border-radius:12px; padding:13px 15px; font-size:15px; line-height:1.5; color:#2a3a5a; border-inline-start:4px solid #7d6bb8; }
 </style>
 </head>
 <body>
@@ -59,8 +60,25 @@
     <a class="btn b2" id="boardLink" href="#" data-i18n="common.board">📊 לוח תוצאות חי</a>
     <a class="btn b2" id="progressLink" href="#" style="background:linear-gradient(135deg,#22a06b,#16c79a)" data-i18n="common.progress">🗺️ ההתקדמות שלי</a>
     <a class="btn b2" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" data-i18n="common.gameMap">🧭 מפת המשחק</a>
+    <button class="btn b2" style="background:linear-gradient(135deg,#5a4b8a,#7d6bb8)" onclick="showPlayerHelp()" data-i18n="phelp.btn">❓ איך משחקים</button>
     <p class="credit" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
     <p class="credit" style="margin-top:6px"><span data-i18n="common.moreGames">למשחקים נוספים פנו ל-</span><a href="mailto:mishak.hevra@gmail.com" style="color:#c47f00;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
+  </div>
+</div>
+
+<div id="playerHelp" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(10,20,15,.75);backdrop-filter:blur(4px);overflow:auto;padding:20px">
+  <div style="max-width:480px;margin:24px auto;background:#fff;color:#1a2a4a;border-radius:22px;padding:26px;box-shadow:0 25px 60px rgba(0,0,0,.5)">
+    <h1 style="font-size:24px;text-align:center;margin-bottom:18px" data-i18n="phelp.title">🎮 איך משחקים</h1>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="ph-step" data-i18n="phelp.s1"></div>
+      <div class="ph-step" data-i18n="phelp.s2"></div>
+      <div class="ph-step" data-i18n="phelp.s3"></div>
+      <div class="ph-step" data-i18n="phelp.s4"></div>
+      <div class="ph-step" data-i18n="phelp.s5"></div>
+      <div class="ph-step" data-i18n="phelp.s6"></div>
+    </div>
+    <div style="margin-top:16px;padding:14px;border-radius:14px;background:linear-gradient(135deg,#fff3cd,#ffe9a8);color:#5a3d12;font-weight:700;line-height:1.5;text-align:center" data-i18n="phelp.goal"></div>
+    <button class="btn bjoin" style="margin-top:18px" onclick="hidePlayerHelp()" data-i18n="phelp.close">הבנתי, בואו נתחיל!</button>
   </div>
 </div>
 
@@ -140,6 +158,9 @@ async function stopScan() {
 // בוררי דגלים (גם במסך הפתיחה וגם בתפריט)
 I18N.renderLangPicker('langPickerW', {compact:true});
 I18N.renderLangPicker('langPickerM');
+
+function showPlayerHelp(){ document.getElementById('playerHelp').style.display='block'; }
+function hidePlayerHelp(){ document.getElementById('playerHelp').style.display='none'; }
 document.addEventListener('langchange', () => {
   applyPoster();
   if (company) document.getElementById('gameName').textContent = company.gameName || t('common.gameName');
