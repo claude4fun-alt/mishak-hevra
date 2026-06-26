@@ -110,7 +110,7 @@ function newCompany(name, password) {
 }
 
 function defaultDB() {
-  return { companies: {} };  // companyId -> company object
+  return { companies: {}, library: [] };  // companies: companyId->company · library: [{id, name, lang, style, ageRange, stations[], mapConfig, uses, createdAt, updatedAt}]
 }
 
 let db;
@@ -138,6 +138,7 @@ async function loadDB() {
     }
   }
   // backfill
+  if (!Array.isArray(db.library)) db.library = [];
   Object.values(db.companies).forEach(c => {
     if (c.enabled === undefined) c.enabled = true;
     if (!c.speedBonus) c.speedBonus = { enabled: true, maxBonus: 10, windowSec: 60 };
@@ -147,6 +148,9 @@ async function loadDB() {
     if (!Array.isArray(c.mapConfig.markers)) c.mapConfig.markers = [];
     if (!isFinite(c.mapConfig.markerSize)) c.mapConfig.markerSize = 30;
     if (!['he', 'en', 'it'].includes(c.defaultLang)) c.defaultLang = 'he';
+    // מעקב פופולריות חבילות: איזו חבילה נטענה לאחרונה והאם כבר נספרה כ"שוחקה"
+    if (c.loadedPackId === undefined) c.loadedPackId = null;
+    if (c.loadedPackCounted === undefined) c.loadedPackCounted = false;
   });
 }
 
@@ -158,6 +162,52 @@ function saveDB() {
 }
 
 function getCompany(id) { return db.companies[id] || null; }
+
+// נרמול 10 תחנות מתוך נתונים גולמיים (משלים חסרות, מתעלם מעודפות)
+function normalizeStations(rawStations) {
+  const incoming = {};
+  (rawStations || []).forEach(s => { const id = Number(s.id); if (id >= 1 && id <= 10) incoming[id] = s; });
+  const out = [];
+  for (let i = 1; i <= 10; i++) {
+    const s = incoming[i] || {};
+    out.push({
+      id: i,
+      title: (s.title != null ? String(s.title) : `תחנה ${i}`).slice(0, 200),
+      questionType: (s.questionType === 'photo') ? 'photo' : 'text',
+      questionText: (s.questionText != null ? String(s.questionText) : '').slice(0, 2000),
+      correctAnswer: (s.correctAnswer != null ? String(s.correctAnswer) : '').slice(0, 500),
+      points: Math.max(0, Number(s.points) || 10),
+      imageUrl: (typeof s.imageUrl === 'string' ? s.imageUrl : '').slice(0, 3000000)
+    });
+  }
+  return out;
+}
+
+// נרמול mapConfig מתוך נתונים גולמיים (מחזיר null אם לא תקין)
+function normalizeMapConfig(m) {
+  if (!m || typeof m !== 'object') return null;
+  const cfg = defaultMapConfig();
+  if (m.center && isFinite(m.center.lat) && isFinite(m.center.lng)) cfg.center = { lat: Number(m.center.lat), lng: Number(m.center.lng) };
+  if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
+  if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
+  if (m.bounds && isFinite(m.bounds.north) && isFinite(m.bounds.south) && isFinite(m.bounds.east) && isFinite(m.bounds.west)) cfg.bounds = { north: Number(m.bounds.north), south: Number(m.bounds.south), east: Number(m.bounds.east), west: Number(m.bounds.west) };
+  cfg.locked = !!m.locked;
+  if (Array.isArray(m.markers)) cfg.markers = m.markers.filter(x => x && isFinite(x.lat) && isFinite(x.lng) && Number(x.id) >= 1 && Number(x.id) <= 10).map(x => ({ id: Number(x.id), lat: Number(x.lat), lng: Number(x.lng) })).slice(0, 10);
+  return cfg;
+}
+
+// מעקב פופולריות: סופר שימוש בחבילה רק אם ≥5 שחקנים שונים כבר ענו בחברה שטענה אותה
+const PACK_USE_THRESHOLD = 5;
+function maybeCountPackUse(c) {
+  if (!c || !c.loadedPackId || c.loadedPackCounted) return;
+  const distinctAnswered = Object.values(c.players || {}).filter(p => p.answers && Object.keys(p.answers).length > 0).length;
+  if (distinctAnswered >= PACK_USE_THRESHOLD) {
+    const pack = (db.library || []).find(p => p.id === c.loadedPackId);
+    if (pack) pack.uses = (pack.uses || 0) + 1;
+    c.loadedPackCounted = true;   // נספר פעם אחת בלבד לכל טעינה
+    saveDB();
+  }
+}
 
 // ============================================================
 //  multer
@@ -355,6 +405,7 @@ app.post('/api/company/:cid/answer', upload.single('photo'), (req, res) => {
   const bonus = correct === true ? speedBonus(c, timeMs) : 0;
   player.answers[station.id] = { stationId: station.id, answerText: answerText || '', photoUrl, correct, basePoints: correct ? station.points : 0, bonus, points: correct ? (station.points + bonus) : 0, timeMs, at: Date.now() };
   c.submissions.push({ playerId, name: player.name, team: player.team, ...player.answers[station.id] });
+  maybeCountPackUse(c);
   saveDB(); broadcast(c.id);
   if (correct === true) broadcastEvent(c.id, 'scored', { team: player.team || '', name: player.name, stationId: station.id });
   res.json({ correct, pending: correct === null, points: correct ? station.points : 0, bonus, message: correct === true ? (bonus > 0 ? `תשובה נכונה! +${station.points} נק' ועוד ${bonus} בונוס מהירות! ⚡🎉` : 'תשובה נכונה! 🎉') : correct === false ? 'לא מדויק, אבל ממשיכים! 💪' : 'התקבל! המנהל יבדוק 📸' });
@@ -599,38 +650,137 @@ app.post('/api/admin/company/:cid/import', auth, (req, res) => {
   const c = resolveCompany(req, res); if (!c) return;
   const data = req.body;
   if (!data || !Array.isArray(data.stations)) return res.status(400).json({ error: 'קובץ לא תקין - חסר שדה stations' });
-  // בנה 10 תחנות מהקובץ (משלים חסרות, מתעלם מעודפות)
-  const incoming = {};
-  data.stations.forEach(s => { const id = Number(s.id); if (id >= 1 && id <= 10) incoming[id] = s; });
-  const newStations = [];
-  for (let i = 1; i <= 10; i++) {
-    const s = incoming[i] || {};
-    const qt = (s.questionType === 'photo') ? 'photo' : 'text';
-    newStations.push({
-      id: i,
-      title: (s.title != null ? String(s.title) : `תחנה ${i}`).slice(0, 200),
-      questionType: qt,
-      questionText: (s.questionText != null ? String(s.questionText) : '').slice(0, 2000),
-      correctAnswer: (s.correctAnswer != null ? String(s.correctAnswer) : '').slice(0, 500),
-      points: Math.max(0, Number(s.points) || 10),
-      imageUrl: (typeof s.imageUrl === 'string' ? s.imageUrl : '').slice(0, 3000000) // data URI מותר
-    });
-  }
-  c.stations = newStations;
+  c.stations = normalizeStations(data.stations);
   if (data.gameName != null && String(data.gameName).trim()) c.gameName = String(data.gameName).trim().slice(0, 100);
   if (['he', 'en', 'it'].includes(data.defaultLang)) c.defaultLang = data.defaultLang;
-  if (data.mapConfig && typeof data.mapConfig === 'object') {
-    const m = data.mapConfig, cfg = defaultMapConfig();
-    if (m.center && isFinite(m.center.lat) && isFinite(m.center.lng)) cfg.center = { lat: Number(m.center.lat), lng: Number(m.center.lng) };
-    if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
-    if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
-    if (m.bounds && isFinite(m.bounds.north) && isFinite(m.bounds.south) && isFinite(m.bounds.east) && isFinite(m.bounds.west)) cfg.bounds = { north: Number(m.bounds.north), south: Number(m.bounds.south), east: Number(m.bounds.east), west: Number(m.bounds.west) };
-    cfg.locked = !!m.locked;
-    if (Array.isArray(m.markers)) cfg.markers = m.markers.filter(x => x && isFinite(x.lat) && isFinite(x.lng) && Number(x.id) >= 1 && Number(x.id) <= 10).map(x => ({ id: Number(x.id), lat: Number(x.lat), lng: Number(x.lng) })).slice(0, 10);
-    c.mapConfig = cfg;
-  }
+  const cfg = normalizeMapConfig(data.mapConfig);
+  if (cfg) c.mapConfig = cfg;
+  // ייבוא ידני אינו חבילת ספרייה — מנתק קישור לחבילה
+  c.loadedPackId = null; c.loadedPackCounted = false;
   saveDB(); broadcast(c.id);
   res.json({ ok: true, gameName: c.gameName, imported: data.stations.length });
+});
+
+// שמירת השאלות הנוכחיות של חברה כחבילה חדשה בספרייה (מנהל-על) — דרך נוחה לבנות תוכן
+app.post('/api/admin/company/:cid/save-as-pack', auth, superOnly, (req, res) => {
+  const c = resolveCompany(req, res); if (!c) return;
+  const b = req.body || {};
+  const name = String(b.name || c.gameName || '').trim().slice(0, 120);
+  if (!name) return res.status(400).json({ error: 'נא להזין שם לחבילה' });
+  const pack = {
+    id: makeId('pack'),
+    name,
+    lang: PACK_LANGS.includes(b.lang) ? b.lang : (c.defaultLang || 'he'),
+    style: String(b.style || '').trim().slice(0, 80),
+    ageRange: String(b.ageRange || '').trim().slice(0, 40),
+    description: String(b.description || '').trim().slice(0, 300),
+    stations: normalizeStations(c.stations),
+    mapConfig: normalizeMapConfig(c.mapConfig) || defaultMapConfig(),
+    uses: 0,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  db.library.push(pack);
+  saveDB();
+  res.json({ ok: true, pack });
+});
+
+// ============================================================
+//  ספריית חבילות שאלות מרכזית (db.library)
+//  - מנהל ראשי: יצירה/עריכה/מחיקה (CRUD מלא)
+//  - מנהל חברה: צפייה + טעינת עותק לחברה שלו (בלי לפגוע במקור)
+// ============================================================
+const PACK_LANGS = ['he', 'en', 'it'];
+
+// פרטי חבילה לרשימה (בלי תוכן השאלות הכבד) — לכל מנהל מחובר
+function packMeta(p) {
+  return {
+    id: p.id, name: p.name, lang: p.lang, style: p.style || '',
+    ageRange: p.ageRange || '', description: p.description || '',
+    questionCount: Array.isArray(p.stations) ? p.stations.filter(s => (s.questionText || '').trim()).length : 0,
+    uses: p.uses || 0, updatedAt: p.updatedAt || p.createdAt || 0
+  };
+}
+
+// רשימת חבילות (מטא-דאטה בלבד) — נגיש לכל מנהל מחובר (לטעינה)
+app.get('/api/admin/library', auth, (req, res) => {
+  res.json({ packs: (db.library || []).map(packMeta) });
+});
+
+// תוכן מלא של חבילה — מנהל-על לעריכה, או מנהל חברה לתצוגה מקדימה/טעינה
+app.get('/api/admin/library/:pid', auth, (req, res) => {
+  const p = (db.library || []).find(x => x.id === req.params.pid);
+  if (!p) return res.status(404).json({ error: 'חבילה לא נמצאה' });
+  res.json({ pack: p });
+});
+
+// יצירת חבילה חדשה (מנהל-על)
+app.post('/api/admin/library', auth, superOnly, (req, res) => {
+  const b = req.body || {};
+  const name = String(b.name || '').trim().slice(0, 120);
+  if (!name) return res.status(400).json({ error: 'נא להזין שם לחבילה' });
+  const lang = PACK_LANGS.includes(b.lang) ? b.lang : 'he';
+  const pack = {
+    id: makeId('pack'),
+    name,
+    lang,
+    style: String(b.style || '').trim().slice(0, 80),
+    ageRange: String(b.ageRange || '').trim().slice(0, 40),
+    description: String(b.description || '').trim().slice(0, 300),
+    stations: normalizeStations(b.stations),
+    mapConfig: normalizeMapConfig(b.mapConfig) || defaultMapConfig(),
+    uses: 0,
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  };
+  db.library.push(pack);
+  saveDB();
+  res.json({ ok: true, pack });
+});
+
+// עדכון חבילה קיימת (מנהל-על) — לא מאפס את מונה השימושים
+app.post('/api/admin/library/:pid', auth, superOnly, (req, res) => {
+  const p = (db.library || []).find(x => x.id === req.params.pid);
+  if (!p) return res.status(404).json({ error: 'חבילה לא נמצאה' });
+  const b = req.body || {};
+  if (b.name != null) { const n = String(b.name).trim().slice(0, 120); if (n) p.name = n; }
+  if (PACK_LANGS.includes(b.lang)) p.lang = b.lang;
+  if (b.style != null) p.style = String(b.style).trim().slice(0, 80);
+  if (b.ageRange != null) p.ageRange = String(b.ageRange).trim().slice(0, 40);
+  if (b.description != null) p.description = String(b.description).trim().slice(0, 300);
+  if (Array.isArray(b.stations)) p.stations = normalizeStations(b.stations);
+  if (b.mapConfig !== undefined) { const cfg = normalizeMapConfig(b.mapConfig); if (cfg) p.mapConfig = cfg; }
+  if (b.resetUses === true) p.uses = 0;   // איפוס יזום בלבד
+  p.updatedAt = Date.now();
+  saveDB();
+  res.json({ ok: true, pack: p });
+});
+
+// מחיקת חבילה (מנהל-על)
+app.delete('/api/admin/library/:pid', auth, superOnly, (req, res) => {
+  const idx = (db.library || []).findIndex(x => x.id === req.params.pid);
+  if (idx < 0) return res.status(404).json({ error: 'חבילה לא נמצאה' });
+  const removed = db.library.splice(idx, 1)[0];
+  // חברות שטענו חבילה זו פשוט מאבדות את הקישור (השאלות שלהן נשארות)
+  Object.values(db.companies).forEach(c => { if (c.loadedPackId === removed.id) { c.loadedPackId = null; c.loadedPackCounted = false; } });
+  saveDB();
+  res.json({ ok: true });
+});
+
+// טעינת חבילה מהספרייה לחברה (מנהל חברה או מנהל-על) — מעתיק, לא מקשר לתוכן המקור
+app.post('/api/admin/company/:cid/load-pack', auth, (req, res) => {
+  const c = resolveCompany(req, res); if (!c) return;
+  const p = (db.library || []).find(x => x.id === req.body.packId);
+  if (!p) return res.status(404).json({ error: 'חבילה לא נמצאה' });
+  // העתק עמוק של התחנות וה-mapConfig — החברה עורכת עותק עצמאי
+  c.stations = normalizeStations(p.stations);
+  const cfg = normalizeMapConfig(p.mapConfig); if (cfg) c.mapConfig = cfg;
+  if (PACK_LANGS.includes(p.lang)) c.defaultLang = p.lang;
+  // קישור למעקב פופולריות — ייספר רק כש-≥5 שחקנים יענו
+  c.loadedPackId = p.id;
+  c.loadedPackCounted = false;
+  saveDB(); broadcast(c.id);
+  res.json({ ok: true, loaded: p.name, lang: p.lang });
 });
 
 // אישור/דחיית תמונה

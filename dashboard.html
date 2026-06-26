@@ -106,6 +106,22 @@
   .map-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
   .lock-badge{padding:4px 12px;border-radius:999px;font-weight:700;font-size:13px;}
   .lock-badge.locked{background:#22a06b;color:#fff;} .lock-badge.unlocked{background:#ffd23f;color:#1a2a4a;}
+  /* ===== ספריית חבילות ===== */
+  .pack-card{background:#fff;border:2px solid #e3e9f5;border-radius:16px;padding:16px;box-shadow:0 4px 14px rgba(0,0,0,.06);display:flex;flex-direction:column;gap:8px;}
+  .pack-card .pname{font-size:17px;font-weight:800;color:#1a2a6c;}
+  .pack-card .ptags{display:flex;gap:6px;flex-wrap:wrap;}
+  .pack-card .ptag{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:#eef2fb;color:#3b5a9e;}
+  .pack-card .ptag.lang{background:#fff3cd;color:#8a5a00;}
+  .pack-card .ptag.uses{background:#eafaf1;color:#1e7f34;}
+  .pack-card .pdesc{font-size:13px;color:#5a6b8a;line-height:1.5;flex:1;}
+  .pack-card .pactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;}
+  .pack-card .pactions .btn{padding:9px 14px;font-size:14px;}
+  .pack-modal{position:fixed;inset:0;background:rgba(10,20,30,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:18px;}
+  .pack-modal .inner{background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:86vh;overflow:auto;padding:22px;}
+  .pack-modal h3{color:#1a2a6c;margin-bottom:12px;}
+  .pack-modal .qitem{border-bottom:1px solid #eef2f9;padding:10px 0;}
+  .pack-modal .qitem b{color:#1a2a6c;}
+  .pack-modal .qitem .qa{font-size:13px;color:#5a6b8a;margin-top:3px;}
 </style>
 </head>
 <body class="login-mode">
@@ -153,6 +169,7 @@
     </div>
     <div class="tabs noprint">
       <div class="tab" onclick="coTab('questions',this)" data-i18n="dash.tabQuestions">📝 שאלות</div>
+      <div class="tab" onclick="coTab('library',this)" data-i18n="dash.tabLibrary">📚 ספריית חבילות</div>
       <div class="tab" onclick="coTab('mapedit',this)" data-i18n="dash.tabMap">🗺️ מפת תחנות</div>
       <div class="tab" onclick="coTab('board',this)" data-i18n="dash.tabBoard">📊 לוח תוצאות</div>
       <div class="tab" onclick="coTab('qr',this)" data-i18n="dash.tabQR">🔲 קודי QR</div>
@@ -161,6 +178,66 @@
     </div>
 
     <div id="questions" class="copanel"></div>
+
+    <div id="library" class="copanel" style="display:none">
+      <!-- ניהול ספרייה (מנהל-על בלבד) -->
+      <div class="card2 noprint" id="libManage" style="display:none">
+        <h3 style="color:#1a2a6c;margin-bottom:6px" data-i18n="lib.manageTitle">📚 ניהול ספריית החבילות</h3>
+        <p class="hint" style="margin-bottom:6px" data-i18n="lib.manageHint">רק מנהל ראשי יכול ליצור/לערוך/למחוק חבילות.</p>
+        <p class="hint" style="margin-bottom:12px" data-i18n="lib.saveCurrentHint">בנה תוכן בטאב "שאלות", ואז שמור אותו כחבילה.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn green" onclick="openSavePackForm()" data-i18n="lib.saveCurrentBtn">📥 שמור את שאלות החברה הנוכחית כחבילה</button>
+          <button class="btn" onclick="document.getElementById('packUploadFile').click()" data-i18n="lib.uploadPack">⬆️ העלאת חבילה מקובץ</button>
+          <input type="file" id="packUploadFile" accept="application/json,.json" style="display:none" onchange="uploadPackFile(event)">
+        </div>
+        <span class="saved" id="libMsg" style="display:none"></span>
+      </div>
+
+      <!-- טופס שמירת/עריכת מטא-דאטה של חבילה (מנהל-על) -->
+      <div class="card2 noprint" id="packEditor" style="display:none">
+        <h3 style="color:#1a2a6c;margin-bottom:10px" id="packEditorTitle"></h3>
+        <div class="row">
+          <div><label data-i18n="lib.packName">שם החבילה</label><input id="pkName"></div>
+          <div><label data-i18n="lib.filterLang">שפה</label>
+            <select id="pkLang">
+              <option value="he" data-i18n="lib.langHe">עברית 🇮🇱</option>
+              <option value="en" data-i18n="lib.langEn">אנגלית 🇺🇸</option>
+              <option value="it" data-i18n="lib.langIt">איטלקית 🇮🇹</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div><label data-i18n="lib.packStyle">סגנון</label><input id="pkStyle" data-i18n-ph="lib.packStyle"></div>
+          <div><label data-i18n="lib.packAge">גילאים</label><input id="pkAge" data-i18n-ph="lib.packAge"></div>
+        </div>
+        <label data-i18n="lib.packDesc">תיאור קצר</label>
+        <input id="pkDesc" data-i18n-ph="lib.packDesc">
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn green" id="pkSaveBtn" onclick="savePack()"></button>
+          <button class="btn gray" onclick="closePackEditor()" data-i18n="lib.cancel">ביטול</button>
+          <span class="saved" id="pkSaved" style="display:none" data-i18n="lib.saved">נשמר ✓</span>
+        </div>
+      </div>
+
+      <!-- דפדפן חבילות (כל המנהלים) -->
+      <div class="card2">
+        <h3 style="color:#1a2a6c;margin-bottom:6px" data-i18n="lib.browseTitle">📚 חבילות שאלות מוכנות</h3>
+        <p class="hint" style="margin-bottom:12px" id="libBrowseHint" data-i18n="lib.browseHint">בחרו חבילה וטענו עותק לחברה שלכם.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+          <div><label data-i18n="lib.filterLang">שפה</label>
+            <select id="filterLang" onchange="renderLibrary()">
+              <option value="" data-i18n="lib.all">הכל</option>
+              <option value="he" data-i18n="lib.langHe">עברית 🇮🇱</option>
+              <option value="en" data-i18n="lib.langEn">אנגלית 🇺🇸</option>
+              <option value="it" data-i18n="lib.langIt">איטלקית 🇮🇹</option>
+            </select>
+          </div>
+          <div><label data-i18n="lib.filterStyle">סגנון</label><select id="filterStyle" onchange="renderLibrary()"><option value="" data-i18n="lib.all">הכל</option></select></div>
+          <div><label data-i18n="lib.filterAge">גילאים</label><select id="filterAge" onchange="renderLibrary()"><option value="" data-i18n="lib.all">הכל</option></select></div>
+        </div>
+        <div class="qr-grid" id="libGrid"></div>
+      </div>
+    </div>
 
     <div id="mapedit" class="copanel" style="display:none">
       <div class="card2">
@@ -390,6 +467,7 @@ function coTab(id, el){
   if(id==='pending') loadPending();
   if(id==='board') loadBoardFrame();
   if(id==='mapedit') loadMapEditor();
+  if(id==='library') loadLibrary();
 }
 function loadBoardFrame(){
   const f=document.getElementById('boardFrame');
@@ -728,6 +806,186 @@ async function printMap(){
 }
 
 function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ===== ספריית חבילות =====
+let libraryPacks = [];
+let editingPackId = null;
+
+async function loadLibrary(){
+  // הצג כלי ניהול רק למנהל-על
+  document.getElementById('libManage').style.display = (ROLE==='super') ? 'block' : 'none';
+  closePackEditor();
+  try {
+    const r = await fetch('/api/admin/library',{headers:H()});
+    const d = await r.json();
+    libraryPacks = d.packs || [];
+  } catch(e){ libraryPacks = []; }
+  populateLibFilters();
+  renderLibrary();
+}
+
+function populateLibFilters(){
+  const styles = [...new Set(libraryPacks.map(p=>p.style).filter(Boolean))].sort();
+  const ages = [...new Set(libraryPacks.map(p=>p.ageRange).filter(Boolean))].sort();
+  const fill = (sel, vals) => {
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">'+t('lib.all')+'</option>' + vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+    sel.value = vals.includes(cur) ? cur : '';
+  };
+  fill(document.getElementById('filterStyle'), styles);
+  fill(document.getElementById('filterAge'), ages);
+}
+
+function renderLibrary(){
+  const fl = document.getElementById('filterLang').value;
+  const fs = document.getElementById('filterStyle').value;
+  const fa = document.getElementById('filterAge').value;
+  const grid = document.getElementById('libGrid');
+  if(!libraryPacks.length){ grid.innerHTML = '<p class="hint">'+t('lib.empty')+'</p>'; return; }
+  const flag = {he:'🇮🇱', en:'🇺🇸', it:'🇮🇹'};
+  const filtered = libraryPacks.filter(p =>
+    (!fl || p.lang===fl) && (!fs || p.style===fs) && (!fa || p.ageRange===fa));
+  if(!filtered.length){ grid.innerHTML = '<p class="hint">'+t('lib.noMatch')+'</p>'; return; }
+  grid.innerHTML = filtered.map(p=>`
+    <div class="pack-card">
+      <div class="pname">${esc(p.name)}</div>
+      <div class="ptags">
+        <span class="ptag lang">${flag[p.lang]||''} ${esc(p.lang.toUpperCase())}</span>
+        ${p.style?`<span class="ptag">${esc(p.style)}</span>`:''}
+        ${p.ageRange?`<span class="ptag">👤 ${esc(p.ageRange)}</span>`:''}
+        <span class="ptag">${p.questionCount} ${t('lib.questions')}</span>
+        <span class="ptag uses">▶ ${p.uses} ${t('lib.uses')}</span>
+      </div>
+      ${p.description?`<div class="pdesc">${esc(p.description)}</div>`:'<div class="pdesc"></div>'}
+      <div class="pactions">
+        <button class="btn green" onclick="loadPack('${p.id}','${esc(p.name).replace(/'/g,"\\'")}')">${t('lib.load')}</button>
+        <button class="btn gray" onclick="previewPack('${p.id}')">${t('lib.preview')}</button>
+        ${ROLE==='super'?`<button class="btn" onclick="editPack('${p.id}')">${t('lib.editPack')}</button>
+        <button class="btn red" onclick="deletePack('${p.id}','${esc(p.name).replace(/'/g,"\\'")}')">${t('lib.deletePack')}</button>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function loadPack(pid, name){
+  if(!confirm(t('lib.loadConfirm',{name}))) return;
+  try {
+    const r = await fetch('/api/admin/company/'+activeCompanyId+'/load-pack',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify({packId:pid})});
+    const d = await r.json();
+    if(!r.ok){ alert(d.error||t('lib.loadErr')); return; }
+    await loadCompanyData();   // רענן את השאלות + שפה
+    alert(t('lib.loaded',{name}));
+  } catch(e){ alert(t('lib.loadErr')); }
+}
+
+async function previewPack(pid){
+  let pack;
+  try { const r = await fetch('/api/admin/library/'+pid,{headers:H()}); const d = await r.json(); pack = d.pack; }
+  catch(e){ return; }
+  if(!pack) return;
+  const items = (pack.stations||[]).filter(s=>(s.questionText||'').trim()).map((s,i)=>`
+    <div class="qitem"><b>${i+1}. ${esc(s.title||'')}</b>
+      <div class="qa">${esc(s.questionText||'')}</div>
+      ${s.questionType==='text' && s.correctAnswer?`<div class="qa">✓ ${esc(s.correctAnswer)}</div>`:''}
+      ${s.questionType==='photo'?`<div class="qa">📸</div>`:''}
+    </div>`).join('');
+  const m = document.createElement('div');
+  m.className='pack-modal';
+  m.onclick = (e)=>{ if(e.target===m) m.remove(); };
+  m.innerHTML = `<div class="inner"><h3>${t('lib.previewTitle',{name:esc(pack.name)})}</h3>${items||'<p class="hint">—</p>'}
+    <div style="margin-top:14px;text-align:center"><button class="btn gray" onclick="this.closest('.pack-modal').remove()">${t('lib.close')}</button></div></div>`;
+  document.body.appendChild(m);
+}
+
+// --- שמירת/עריכת חבילה (מנהל-על) ---
+// editingPackId=null + saveMode='new'  → שמירת שאלות החברה הנוכחית כחבילה חדשה
+// editingPackId set + saveMode='edit'  → עריכת מטא-דאטה של חבילה קיימת
+let saveMode = 'new';
+
+function openSavePackForm(){
+  editingPackId = null; saveMode = 'new';
+  document.getElementById('packEditorTitle').textContent = t('lib.saveCurrentTitle');
+  document.getElementById('pkName').value = activeCompanyName || '';
+  document.getElementById('pkLang').value = document.getElementById('defaultLang') ? document.getElementById('defaultLang').value : 'he';
+  document.getElementById('pkStyle').value=''; document.getElementById('pkAge').value=''; document.getElementById('pkDesc').value='';
+  document.getElementById('pkSaveBtn').textContent = t('lib.saveAsNew');
+  document.getElementById('packEditor').style.display='block';
+  document.getElementById('packEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function closePackEditor(){ const e=document.getElementById('packEditor'); if(e) e.style.display='none'; editingPackId=null; }
+
+async function editPack(pid){
+  const meta = libraryPacks.find(p=>p.id===pid);
+  if(!meta) return;
+  editingPackId = pid; saveMode = 'edit';
+  document.getElementById('packEditorTitle').textContent = t('lib.editingPack',{name:meta.name});
+  document.getElementById('pkName').value=meta.name||'';
+  document.getElementById('pkLang').value=meta.lang||'he';
+  document.getElementById('pkStyle').value=meta.style||'';
+  document.getElementById('pkAge').value=meta.ageRange||'';
+  document.getElementById('pkDesc').value=meta.description||'';
+  document.getElementById('pkSaveBtn').textContent = t('lib.saveChanges');
+  document.getElementById('packEditor').style.display='block';
+  document.getElementById('packEditor').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function savePack(){
+  const body = {
+    name: document.getElementById('pkName').value.trim(),
+    lang: document.getElementById('pkLang').value,
+    style: document.getElementById('pkStyle').value.trim(),
+    ageRange: document.getElementById('pkAge').value.trim(),
+    description: document.getElementById('pkDesc').value.trim()
+  };
+  if(!body.name){ alert(t('lib.packName')); return; }
+  try {
+    let url, r, d;
+    if(saveMode==='edit' && editingPackId){
+      // עדכון מטא בלבד — התוכן נשמר בשרת כפי שהוא
+      r = await fetch('/api/admin/library/'+editingPackId,{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    } else {
+      // שמירת שאלות החברה הנוכחית כחבילה חדשה
+      r = await fetch('/api/admin/company/'+activeCompanyId+'/save-as-pack',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    }
+    d = await r.json();
+    if(!r.ok){ alert(d.error||t('lib.loadErr')); return; }
+    const s=document.getElementById('pkSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
+    if(saveMode==='new'){ const m=document.getElementById('libMsg'); m.textContent=t('lib.saveCurrentDone',{name:body.name}); m.style.display='inline'; setTimeout(()=>m.style.display='none',2800); }
+    closePackEditor();
+    await loadLibrary();
+  } catch(e){ alert(t('lib.loadErr')); }
+}
+
+async function uploadPackFile(e){
+  const file=e.target.files[0]; if(!file) return; e.target.value='';
+  if(!confirm(t('lib.uploadConfirm'))) return;
+  let data;
+  try { data=JSON.parse(await file.text()); }
+  catch(err){ alert(t('dash.importBadJson')); return; }
+  if(!Array.isArray(data.stations)){ alert(t('dash.importNoStations')); return; }
+  const body = {
+    name: (data.name || data.gameName || file.name.replace(/\.json$/i,'')).slice(0,120),
+    lang: data.lang || data.defaultLang || 'he',
+    style: data.style || '',
+    ageRange: data.ageRange || '',
+    description: data.description || '',
+    stations: data.stations,
+    mapConfig: data.mapConfig
+  };
+  try {
+    const r = await fetch('/api/admin/library',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json();
+    if(!r.ok){ alert(d.error||t('lib.loadErr')); return; }
+    const m=document.getElementById('libMsg'); m.textContent=t('lib.created'); m.style.display='inline'; setTimeout(()=>m.style.display='none',2500);
+    await loadLibrary();
+  } catch(e){ alert(t('lib.loadErr')); }
+}
+
+async function deletePack(pid, name){
+  if(!confirm(t('lib.deleteConfirm',{name}))) return;
+  try { await fetch('/api/admin/library/'+pid,{method:'DELETE',headers:H()}); await loadLibrary(); }
+  catch(e){ alert(t('lib.loadErr')); }
+}
+
 
 // ===== בורר שפת ממשק למנהל =====
 I18N.renderLangPicker('langPicker', {compact:true});
