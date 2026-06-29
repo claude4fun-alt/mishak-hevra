@@ -739,7 +739,14 @@ async function loadMapEditor(){
   // קריאות חוזרות ל-invalidateSize כדי שהמפה תצייר אריחים אחרי שהטאב גלוי
   [60,200,500,900].forEach(ms=>setTimeout(()=>{ try{ editMap.invalidateSize(); }catch(e){} }, ms));
   if(edMapLoadedFor!==activeCompanyId){
-    editMap.setView([cfg.center.lat,cfg.center.lng], cfg.zoom);
+    // מציגים את התצוגה בדיוק כפי שהשחקן/ההדפסה יראו: fitBounds על ה-bounds השמורים (אם יש).
+    // כך מה שהמנהל ממסגר ושומר = מה שמודפס = מה שהשחקן רואה. בלי bounds (מפה חדשה) — center+zoom.
+    const eb = cfg.bounds;
+    if(eb && isFinite(eb.north) && isFinite(eb.south) && isFinite(eb.east) && isFinite(eb.west)){
+      editMap.fitBounds([[eb.south,eb.west],[eb.north,eb.east]], {animate:false, padding:[0,0]});
+    } else {
+      editMap.setView([cfg.center.lat,cfg.center.lng], cfg.zoom);
+    }
     edMapLoadedFor=activeCompanyId;
   }
 

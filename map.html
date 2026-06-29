@@ -84,8 +84,10 @@
     html,body{ background:#fff !important; width:auto !important; height:auto !important; overflow:visible !important; }
     #msg,#navBar{ display:none !important; }
     #stage{ position:static !important; width:100% !important; height:auto !important; display:block !important; overflow:visible !important; }
-    #frameBox{ position:relative !important; width:100% !important; max-width:190mm !important; height:auto !important; margin:0 auto !important; }
-    #frameImg{ position:static !important; display:block !important; width:100% !important; height:auto !important; object-fit:fill !important; }
+    /* רוחב קבוע + יחס ממדים נעול (aspect-ratio) — כך חלון המפה שומר בדיוק על אותו יחס כמו במסך,
+       ו-fitBounds מציג את אותו אזור גיאוגרפי. height:auto היה גורם ליחס לא צפוי בזמן ההדפסה. */
+    #frameBox{ position:relative !important; width:190mm !important; max-width:190mm !important; aspect-ratio:1054/1492 !important; height:auto !important; margin:0 auto !important; }
+    #frameImg{ position:absolute !important; inset:0 !important; display:block !important; width:100% !important; height:100% !important; object-fit:fill !important; }
     #mapWindow{ box-shadow:none !important; }
     .leaflet-control-zoom{ display:none !important; }
     /* בהדפסה: המקרא לא רלוונטי (אין סטטוס צבעים בדף מודפס) ועלול לזלוג מהדף — מוסתר. */
@@ -216,13 +218,22 @@ async function load(){
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom:21, maxNativeZoom:19, attribution:'Esri' }).addTo(map);
     if(!cfg.locked) L.control.zoom({position:'topleft'}).addTo(map);
-    // הצגת אותו אזור גיאוגרפי תמיד גם כשהמיכל משנה גודל (הדפסה): fitBounds + zoomSnap:0
-    // משחזר בדיוק את האזור שהמנהל מסגר, בלי ה-zoom-out שנגרם מעיגול רמת הזום
-    const applyView = ()=>{ try{ map.invalidateSize();
-      if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
-      else map.setView([cfg.center.lat,cfg.center.lng], cfg.zoom, {animate:false});
-    }catch(e){} };
-    [60,200,500,900,1500].forEach(ms=>setTimeout(applyView, ms));
+    [60,200,500,900,1500].forEach(ms=>setTimeout(applyExactView, ms));
+  }
+
+  // ===== שחזור אזור גיאוגרפי קבוע =====
+  // גם העורך וגם השחקן/ההדפסה משתמשים ב-fitBounds על אותו מלבן bounds שמור.
+  // fitBounds מציג תמיד את אותו אזור גיאוגרפי ללא תלות בגודל המיכל בפיקסלים,
+  // ומאחר שחלונות המפה חולקים אותו יחס-ממדים — התצוגה זהה בעורך, במסך ובהדפסה.
+  function applyExactView(){
+    try{
+      map.invalidateSize();
+      if(hasBounds){
+        map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]], {animate:false, padding:[0,0]});
+      } else {
+        map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom, {animate:false});
+      }
+    }catch(e){}
   }
 
   // ציור / עדכון סיכות — tooltip = כותרת התחנה כפי שהוגדרה (בלי לשכפל "תחנה N")
@@ -241,42 +252,45 @@ async function load(){
 
   // שמירה על האזור הקבוע (גם בעדכוני רענון)
   if(cfg.locked){
-    if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
-    else map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom, {animate:false});
+    applyExactView();
   }
 
-  // הדפסה אוטומטית כשמגיעים עם ?print=1 (מהדשבורד) — מיישרת לאותו אזור לפני הדפסה
+  // ===== הדפסה דטרמיניסטית =====
+  // הבעיה: כשמדפיסים, מיכל המפה משנה גודל, ו-fitBounds/invalidateSize רצים אסינכרונית —
+  // הדפדפן עלול "לצלם" את המפה במצב מעבר. הפתרון: להחיל מצב-הדפסה על המסך, לחכות
+  // שהמפה והאריחים יתייצבו לגמרי באזור הנכון, ורק אז להפעיל window.print().
+  function settleMap(){
+    return new Promise(resolve=>{
+      applyExactView();
+      // לחכות שהאריחים שנטענו בעקבות ה-fitBounds יסיימו לעלות (או טיימאאוט בטוח)
+      let done=false; const finish=()=>{ if(done)return; done=true; try{map.off('load',finish);}catch(e){} setTimeout(resolve,250); };
+      try{ map.once('load', finish); }catch(e){}
+      setTimeout(finish, 1200); // רשת בטחון אם אין אירוע load
+    });
+  }
+
+  async function doPrint(){
+    // מסתירים גדלים אינליין כך שכללי @media print (יחס ממדים נעול) ישלטו על המסגרת
+    const box=document.getElementById('frameBox');
+    const savedW=box.style.width, savedH=box.style.height;
+    box.style.width=''; box.style.height='';
+    void box.offsetWidth;        // כפיית reflow כדי שה-CSS החדש ייכנס לתוקף מיד
+    await settleMap();
+    await settleMap();           // מעבר שני לוודא יציבות מלאה
+    window.print();
+    // אחרי ההדפסה — מחזירים את תצוגת המסך
+    setTimeout(()=>{ box.style.width=savedW; box.style.height=savedH; sizeFrame(); settleMap(); }, 300);
+  }
+
+  // הדפסה אוטומטית כשמגיעים עם ?print=1 (מהדשבורד)
   if(PRINT && !window._printed){
     window._printed=true;
-    setTimeout(()=>{
-      // מנקים גדלים אינליין כדי שכללי ההדפסה ישלטו, ואז מחשבים מחדש את גודל המפה
-      const box=document.getElementById('frameBox');
-      if(box){ box.style.width=''; box.style.height=''; }
-      try{
-        map.invalidateSize();
-        if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
-      }catch(e){}
-      // קריאה נוספת אחרי שהפריסה התייצבה, ואז הדפסה
-      setTimeout(()=>{ try{ map.invalidateSize();
-        if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
-      }catch(e){}
-        setTimeout(()=>window.print(), 600);
-      }, 500);
-    }, 1600);
+    setTimeout(()=>{ doPrint(); }, 1400);
   }
 
-  // לפני כל הדפסה (גם ידנית/Ctrl+P) — נקה גדלים אינליין ורענן את המפה
-  if(!window._printHooked){
-    window._printHooked=true;
-    window.addEventListener('beforeprint', ()=>{
-      const box=document.getElementById('frameBox');
-      if(box){ box.style.width=''; box.style.height=''; }
-      try{ map.invalidateSize();
-        if(window._lastBounds) map.fitBounds([[window._lastBounds.south,window._lastBounds.west],[window._lastBounds.north,window._lastBounds.east]],{animate:false});
-      }catch(e){}
-    });
-    window.addEventListener('afterprint', ()=>{ sizeFrame(); });
-  }
+  // הדפסה ידנית — חשיפת פונקציה גלובלית (אם תרצה כפתור בעמוד השחקן בעתיד)
+  window.fgPrintMap = doPrint;
+
   window._lastBounds = hasBounds ? cfg.bounds : null;
 }
 
