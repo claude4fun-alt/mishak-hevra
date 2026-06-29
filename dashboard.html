@@ -726,7 +726,7 @@ async function loadMapEditor(){
 
   // אתחל את המפה (פעם אחת לכל חברה)
   if(!editMap){
-    editMap = L.map('editMap', { center:[cfg.center.lat,cfg.center.lng], zoom:cfg.zoom, maxZoom:21, zoomControl:true });
+    editMap = L.map('editMap', { center:[cfg.center.lat,cfg.center.lng], zoom:cfg.zoom, maxZoom:21, zoomControl:true, zoomSnap:0, zoomDelta:0.5 });
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom:21, maxNativeZoom:19, attribution:'Esri' }).addTo(editMap);
     // לחיצה על המפה ממקמת את התחנה שנבחרה

@@ -208,6 +208,7 @@ async function load(){
     map = L.map('map', {
       center:[cfg.center.lat, cfg.center.lng], zoom: cfg.zoom,
       zoomControl:false, attributionControl:true, maxZoom:21,
+      zoomSnap:0, zoomDelta:0.5,  // מאפשר זום שברירי כדי ש-fitBounds ישחזר את האזור המדויק בלי zoom-out
       // נעילת אינטראקציה אם המנהל נעל את המפה — השחקן רואה רק את התצוגה הקבועה
       dragging: !cfg.locked, scrollWheelZoom: !cfg.locked, doubleClickZoom: !cfg.locked,
       touchZoom: !cfg.locked, boxZoom: !cfg.locked, keyboard: !cfg.locked, tap: !cfg.locked
@@ -215,7 +216,8 @@ async function load(){
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom:21, maxNativeZoom:19, attribution:'Esri' }).addTo(map);
     if(!cfg.locked) L.control.zoom({position:'topleft'}).addTo(map);
-    // הצגת אותו אזור גיאוגרפי תמיד (גם בהדפסה כשהמיכל משנה גודל)
+    // הצגת אותו אזור גיאוגרפי תמיד גם כשהמיכל משנה גודל (הדפסה): fitBounds + zoomSnap:0
+    // משחזר בדיוק את האזור שהמנהל מסגר, בלי ה-zoom-out שנגרם מעיגול רמת הזום
     const applyView = ()=>{ try{ map.invalidateSize();
       if(hasBounds) map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]],{animate:false});
       else map.setView([cfg.center.lat,cfg.center.lng], cfg.zoom, {animate:false});
