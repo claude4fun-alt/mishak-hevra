@@ -738,17 +738,34 @@ async function loadMapEditor(){
   }
   // קריאות חוזרות ל-invalidateSize כדי שהמפה תצייר אריחים אחרי שהטאב גלוי
   [60,200,500,900].forEach(ms=>setTimeout(()=>{ try{ editMap.invalidateSize(); }catch(e){} }, ms));
-  if(edMapLoadedFor!==activeCompanyId){
-    // העורך מציג center+zoom — אותה שיטה בדיוק שבה השחקן/ההדפסה משחזרים, כך שהתצוגה זהה.
-    editMap.setView([cfg.center.lat,cfg.center.lng], cfg.zoom);
-    edMapLoadedFor=activeCompanyId;
-  }
 
   // נקה סיכות קיימות וצייר מחדש
   Object.values(edMarkers).forEach(m=>editMap.removeLayer(m)); edMarkers={};
   (cfg.markers||[]).forEach(mk=>placePin(mk.id, mk.lat, mk.lng));
+
+  if(edMapLoadedFor!==activeCompanyId){
+    // מציגים בדיוק את מה שיודפס/יוצג לשחקן: התאמה לכל התחנות + שוליים (אותה לוגיקה כמו במפת השחקן).
+    // אם אין תחנות עדיין — מציגים את התצוגה השמורה (center+zoom) כדי שהמנהל ימקם.
+    fitEditorToMarkers();
+    // קריאה דחויה אחרי שהמפה קיבלה גודל סופי (הטאב הוצג זה עתה)
+    [250, 650, 1000].forEach(ms=>setTimeout(fitEditorToMarkers, ms));
+    edMapLoadedFor=activeCompanyId;
+  }
   applyLockUI();
   renderChips();
+}
+
+// התאמת מפת העורך לכל התחנות + שוליים — תואם בדיוק את applyExactView במפת השחקן/הדפסה
+function fitEditorToMarkers(){
+  try{
+    const mks = Object.keys(edMarkers).map(id=>{ const ll=edMarkers[id].getLatLng(); return {lat:ll.lat,lng:ll.lng}; });
+    if(mks.length >= 1){
+      const lats=mks.map(m=>m.lat), lngs=mks.map(m=>m.lng);
+      let south=Math.min(...lats), north=Math.max(...lats), west=Math.min(...lngs), east=Math.max(...lngs);
+      const padLat=Math.max((north-south)*0.18,0.0008), padLng=Math.max((east-west)*0.18,0.0008);
+      editMap.fitBounds([[south-padLat,west-padLng],[north+padLat,east+padLng]], {animate:false, padding:[0,0]});
+    }
+  }catch(e){}
 }
 
 function placePin(id, lat, lng){
