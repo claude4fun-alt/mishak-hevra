@@ -87,6 +87,7 @@ function defaultMapConfig() {
     zoom: 16,
     bounds: null,    // {north,south,east,west} — האזור הגיאוגרפי המדויק שהמנהל מסגר (להדפסה/תצוגה עקבית)
     markerSize: 30,  // קוטר עיגול התחנה בפיקסלים (16-64)
+    viewWidth: 0,    // רוחב חלון המפה בעורך בעת השמירה (פיקסלים) — לכיול זום עקבי בהדפסה/מסך
     markers: []  // [{id:1..10, lat, lng}]
   };
 }
@@ -190,6 +191,7 @@ function normalizeMapConfig(m) {
   if (m.center && isFinite(m.center.lat) && isFinite(m.center.lng)) cfg.center = { lat: Number(m.center.lat), lng: Number(m.center.lng) };
   if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
   if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
+  if (isFinite(m.viewWidth)) cfg.viewWidth = Math.max(0, Math.round(Number(m.viewWidth)));
   if (m.bounds && isFinite(m.bounds.north) && isFinite(m.bounds.south) && isFinite(m.bounds.east) && isFinite(m.bounds.west)) cfg.bounds = { north: Number(m.bounds.north), south: Number(m.bounds.south), east: Number(m.bounds.east), west: Number(m.bounds.west) };
   cfg.locked = !!m.locked;
   if (Array.isArray(m.markers)) cfg.markers = m.markers.filter(x => x && isFinite(x.lat) && isFinite(x.lng) && Number(x.id) >= 1 && Number(x.id) <= 10).map(x => ({ id: Number(x.id), lat: Number(x.lat), lng: Number(x.lng) })).slice(0, 10);
@@ -456,7 +458,7 @@ app.get('/api/company/:cid/map', (req, res) => {
   });
   res.json({
     gameName: c.gameName, companyName: c.name, defaultLang: c.defaultLang || 'he',
-    mapConfig: { center: cfg.center, zoom: cfg.zoom, bounds: cfg.bounds || null, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [] },
+    mapConfig: { center: cfg.center, zoom: cfg.zoom, viewWidth: cfg.viewWidth || 0, bounds: cfg.bounds || null, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [] },
     stations: statusById,
     name: player ? player.name : '', team: player ? player.team : ''
   });
@@ -845,6 +847,7 @@ app.post('/api/admin/company/:cid/map', auth, (req, res) => {
   }
   if (isFinite(m.zoom)) cfg.zoom = Math.min(21, Math.max(1, Number(m.zoom)));
   if (isFinite(m.markerSize)) cfg.markerSize = Math.min(64, Math.max(16, Math.round(Number(m.markerSize))));
+  if (isFinite(m.viewWidth)) cfg.viewWidth = Math.max(0, Math.round(Number(m.viewWidth)));
   if (m.bounds && isFinite(m.bounds.north) && isFinite(m.bounds.south) && isFinite(m.bounds.east) && isFinite(m.bounds.west)) {
     cfg.bounds = { north: Number(m.bounds.north), south: Number(m.bounds.south), east: Number(m.bounds.east), west: Number(m.bounds.west) };
   }

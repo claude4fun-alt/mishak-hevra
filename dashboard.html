@@ -739,14 +739,8 @@ async function loadMapEditor(){
   // קריאות חוזרות ל-invalidateSize כדי שהמפה תצייר אריחים אחרי שהטאב גלוי
   [60,200,500,900].forEach(ms=>setTimeout(()=>{ try{ editMap.invalidateSize(); }catch(e){} }, ms));
   if(edMapLoadedFor!==activeCompanyId){
-    // מציגים את התצוגה בדיוק כפי שהשחקן/ההדפסה יראו: fitBounds על ה-bounds השמורים (אם יש).
-    // כך מה שהמנהל ממסגר ושומר = מה שמודפס = מה שהשחקן רואה. בלי bounds (מפה חדשה) — center+zoom.
-    const eb = cfg.bounds;
-    if(eb && isFinite(eb.north) && isFinite(eb.south) && isFinite(eb.east) && isFinite(eb.west)){
-      editMap.fitBounds([[eb.south,eb.west],[eb.north,eb.east]], {animate:false, padding:[0,0]});
-    } else {
-      editMap.setView([cfg.center.lat,cfg.center.lng], cfg.zoom);
-    }
+    // העורך מציג center+zoom — אותה שיטה בדיוק שבה השחקן/ההדפסה משחזרים, כך שהתצוגה זהה.
+    editMap.setView([cfg.center.lat,cfg.center.lng], cfg.zoom);
     edMapLoadedFor=activeCompanyId;
   }
 
@@ -826,7 +820,8 @@ async function saveMap(){
   });
   const b=editMap.getBounds();
   const bounds={ north:b.getNorth(), south:b.getSouth(), east:b.getEast(), west:b.getWest() };
-  const body={ center:{lat:c.lat,lng:c.lng}, zoom:editMap.getZoom(), bounds, locked:edLocked, markerSize:edMarkerSize, markers };
+  const viewWidth = editMap.getSize().x;   // רוחב חלון המפה בעורך (פיקסלים) — לכיול זום בהדפסה/מסך
+  const body={ center:{lat:c.lat,lng:c.lng}, zoom:editMap.getZoom(), viewWidth, bounds, locked:edLocked, markerSize:edMarkerSize, markers };
   let r;
   try {
     r=await fetch('/api/admin/company/'+activeCompanyId+'/map',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});

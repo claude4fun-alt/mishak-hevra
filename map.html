@@ -221,18 +221,23 @@ async function load(){
     [60,200,500,900,1500].forEach(ms=>setTimeout(applyExactView, ms));
   }
 
-  // ===== שחזור אזור גיאוגרפי קבוע =====
-  // גם העורך וגם השחקן/ההדפסה משתמשים ב-fitBounds על אותו מלבן bounds שמור.
-  // fitBounds מציג תמיד את אותו אזור גיאוגרפי ללא תלות בגודל המיכל בפיקסלים,
-  // ומאחר שחלונות המפה חולקים אותו יחס-ממדים — התצוגה זהה בעורך, במסך ובהדפסה.
+  // ===== שחזור התצוגה בדיוק כפי שהמנהל מסגר =====
+  // המרכז משוחזר במדויק. הזום מכויל לפי יחס רוחב המיכל הנוכחי לרוחב חלון העורך:
+  //   zoom = zoomעורך + log2(רוחב_נוכחי / רוחב_עורך)
+  // כך אותו אזור גיאוגרפי בדיוק מוצג בכל גודל מיכל (מסך גדול/קטן, הדפסה A4).
   function applyExactView(){
     try{
       map.invalidateSize();
-      if(hasBounds){
-        map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]], {animate:false, padding:[0,0]});
-      } else {
-        map.setView([cfg.center.lat, cfg.center.lng], cfg.zoom, {animate:false});
+      const cLat = cfg.center ? cfg.center.lat : 31.8133;
+      const cLng = cfg.center ? cfg.center.lng : 34.7780;
+      let z = cfg.zoom;
+      const savedW = Number(cfg.viewWidth) || 0;
+      const curW = map.getSize().x;
+      if(savedW > 0 && curW > 0){
+        z = cfg.zoom + Math.log2(curW / savedW);
+        z = Math.max(1, Math.min(21, z));
       }
+      map.setView([cLat, cLng], z, {animate:false});
     }catch(e){}
   }
 
