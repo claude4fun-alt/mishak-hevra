@@ -290,6 +290,25 @@ async function load(){
     setTimeout(()=>{ box.style.width=savedW; box.style.height=savedH; sizeFrame(); settleMap(); }, 300);
   }
 
+  // קריטי: Chrome עובר לפריסת-הדפסה (גדלים שונים) ברגע פתיחת הדיאלוג. אירוע beforeprint
+  // הוא הרגע המדויק שבו המיכל כבר בגודל ההדפסה — מריצים כאן applyExactView סינכרונית
+  // כדי שההתאמה לכל התחנות תהיה נכונה בדיוק לדף המודפס (ולא תיתקע על מצב ביניים).
+  if(!window._printFitHooked){
+    window._printFitHooked=true;
+    window.addEventListener('beforeprint', ()=>{
+      const box=document.getElementById('frameBox');
+      if(box){ box.style.width=''; box.style.height=''; void box.offsetWidth; }
+      // כמה קריאות סינכרוניות כדי לתפוס את הגודל הסופי אחרי שה-@media print הוחל
+      applyExactView(); applyExactView();
+    });
+    // גם דרך matchMedia('print') — חלק מהדפדפנים מפעילים זאת מוקדם יותר מ-beforeprint
+    try{
+      const mql = window.matchMedia('print');
+      mql.addEventListener('change', e=>{ if(e.matches){ applyExactView(); applyExactView(); } });
+    }catch(e){}
+    window.addEventListener('afterprint', ()=>{ sizeFrame(); applyExactView(); });
+  }
+
   // הדפסה אוטומטית כשמגיעים עם ?print=1 (מהדשבורד)
   if(PRINT && !window._printed){
     window._printed=true;
