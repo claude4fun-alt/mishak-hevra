@@ -239,6 +239,7 @@ app.get('/poster.png', (req, res) => langAsset(res, 'poster', req.query.lang));
 app.get('/map-frame.png', (req, res) => langAsset(res, 'map-frame', req.query.lang));
 app.get('/leaflet.js', (req, res) => res.sendFile(path.join(__dirname, 'leaflet.js')));
 app.get('/leaflet.css', (req, res) => res.sendFile(path.join(__dirname, 'leaflet.css')));
+app.get('/html2canvas.js', (req, res) => res.sendFile(path.join(__dirname, 'html2canvas.js')));
 
 // ============================================================
 //  SSE - לוח תוצאות חי, פר-חברה

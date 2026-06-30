@@ -77,6 +77,10 @@
 
   /* גודל המסגרת מחושב ב-JS (sizeFrame) לפי השטח הזמין מתחת למייל */
 
+  /* כשמצלמים את המפה לתמונה (printing-snapshot) — מציגים את התמונה ומחביאים את המפה החיה */
+  body.printing-snapshot #mapSnapshot{ display:block !important; }
+  body.printing-snapshot #map{ visibility:hidden !important; }
+
   /* הדפסה: דף A4 לאורך, המסגרת ממלאה את העמוד. נכתב אחרון כדי לגבור על שאר הכללים */
   @media print{
     @page{ size:A4 portrait; margin:6mm; }
@@ -84,16 +88,14 @@
     html,body{ background:#fff !important; width:auto !important; height:auto !important; overflow:visible !important; }
     #msg,#navBar{ display:none !important; }
     #stage{ position:static !important; width:100% !important; height:auto !important; display:block !important; overflow:visible !important; }
-    /* גדלים פיזיים קבועים בשני הצירים (לא aspect-ratio שלא תמיד מיושם בהדפסה) —
-       כך יחס חלון המפה זהה בדיוק למסך (1054/1492) ו-fitBounds מציג בדיוק אותו אזור.
-       188mm × (1492/1054) ≈ 266mm — נכנס ב-A4 לאורך (גובה מודפס ~285mm). */
-    #frameBox{ position:relative !important; width:188mm !important; max-width:188mm !important; height:266.2mm !important; aspect-ratio:auto !important; margin:0 auto !important; }
+    /* המסגרת ממלאה את רוחב A4. יחס הממדים נשמר ע"י aspect-ratio + height:auto. */
+    #frameBox{ position:relative !important; width:188mm !important; max-width:188mm !important; aspect-ratio:1054/1492 !important; height:auto !important; margin:0 auto !important; }
     #frameImg{ position:absolute !important; inset:0 !important; display:block !important; width:100% !important; height:100% !important; object-fit:fill !important; }
+    #mapSnapshot{ display:block !important; }   /* התמונה המצולמת — סטטית, לא משתנה בהדפסה */
+    #map{ visibility:hidden !important; }
     #mapWindow{ box-shadow:none !important; }
     .leaflet-control-zoom{ display:none !important; }
-    /* בהדפסה: המקרא לא רלוונטי (אין סטטוס צבעים בדף מודפס) ועלול לזלוג מהדף — מוסתר. */
     #legend{ display:none !important; }
-    /* מייל ממוקם יחסית למסגרת */
     #topMail{ position:absolute !important; top:1mm !important; }
   }
 </style>
@@ -124,6 +126,7 @@
 
 <script src="/i18n.js"></script>
 <script src="/leaflet.js"></script>
+<script src="/html2canvas.js"></script>
 <script>
 const parts = location.pathname.split('/');
 const CID = parts[2];
@@ -220,6 +223,7 @@ async function load(){
     const _tl = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       { maxZoom:21, maxNativeZoom:19, attribution:'Esri',
         keepBuffer: 12,        // שומר הרבה אריחים בזיכרון כך שלא ייעלמו בזמן reflow של הדפסה
+        crossOrigin: 'anonymous',   // חיוני כדי ש-html2canvas יוכל לצלם אריחים מדומיין חיצוני (Esri תומך CORS)
         updateWhenIdle: false, updateWhenZooming: true });
     _tl.addTo(map);
     trackTiles(_tl);
@@ -321,39 +325,48 @@ async function load(){
   }
 
   async function doPrint(){
-    // מסתירים גדלים אינליין כך שכללי @media print (יחס ממדים נעול) ישלטו על המסגרת
-    const box=document.getElementById('frameBox');
-    const savedW=box.style.width, savedH=box.style.height;
-    box.style.width=''; box.style.height='';
-    void box.offsetWidth;        // כפיית reflow כדי שה-CSS החדש ייכנס לתוקף מיד
-    await settleMap();
-    await settleMap();           // מעבר שני לוודא שהאריחים בגודל ההדפסה נטענו
-    window.print();
-    // אחרי ההדפסה — מחזירים את תצוגת המסך
-    setTimeout(()=>{ box.style.width=savedW; box.style.height=savedH; sizeFrame(); applyExactView(); }, 300);
+    // ===== הדפסה ע"י "צילום" המפה לתמונה =====
+    // במקום להדפיס מפת Leaflet חיה (שמתרנדרת מחדש בגודל אחר → זום/מיקום משתנים, רקע שחור),
+    // מצלמים את אזור המפה כפי שהוא נראה במסך לתמונה סטטית, ומדפיסים אותה. תמונה לא משתנה.
+    const win = document.getElementById('mapWindow');
+    try{
+      // קודם מוודאים שהמפה במצב יציב והאריחים טעונים
+      await settleMap();
+      // מצלמים את חלון המפה (לוויין + תחנות + כותרת) לקנבס
+      const canvas = await html2canvas(win, {
+        useCORS: true, allowTaint: false, backgroundColor: null,
+        scale: 2,                 // רזולוציה כפולה לאיכות הדפסה
+        logging: false,
+        width: win.clientWidth, height: win.clientHeight
+      });
+      const dataUrl = canvas.toDataURL('image/png');
+      // יוצרים/מעדכנים תמונת snapshot שתוצג במקום המפה החיה בזמן הדפסה
+      let snap = document.getElementById('mapSnapshot');
+      if(!snap){
+        snap = document.createElement('img');
+        snap.id = 'mapSnapshot';
+        snap.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:none;z-index:700;';
+        win.appendChild(snap);
+      }
+      snap.src = dataUrl;
+      // מסמנים את ה-body שאנחנו במצב snapshot — ה-CSS יחביא את המפה החיה ויראה את התמונה
+      document.body.classList.add('printing-snapshot');
+      await new Promise(r=>setTimeout(r, 150));   // רגע שהתמונה תיכנס ל-DOM
+      window.print();
+      // אחרי ההדפסה — מסירים את מצב ה-snapshot ומחזירים מפה חיה
+      setTimeout(()=>{ document.body.classList.remove('printing-snapshot'); applyExactView(); }, 400);
+    }catch(e){
+      // אם הצילום נכשל (למשל CORS) — נופלים להדפסה רגילה של המפה החיה
+      document.body.classList.remove('printing-snapshot');
+      try{ await settleMap(); }catch(_){}
+      window.print();
+      setTimeout(()=>applyExactView(), 400);
+    }
   }
 
-  // beforeprint: ברגע זה כרום כבר החיל את פריסת ההדפסה והמיכל בגודלו הסופי (כפי שאישר
-  // האבחון: 513px בהדפסה מול 381px במסך). חובה להריץ כאן fitBounds מחדש — אחרת המפה
-  // נשארת ממוקמת לגודל המסך והאזור יוצא רחב מדי (תחנה 10 בורחת). מריצים כמה פעמים
-  // (סינכרוני + אחרי reflow) כדי לתפוס את הגודל הסופי בוודאות.
-  function refitForPrint(){
-    const box=document.getElementById('frameBox');
-    if(box){ box.style.width=''; box.style.height=''; }
-    try{ map.invalidateSize(); }catch(e){}
-    void (box && box.offsetWidth);   // כפיית reflow כדי שגודל ההדפסה ייכנס לתוקף לפני המדידה
-    applyExactView();                // fitBounds נמדד עכשיו מול הגודל הסופי (513px)
-    applyExactView();                // קריאה שנייה ליציבות
-  }
   if(!window._printFitHooked){
     window._printFitHooked=true;
-    window.addEventListener('beforeprint', refitForPrint);
-    // matchMedia('print') לעיתים נורה לפני beforeprint — תופסים גם אותו
-    try{
-      const mql = window.matchMedia('print');
-      (mql.addEventListener ? mql.addEventListener.bind(mql,'change') : mql.addListener.bind(mql))(e=>{ if(e.matches) refitForPrint(); });
-    }catch(e){}
-    window.addEventListener('afterprint', ()=>{ sizeFrame(); applyExactView(); });
+    window.addEventListener('afterprint', ()=>{ document.body.classList.remove('printing-snapshot'); sizeFrame(); applyExactView(); });
   }
 
   // הדפסה אוטומטית כשמגיעים עם ?print=1 (מהדשבורד)
