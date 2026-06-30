@@ -333,16 +333,26 @@ async function load(){
     setTimeout(()=>{ box.style.width=savedW; box.style.height=savedH; sizeFrame(); applyExactView(); }, 300);
   }
 
-  // beforeprint: מוודא רק שהמסגרת בגודל הנכון. לא קוראים ל-fitBounds מחדש כאן —
-  // doPrint כבר מיקם והמתין לאריחים; הזזה נוספת כאן הייתה גורמת לטעינת אריחים חדשה
-  // (= רקע שחור) בדיוק כשהדפדפן מצלם. רק מתקנים גודל אם המשתמש הדפיס ידנית (Ctrl+P).
+  // beforeprint: ברגע זה כרום כבר החיל את פריסת ההדפסה והמיכל בגודלו הסופי (כפי שאישר
+  // האבחון: 513px בהדפסה מול 381px במסך). חובה להריץ כאן fitBounds מחדש — אחרת המפה
+  // נשארת ממוקמת לגודל המסך והאזור יוצא רחב מדי (תחנה 10 בורחת). מריצים כמה פעמים
+  // (סינכרוני + אחרי reflow) כדי לתפוס את הגודל הסופי בוודאות.
+  function refitForPrint(){
+    const box=document.getElementById('frameBox');
+    if(box){ box.style.width=''; box.style.height=''; }
+    try{ map.invalidateSize(); }catch(e){}
+    void (box && box.offsetWidth);   // כפיית reflow כדי שגודל ההדפסה ייכנס לתוקף לפני המדידה
+    applyExactView();                // fitBounds נמדד עכשיו מול הגודל הסופי (513px)
+    applyExactView();                // קריאה שנייה ליציבות
+  }
   if(!window._printFitHooked){
     window._printFitHooked=true;
-    window.addEventListener('beforeprint', ()=>{
-      const box=document.getElementById('frameBox');
-      if(box){ box.style.width=''; box.style.height=''; void box.offsetWidth; }
-      applyExactView();           // קריאה אחת בלבד למקרה של Ctrl+P ידני (ללא doPrint מקדים)
-    });
+    window.addEventListener('beforeprint', refitForPrint);
+    // matchMedia('print') לעיתים נורה לפני beforeprint — תופסים גם אותו
+    try{
+      const mql = window.matchMedia('print');
+      (mql.addEventListener ? mql.addEventListener.bind(mql,'change') : mql.addListener.bind(mql))(e=>{ if(e.matches) refitForPrint(); });
+    }catch(e){}
     window.addEventListener('afterprint', ()=>{ sizeFrame(); applyExactView(); });
   }
 
