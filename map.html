@@ -84,9 +84,10 @@
     html,body{ background:#fff !important; width:auto !important; height:auto !important; overflow:visible !important; }
     #msg,#navBar{ display:none !important; }
     #stage{ position:static !important; width:100% !important; height:auto !important; display:block !important; overflow:visible !important; }
-    /* רוחב קבוע + יחס ממדים נעול (aspect-ratio) — כך חלון המפה שומר בדיוק על אותו יחס כמו במסך,
-       ו-fitBounds מציג את אותו אזור גיאוגרפי. height:auto היה גורם ליחס לא צפוי בזמן ההדפסה. */
-    #frameBox{ position:relative !important; width:190mm !important; max-width:190mm !important; aspect-ratio:1054/1492 !important; height:auto !important; margin:0 auto !important; }
+    /* גדלים פיזיים קבועים בשני הצירים (לא aspect-ratio שלא תמיד מיושם בהדפסה) —
+       כך יחס חלון המפה זהה בדיוק למסך (1054/1492) ו-fitBounds מציג בדיוק אותו אזור.
+       188mm × (1492/1054) ≈ 266mm — נכנס ב-A4 לאורך (גובה מודפס ~285mm). */
+    #frameBox{ position:relative !important; width:188mm !important; max-width:188mm !important; height:266.2mm !important; aspect-ratio:auto !important; margin:0 auto !important; }
     #frameImg{ position:absolute !important; inset:0 !important; display:block !important; width:100% !important; height:100% !important; object-fit:fill !important; }
     #mapWindow{ box-shadow:none !important; }
     .leaflet-control-zoom{ display:none !important; }
@@ -246,6 +247,23 @@ async function load(){
       } else {
         map.setView([cfg.center?cfg.center.lat:31.8133, cfg.center?cfg.center.lng:34.7780], cfg.zoom||16, {animate:false});
       }
+      updateDiag();
+    }catch(e){}
+  }
+
+  // אבחון: מציג על המפה את גודל המיכל בפיקסלים, היחס, והזום — נראה גם בהדפסה.
+  // נועד לאיתור הפער בין העורך להדפסה. נוסיף ?diag=1 לכתובת כדי להציג.
+  function updateDiag(){
+    if(!/[?&]diag=1/.test(location.search)) return;
+    let el = document.getElementById('diagBox');
+    if(!el){
+      el = document.createElement('div'); el.id='diagBox';
+      el.style.cssText='position:absolute;top:4px;left:4px;z-index:5000;background:rgba(0,0,0,.8);color:#0f0;font:11px/1.4 monospace;padding:4px 6px;border-radius:4px;white-space:pre;pointer-events:none;';
+      document.getElementById('mapWindow').appendChild(el);
+    }
+    try{
+      const s = map.getSize();
+      el.textContent = `size: ${s.x}×${s.y}px\nratio: ${(s.x/s.y).toFixed(3)}\nzoom: ${map.getZoom().toFixed(3)}`;
     }catch(e){}
   }
 
