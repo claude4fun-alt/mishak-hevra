@@ -93,7 +93,13 @@ function defaultMapConfig() {
 }
 
 // חברה חדשה
-function newCompany(name, password) {
+// accountSource: 'admin' (נוצרה ידנית ע"י מנהל-על — לעולם לא כפופה למחזור מחיקה אוטומטי)
+//                'billing' (נוצרה ע"י לקוח ששילם — כפופה למחזור: enabledUntil -> disable -> deleteAt)
+// controlledBy: 'system' (האוטומציה שולטת) | 'admin' (מנהל-על השתלט ידנית, האוטומציה לא נוגעת בחשבון)
+function newCompany(name, password, opts) {
+  opts = opts || {};
+  const source = opts.accountSource === 'billing' ? 'billing' : 'admin';
+  const now = Date.now();
   return {
     id: makeId('co'),
     name: name || 'חברה חדשה',
@@ -106,12 +112,30 @@ function newCompany(name, password) {
     submissions: [],
     speedBonus: { enabled: true, maxBonus: 10, windowSec: 60 },
     mapConfig: defaultMapConfig(),
-    createdAt: Date.now()
+    createdAt: now,
+    // --- מחזור חיים של בילינג ---
+    accountSource: source,                 // 'admin' | 'billing'
+    controlledBy: source === 'billing' ? 'system' : 'admin',  // 'system' | 'admin'
+    enabledUntil: source === 'billing' ? (now + 7 * 24 * 60 * 60 * 1000) : null,   // סוף השבוע הפעיל
+    deleteAt: source === 'billing' ? (now + 14 * 24 * 60 * 60 * 1000) : null,      // מועד מחיקה אם לא משולם
+    billingEmail: opts.billingEmail || '',
+    billingHistory: []                     // [{at, amount, currency, orderId, status}]
   };
 }
 
 function defaultDB() {
-  return { companies: {}, library: [] };  // companies: companyId->company · library: [{id, name, lang, style, ageRange, stations[], mapConfig, uses, createdAt, updatedAt}]
+  return {
+    companies: {}, library: [],
+    // הגדרות בילינג גלובליות — נגיש למנהל-על בלבד דרך הדשבורד (לא בקוד)
+    billingConfig: {
+      provider: 'paypal',
+      mode: 'sandbox',           // 'sandbox' | 'live'
+      paypalClientId: '',
+      paypalClientSecret: '',
+      weeklyPrice: 19.90,
+      currency: 'USD'
+    }
+  };
 }
 
 let db;
@@ -140,6 +164,9 @@ async function loadDB() {
   }
   // backfill
   if (!Array.isArray(db.library)) db.library = [];
+  if (!db.billingConfig) {
+    db.billingConfig = { provider: 'paypal', mode: 'sandbox', paypalClientId: '', paypalClientSecret: '', weeklyPrice: 19.90, currency: 'USD' };
+  }
   Object.values(db.companies).forEach(c => {
     if (c.enabled === undefined) c.enabled = true;
     if (!c.speedBonus) c.speedBonus = { enabled: true, maxBonus: 10, windowSec: 60 };
@@ -152,7 +179,48 @@ async function loadDB() {
     // מעקב פופולריות חבילות: איזו חבילה נטענה לאחרונה והאם כבר נספרה כ"שוחקה"
     if (c.loadedPackId === undefined) c.loadedPackId = null;
     if (c.loadedPackCounted === undefined) c.loadedPackCounted = false;
+    // backfill שדות מחזור-חיים של בילינג — חברות קיימות (שנוצרו לפני הפיצ'ר) נחשבות "admin" (לא כפופות)
+    if (!c.accountSource) c.accountSource = 'admin';
+    if (!c.controlledBy) c.controlledBy = c.accountSource === 'billing' ? 'system' : 'admin';
+    if (c.enabledUntil === undefined) c.enabledUntil = null;
+    if (c.deleteAt === undefined) c.deleteAt = null;
+    if (c.billingEmail === undefined) c.billingEmail = '';
+    if (!Array.isArray(c.billingHistory)) c.billingHistory = [];
   });
+}
+
+// ============================================================
+//  מחזור חיים של בילינג — בדיקה עצלה (lazy) בכל בקשה, לא טיימרים
+//  (Render free tier נרדם — אסור לסמוך על setTimeout שרץ ברקע)
+// ============================================================
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+function applyBillingLifecycle(c) {
+  if (!c || c.accountSource !== 'billing' || c.controlledBy !== 'system') return; // לא כפוף למחזור
+  const now = Date.now();
+  if (c.enabledUntil && now > c.enabledUntil && c.enabled) {
+    // עבר השבוע הפעיל -> כיבוי, ופתיחת חלון מחיקה של שבוע נוסף
+    c.enabled = false;
+    if (!c.deleteAt) c.deleteAt = c.enabledUntil + WEEK_MS;
+    saveDB();
+  }
+  if (c.deleteAt && now > c.deleteAt && !c.enabled) {
+    // עברו שבועיים בלי תשלום -> מחיקת החברה
+    delete db.companies[c.id];
+    saveDB();
+  }
+}
+// מריץ בדיקה על כל החברות הכפופות למחזור (לקריאה מ-cron חיצוני / endpoint תחזוקה)
+function runBillingSweep() {
+  Object.values(db.companies).forEach(applyBillingLifecycle);
+}
+// הארכה/הפעלה אוטומטית של חברה לאחר תשלום מאומת — שבוע נוסף, האוטומציה חוזרת לשלוט
+function extendCompanyByPayment(c, days) {
+  const now = Date.now();
+  c.enabled = true;
+  c.controlledBy = 'system';
+  c.enabledUntil = now + (days || 7) * 24 * 60 * 60 * 1000;
+  c.deleteAt = null;
+  saveDB();
 }
 
 let saveTimer = null, ghPushTimer = null;
@@ -162,7 +230,11 @@ function saveDB() {
   if (GH_ENABLED) { clearTimeout(ghPushTimer); ghPushTimer = setTimeout(() => ghPush(), 4000); }
 }
 
-function getCompany(id) { return db.companies[id] || null; }
+function getCompany(id) {
+  const c = db.companies[id] || null;
+  if (c) applyBillingLifecycle(c);
+  return db.companies[id] || null; // ייתכן שנמחקה כרגע ע"י applyBillingLifecycle
+}
 
 // נרמול 10 תחנות מתוך נתונים גולמיים (משלים חסרות, מתעלם מעודפות)
 function normalizeStations(rawStations) {
@@ -526,11 +598,14 @@ function resolveCompany(req, res) {
 // ============================================================
 // רשימת כל החברות
 app.get('/api/admin/companies', auth, superOnly, (req, res) => {
+  runBillingSweep();
   const list = Object.values(db.companies).map(c => ({
     id: c.id, name: c.name, password: c.password, enabled: c.enabled,
     gameName: c.gameName, stationCount: c.stations.length,
     playerCount: Object.keys(c.players).length,
-    questionsSet: c.stations.filter(s => s.questionText).length
+    questionsSet: c.stations.filter(s => s.questionText).length,
+    accountSource: c.accountSource || 'admin', controlledBy: c.controlledBy || 'admin',
+    enabledUntil: c.enabledUntil || null, deleteAt: c.deleteAt || null
   }));
   res.json({ companies: list });
 });
@@ -557,7 +632,12 @@ app.post('/api/admin/companies/:cid', auth, superOnly, (req, res) => {
     if (name.length >= 2 && !Object.values(db.companies).some(x => x.name === name && x.id !== c.id)) { c.name = name; if (!c.gameName) c.gameName = name; }
   }
   if (req.body.password !== undefined && req.body.password.trim().length >= 4) c.password = req.body.password.trim();
-  if (req.body.enabled !== undefined) c.enabled = !!req.body.enabled;
+  if (req.body.enabled !== undefined) {
+    c.enabled = !!req.body.enabled;
+    // שינוי ידני של מנהל-על בחשבון בילינג -> האוטומציה נעצרת, השליטה עוברת לאדמין
+    // (חוזרת לאוטומציה רק אם הלקוח משלם מחדש, ראו extendCompanyByPayment)
+    if (c.accountSource === 'billing') c.controlledBy = 'admin';
+  }
   if (req.body.gameName !== undefined) c.gameName = req.body.gameName.toString();
   saveDB();
   res.json({ ok: true });
@@ -569,6 +649,133 @@ app.delete('/api/admin/companies/:cid', auth, superOnly, (req, res) => {
   delete db.companies[req.params.cid];
   saveDB();
   res.json({ ok: true });
+});
+
+// ============================================================
+//  בילינג — הגדרות (מנהל-על בלבד) + PayPal sandbox/live
+//  הסוד והמפתח נשמרים ב-db.json ולא בקוד, כדי שיוחלפו מהדשבורד
+//  ללא deploy. הסוד (paypalClientSecret) לא חוזר ללקוח דרך GET.
+// ============================================================
+app.get('/api/admin/billing-config', auth, superOnly, (req, res) => {
+  const b = db.billingConfig || {};
+  res.json({ provider: b.provider || 'paypal', mode: b.mode || 'sandbox', paypalClientId: b.paypalClientId || '', hasSecret: !!b.paypalClientSecret, weeklyPrice: b.weeklyPrice || 19.90, currency: b.currency || 'USD' });
+});
+app.post('/api/admin/billing-config', auth, superOnly, (req, res) => {
+  const b = req.body || {};
+  if (!db.billingConfig) db.billingConfig = {};
+  if (b.mode === 'sandbox' || b.mode === 'live') db.billingConfig.mode = b.mode;
+  if (typeof b.paypalClientId === 'string') db.billingConfig.paypalClientId = b.paypalClientId.trim();
+  if (typeof b.paypalClientSecret === 'string' && b.paypalClientSecret.trim()) db.billingConfig.paypalClientSecret = b.paypalClientSecret.trim();
+  if (isFinite(b.weeklyPrice) && Number(b.weeklyPrice) > 0) db.billingConfig.weeklyPrice = Number(b.weeklyPrice);
+  if (typeof b.currency === 'string' && b.currency.trim().length === 3) db.billingConfig.currency = b.currency.trim().toUpperCase();
+  saveDB();
+  res.json({ ok: true });
+});
+// רשימת חברות הכפופות למחזור בילינג + סטטוס מחזור-חיים (למסך מעקב באדמין)
+app.get('/api/admin/billing-companies', auth, superOnly, (req, res) => {
+  runBillingSweep();
+  const list = Object.values(db.companies).filter(c => c.accountSource === 'billing').map(c => ({
+    id: c.id, name: c.name, enabled: c.enabled, controlledBy: c.controlledBy,
+    enabledUntil: c.enabledUntil, deleteAt: c.deleteAt, billingEmail: c.billingEmail || '',
+    lastPayment: (c.billingHistory || []).slice(-1)[0] || null
+  }));
+  res.json({ companies: list, mode: (db.billingConfig || {}).mode || 'sandbox' });
+});
+
+// --- PayPal REST API: שגיאות sandbox/live לפי mode שנבחר ---
+function paypalApiBase() { return (db.billingConfig && db.billingConfig.mode === 'live') ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'; }
+async function paypalAccessToken() {
+  const cfg = db.billingConfig || {};
+  if (!cfg.paypalClientId || !cfg.paypalClientSecret) throw new Error('PayPal לא מוגדר — נא להזין Client ID/Secret בטאב הבילינג');
+  const auth64 = Buffer.from(cfg.paypalClientId + ':' + cfg.paypalClientSecret).toString('base64');
+  const r = await fetch(paypalApiBase() + '/v1/oauth2/token', {
+    method: 'POST',
+    headers: { 'Authorization': 'Basic ' + auth64, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'grant_type=client_credentials'
+  });
+  if (!r.ok) throw new Error('PayPal auth failed: ' + r.status);
+  const data = await r.json();
+  return data.access_token;
+}
+
+// יצירת הזמנת תשלום (שבוע גישה) — companyId אופציונלי (הארכה לחברה קיימת) או חדש (יצירת חברה אחרי תשלום)
+app.post('/api/billing/create-order', async (req, res) => {
+  try {
+    const cfg = db.billingConfig || {};
+    const amount = (cfg.weeklyPrice || 19.90).toFixed(2);
+    const currency = cfg.currency || 'USD';
+    const token = await paypalAccessToken();
+    const r = await fetch(paypalApiBase() + '/v2/checkout/orders', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        intent: 'CAPTURE',
+        purchase_units: [{ amount: { currency_code: currency, value: amount }, description: 'משחק חברה — שבוע גישה' }]
+      })
+    });
+    if (!r.ok) { const t = await r.text(); return res.status(502).json({ error: 'יצירת הזמנת PayPal נכשלה', detail: t }); }
+    const order = await r.json();
+    res.json({ orderId: order.id, mode: cfg.mode || 'sandbox' });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// אישור תשלום (capture) — רק אחרי אישור הלקוח בעמוד PayPal. מאשרים מול PayPal עצמו (לא סומכים על הדפדפן).
+// companyId קיים -> הארכה (extendCompanyByPayment) — מחייב גם companyPassword תואם, כדי שלא יוכל זר
+//                    לשלם ולהאריך/לשחרר משליטת-אדמין חברה שאינה שלו. אין companyId -> יצירת חברה חדשה.
+app.post('/api/billing/capture-order', async (req, res) => {
+  try {
+    const { orderId, companyId, companyPassword, name, password, billingEmail } = req.body || {};
+    if (!orderId) return res.status(400).json({ error: 'חסר orderId' });
+    const token = await paypalAccessToken();
+    const r = await fetch(paypalApiBase() + '/v2/checkout/orders/' + orderId + '/capture', {
+      method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+    });
+    if (!r.ok) { const t = await r.text(); return res.status(402).json({ error: 'אישור התשלום נכשל', detail: t }); }
+    const capture = await r.json();
+    if (capture.status !== 'COMPLETED') return res.status(402).json({ error: 'התשלום לא הושלם', status: capture.status });
+    const paid = capture.purchase_units && capture.purchase_units[0] && capture.purchase_units[0].payments && capture.purchase_units[0].payments.captures && capture.purchase_units[0].payments.captures[0];
+    const record = { at: Date.now(), amount: paid ? paid.amount.value : null, currency: paid ? paid.amount.currency_code : null, orderId, status: 'completed' };
+
+    if (companyId) {
+      // הארכת חברה קיימת — מחייבים סיסמת החברה כהוכחת בעלות (כסף לבד לא מספיק כדי להאריך/לשנות חברה של מישהו אחר)
+      const c = getCompany(companyId);
+      if (!c) {
+        // התשלום ב-PayPal כבר הצליח (capture בוצע!) אבל החברה לא נמצאה — לדוגמה אם נמחקה בדיוק לפני שהתשלום הושלם.
+        // לא מתעלמים מהתשלום: נרשם אותו בלוג כספי גלובלי כדי שאפשר לטפל בו ידנית (לא לאבד כסף ששולם בפועל).
+        if (!Array.isArray(db.orphanedPayments)) db.orphanedPayments = [];
+        db.orphanedPayments.push({ ...record, attemptedCompanyId: companyId });
+        saveDB();
+        return res.status(404).json({ error: 'החברה לא נמצאה. התשלום נקלט ונרשם — נא לפנות לתמיכה לשחזור.' });
+      }
+      if (!companyPassword || companyPassword !== c.password) {
+        if (!Array.isArray(db.orphanedPayments)) db.orphanedPayments = [];
+        db.orphanedPayments.push({ ...record, attemptedCompanyId: companyId, rejected: 'bad-password' });
+        saveDB();
+        return res.status(403).json({ error: 'סיסמת החברה שגויה — התשלום נקלט ונרשם, נא לפנות לתמיכה' });
+      }
+      c.billingHistory.push(record);
+      extendCompanyByPayment(c, 7);
+      return res.json({ ok: true, companyId: c.id, enabledUntil: c.enabledUntil });
+    }
+
+    // יצירת חברה חדשה אחרי תשלום ראשוני
+    const nm = (name || '').toString().trim().slice(0, 120);
+    const pw = (password || '').toString().trim().slice(0, 200);
+    const email = (billingEmail || '').toString().trim().slice(0, 200);
+    if (nm.length < 2 || pw.length < 4) return res.status(400).json({ error: 'נא להזין שם חברה (2+ תווים) וסיסמה (4+ תווים)' });
+    if (Object.values(db.companies).some(c => c.name === nm)) return res.status(400).json({ error: 'שם זה כבר תפוס, נא לבחור שם אחר' });
+    const c = newCompany(nm, pw, { accountSource: 'billing', billingEmail: email });
+    c.billingHistory.push(record);
+    db.companies[c.id] = c;
+    saveDB();
+    res.json({ ok: true, companyId: c.id, enabledUntil: c.enabledUntil, deleteAt: c.deleteAt });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Client ID בלבד (לא הסוד) — לטעינת כפתורי PayPal בעמוד הבילינג הציבורי
+app.get('/api/billing/public-config', (req, res) => {
+  const cfg = db.billingConfig || {};
+  res.json({ paypalClientId: cfg.paypalClientId || '', mode: cfg.mode || 'sandbox', weeklyPrice: cfg.weeklyPrice || 19.90, currency: cfg.currency || 'USD' });
 });
 
 // ============================================================
@@ -880,7 +1087,12 @@ app.get('/c/:cid/progress', (req, res) => res.sendFile(path.join(__dirname, 'pro
 app.get('/c/:cid/map', (req, res) => res.sendFile(path.join(__dirname, 'map.html')));
 
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/billing', (req, res) => res.sendFile(path.join(__dirname, 'billing.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+
+// הפעלה יזומה של בדיקת מחזור בילינג (גם בלי תעבורה) — תוספת לבדיקה העצלה ב-getCompany.
+// לא מסתמכים על זה בלבד כי Render free tier נרדם; ה-cron האמיתי הוא הבדיקה העצלה + sweep יומי חיצוני (ראו endpoint למטה).
+app.post('/api/admin/billing-sweep', auth, superOnly, (req, res) => { runBillingSweep(); res.json({ ok: true }); });
 
 loadDB().then(() => {
   app.listen(PORT, () => {
@@ -888,4 +1100,5 @@ loadDB().then(() => {
     console.log(GH_ENABLED ? '☁️  גיבוי GitHub פעיל' : '💾 אחסון מקומי בלבד');
     console.log(`📊 חברות רשומות: ${Object.keys(db.companies).length}`);
   });
+  setInterval(runBillingSweep, 60 * 60 * 1000); // בדיקה נוספת כל שעה כל עוד השרת מעיר
 }).catch(err => { console.error('שגיאה בטעינת DB:', err); process.exit(1); });

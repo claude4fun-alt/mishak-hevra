@@ -157,6 +157,7 @@
     <div class="tabs noprint">
       <div class="tab active" onclick="superTab('companies',this)" data-i18n="dash.tabCompanies">🏢 חברות</div>
       <div class="tab" onclick="superTab('superlib',this)" data-i18n="dash.tabLibrary">📚 ספריית חבילות</div>
+      <div class="tab" onclick="superTab('billing',this)" data-i18n="dash.tabBilling">💳 בילינג</div>
     </div>
     <div id="sv_companies">
       <div class="card2">
@@ -171,6 +172,7 @@
       <div id="companiesList"></div>
     </div>
     <div id="sv_superlib" style="display:none"></div>
+    <div id="sv_billing" style="display:none"></div>
   </div>
 
   <!-- ===== ניהול תוכן חברה (גם מנהל-על וגם מנהל חברה) ===== -->
@@ -431,7 +433,9 @@ function superTab(id, el){
   el.classList.add('active');
   document.getElementById('sv_companies').style.display = (id==='companies') ? 'block' : 'none';
   document.getElementById('sv_superlib').style.display = (id==='superlib') ? 'block' : 'none';
+  document.getElementById('sv_billing').style.display = (id==='billing') ? 'block' : 'none';
   if(id==='superlib') loadSuperLibrary();
+  if(id==='billing') loadBilling();
 }
 
 async function loadCompanies() {
@@ -445,6 +449,7 @@ async function loadCompanies() {
         <div>
           <span class="cname">${esc(co.name)}</span>
           <span class="${co.enabled?'badge-on':'badge-off'}">${co.enabled?t('dash.active'):t('dash.inactive')}</span>
+          ${billingBadge(co)}
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn" onclick="openCompany('${co.id}',true)">${t('dash.editQuestions')}</button>
@@ -456,8 +461,24 @@ async function loadCompanies() {
       <div class="meta">
         ${t('dash.coPassword')} <span class="pwbox">${esc(co.password)}</span> ·
         ${t('dash.questionsSet',{set:co.questionsSet,total:co.stationCount})} · ${t('dash.playersCount',{n:co.playerCount})}
+        ${billingMeta(co)}
       </div>
     </div>`).join('');
+}
+
+// תג קטן שמראה אם החברה נוצרה ע"י בילינג, ומי שולט בה כרגע (system/admin)
+function billingBadge(co){
+  if (co.accountSource !== 'billing') return '';
+  const adminCtl = co.controlledBy === 'admin';
+  return `<span class="${adminCtl?'badge-off':'badge-on'}" style="margin-right:6px;font-size:11px" data-i18n="${adminCtl?'dash.billingAdminCtl':'dash.billingAuto'}">${adminCtl?t('dash.billingAdminCtl'):t('dash.billingAuto')}</span>`;
+}
+// שורת מטא נוספת: תאריך כיבוי / מחיקה אוטומטית (רק לחברות בילינג כפופות לאוטומציה)
+function billingMeta(co){
+  if (co.accountSource !== 'billing') return '';
+  const parts=[];
+  if (co.controlledBy==='system' && co.enabled && co.enabledUntil) parts.push(t('dash.billingDisablesOn',{date:new Date(co.enabledUntil).toLocaleDateString()}));
+  if (co.controlledBy==='system' && !co.enabled && co.deleteAt) parts.push(t('dash.billingDeletesOn',{date:new Date(co.deleteAt).toLocaleDateString()}));
+  return parts.length ? ' · '+parts.join(' · ') : '';
 }
 
 async function createCompany() {
@@ -855,6 +876,83 @@ function updateHeader(){
   }
 }
 
+// ===== מנהל-על: בילינג (PayPal + מעקב מחזור-חיים) =====
+async function loadBilling(){
+  const host = document.getElementById('sv_billing');
+  host.innerHTML = `
+    <div class="card2">
+      <h3 style="color:#1a2a6c;margin-bottom:10px" data-i18n="dash.billingCfgTitle">⚙️ הגדרות PayPal</h3>
+      <p class="hint" style="margin-bottom:12px" data-i18n="dash.billingCfgHint">מצב sandbox = בדיקות עם כסף מדומה. החלפה ל-live כשהחשבון האמיתי מוכן — בלי לשנות קוד.</p>
+      <div class="row">
+        <div><label data-i18n="dash.billingMode">מצב</label>
+          <select id="bMode"><option value="sandbox">Sandbox (בדיקות)</option><option value="live">Live (אמיתי)</option></select>
+        </div>
+        <div><label data-i18n="dash.billingPrice">מחיר שבועי</label><input id="bPrice" type="number" min="0" step="0.10"></div>
+        <div><label data-i18n="dash.billingCurrency">מטבע</label><input id="bCurrency" maxlength="3" style="text-transform:uppercase"></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div><label>PayPal Client ID</label><input id="bClientId" placeholder="Axxx..."></div>
+        <div><label>PayPal Client Secret</label><input id="bSecret" type="password" placeholder="${t('dash.billingSecretPh')}"></div>
+      </div>
+      <button class="btn green" style="margin-top:12px" onclick="saveBillingConfig()" data-i18n="dash.saveBtn">💾 שמור</button>
+      <span class="saved" id="bSaved" style="display:none" data-i18n="dash.savedMsg">נשמר ✓</span>
+      <p class="hint" style="margin-top:10px" id="bSecretStatus"></p>
+      <p class="hint" style="margin-top:6px">💳 ${location.origin}/billing</p>
+    </div>
+    <div class="card2">
+      <h3 style="color:#1a2a6c;margin-bottom:10px" data-i18n="dash.billingCompaniesTitle">📋 חברות במחזור בילינג</h3>
+      <div id="billingCompaniesList"></div>
+    </div>`;
+  I18N.applyLang();
+  try {
+    const r = await fetch('/api/admin/billing-config',{headers:H()});
+    const d = await r.json();
+    document.getElementById('bMode').value = d.mode || 'sandbox';
+    document.getElementById('bPrice').value = d.weeklyPrice || 19.90;
+    document.getElementById('bCurrency').value = d.currency || 'USD';
+    document.getElementById('bClientId').value = d.paypalClientId || '';
+    document.getElementById('bSecretStatus').textContent = d.hasSecret ? t('dash.billingSecretSet') : t('dash.billingSecretMissing');
+  } catch(e){}
+  loadBillingCompanies();
+}
+async function saveBillingConfig(){
+  const body = {
+    mode: document.getElementById('bMode').value,
+    weeklyPrice: Number(document.getElementById('bPrice').value)||19.90,
+    currency: document.getElementById('bCurrency').value.trim().toUpperCase()||'USD',
+    paypalClientId: document.getElementById('bClientId').value.trim(),
+    paypalClientSecret: document.getElementById('bSecret').value.trim()
+  };
+  const r = await fetch('/api/admin/billing-config',{method:'POST',headers:{...H(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){ alert(t('dash.saveErr')); return; }
+  document.getElementById('bSecret').value='';
+  const s=document.getElementById('bSaved'); s.style.display='inline'; setTimeout(()=>s.style.display='none',2000);
+  loadBilling();
+}
+async function loadBillingCompanies(){
+  const host = document.getElementById('billingCompaniesList');
+  try {
+    const r = await fetch('/api/admin/billing-companies',{headers:H()});
+    const d = await r.json();
+    if(!d.companies.length){ host.innerHTML='<p class="hint" style="padding:14px;text-align:center">'+t('dash.billingNoCompanies')+'</p>'; return; }
+    host.innerHTML = d.companies.map(co=>`
+      <div class="company-row">
+        <div class="top">
+          <div>
+            <span class="cname">${esc(co.name)}</span>
+            <span class="${co.enabled?'badge-on':'badge-off'}">${co.enabled?t('dash.active'):t('dash.inactive')}</span>
+            <span class="${co.controlledBy==='admin'?'badge-off':'badge-on'}" style="font-size:11px">${co.controlledBy==='admin'?t('dash.billingAdminCtl'):t('dash.billingAuto')}</span>
+          </div>
+        </div>
+        <div class="meta">
+          ${co.billingEmail?esc(co.billingEmail)+' · ':''}
+          ${co.enabledUntil?t('dash.billingDisablesOn',{date:new Date(co.enabledUntil).toLocaleDateString()}):''}
+          ${co.deleteAt?' · '+t('dash.billingDeletesOn',{date:new Date(co.deleteAt).toLocaleDateString()}):''}
+        </div>
+      </div>`).join('');
+  } catch(e){ host.innerHTML=''; }
+}
+
 // ===== ספריית חבילות =====
 let libraryPacks = [];
 let editingPackId = null;
@@ -1152,6 +1250,8 @@ document.addEventListener('langchange', () => {
   if (ROLE==='super' && document.getElementById('superView').style.display!=='none') {
     if (document.getElementById('sv_superlib') && document.getElementById('sv_superlib').style.display !== 'none') {
       loadSuperLibrary();
+    } else if (document.getElementById('sv_billing') && document.getElementById('sv_billing').style.display !== 'none') {
+      loadBilling();
     } else {
       loadCompanies();
     }
