@@ -231,26 +231,17 @@ async function load(){
     [60,200,500,900,1500].forEach(ms=>setTimeout(applyExactView, ms));
   }
 
-  // ===== התאמת התצוגה כך שכל התחנות תמיד נכנסות למסגרת =====
-  // במקום לנסות לשחזר זום מדויק (ששובר בין גדלי חלון שונים), מתאימים את המפה
-  // למלבן שמכיל את כל התחנות + שוליים. כך בכל גודל (עורך/מסך/הדפסה A4) — כל
-  // התחנות תמיד נראות בתוך המסגרת, וזו המטרה האמיתית. אם אין תחנות — נופלים ל-bounds/center.
+  // ===== שחזור התצוגה בדיוק כפי שהמנהל מסגר ידנית =====
+  // המנהל קובע את התצוגה (זום + גרירה) בעורך ושומר center+zoom. כאן משחזרים בדיוק
+  // אותם — אותה שיטה בדיוק כמו בעורך — כך שמה שמוסגר ידנית = מה שהשחקן רואה = מה שמודפס.
+  // ההדפסה נעשית ע"י צילום (html2canvas), כך שמה שרואים על המסך בגודל הזה הוא מה שיודפס.
   function applyExactView(){
     try{
       map.invalidateSize();
-      const mks = (cfg.markers || []).filter(m => isFinite(m.lat) && isFinite(m.lng));
-      if(mks.length >= 1){
-        const lats = mks.map(m=>m.lat), lngs = mks.map(m=>m.lng);
-        let south=Math.min(...lats), north=Math.max(...lats), west=Math.min(...lngs), east=Math.max(...lngs);
-        // שוליים: 18% מהטווח בכל צד (מינימום קטן כדי שגם תחנה בודדת תיראה סביר)
-        const padLat=Math.max((north-south)*0.18, 0.0008), padLng=Math.max((east-west)*0.18, 0.0008);
-        const bnds = [[south-padLat, west-padLng],[north+padLat, east+padLng]];
-        map.fitBounds(bnds, {animate:false, padding:[0,0]});
-      } else if(cfg.bounds && isFinite(cfg.bounds.north)){
-        map.fitBounds([[cfg.bounds.south,cfg.bounds.west],[cfg.bounds.north,cfg.bounds.east]], {animate:false, padding:[0,0]});
-      } else {
-        map.setView([cfg.center?cfg.center.lat:31.8133, cfg.center?cfg.center.lng:34.7780], cfg.zoom||16, {animate:false});
-      }
+      const cLat = (cfg.center && isFinite(cfg.center.lat)) ? cfg.center.lat : 31.8133;
+      const cLng = (cfg.center && isFinite(cfg.center.lng)) ? cfg.center.lng : 34.7780;
+      const z = isFinite(cfg.zoom) ? cfg.zoom : 16;
+      map.setView([cLat, cLng], z, {animate:false});
       updateDiag();
     }catch(e){}
   }
