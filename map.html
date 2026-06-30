@@ -170,6 +170,7 @@ function sizeFrame(){
 window.addEventListener('resize', sizeFrame);
 
 let pinSize = 30;
+let _tilesLoading = 0, _tileLayerRef = null;   // מעקב טעינת אריחים (למניעת רקע שחור בהדפסה)
 function buildPin(id, status){
   const sz = pinSize, anc = sz/2;
   return L.divIcon({ className:'', html:`<div class="pin ${status}" style="--pin:${sz}px">${id}</div>`,
@@ -215,8 +216,12 @@ async function load(){
       dragging: !cfg.locked, scrollWheelZoom: !cfg.locked, doubleClickZoom: !cfg.locked,
       touchZoom: !cfg.locked, boxZoom: !cfg.locked, keyboard: !cfg.locked, tap: !cfg.locked
     });
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      { maxZoom:21, maxNativeZoom:19, attribution:'Esri' }).addTo(map);
+    const _tl = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom:21, maxNativeZoom:19, attribution:'Esri',
+        keepBuffer: 12,        // שומר הרבה אריחים בזיכרון כך שלא ייעלמו בזמן reflow של הדפסה
+        updateWhenIdle: false, updateWhenZooming: true });
+    _tl.addTo(map);
+    trackTiles(_tl);
     if(!cfg.locked) L.control.zoom({position:'topleft'}).addTo(map);
     [60,200,500,900,1500].forEach(ms=>setTimeout(applyExactView, ms));
   }
@@ -264,17 +269,37 @@ async function load(){
   }
 
   // ===== הדפסה דטרמיניסטית =====
-  // הבעיה: כשמדפיסים, מיכל המפה משנה גודל, ו-fitBounds/invalidateSize רצים אסינכרונית —
-  // הדפדפן עלול "לצלם" את המפה במצב מעבר. הפתרון: להחיל מצב-הדפסה על המסך, לחכות
-  // שהמפה והאריחים יתייצבו לגמרי באזור הנכון, ורק אז להפעיל window.print().
-  function settleMap(){
+  // עוקבים אחרי מספר האריחים בטעינה; settleMap ממתין שכולם ייטענו לפני ההדפסה,
+  // כך שלא מקבלים רקע שחור (אריחים שלא הספיקו לעלות) בדף המודפס.
+  function trackTiles(layer){
+    _tileLayerRef = layer;
+    layer.on('loading', ()=>{ _tilesLoading++; });
+    layer.on('load', ()=>{ _tilesLoading = 0; });   // 'load' = כל האריחים הנראים נטענו
+  }
+
+  function waitTilesIdle(maxMs){
     return new Promise(resolve=>{
-      applyExactView();
-      // לחכות שהאריחים שנטענו בעקבות ה-fitBounds יסיימו לעלות (או טיימאאוט בטוח)
-      let done=false; const finish=()=>{ if(done)return; done=true; try{map.off('load',finish);}catch(e){} setTimeout(resolve,250); };
-      try{ map.once('load', finish); }catch(e){}
-      setTimeout(finish, 1200); // רשת בטחון אם אין אירוע load
+      const start = Date.now();
+      const check = ()=>{
+        // אם שכבת האריחים שידרה 'load' (אין טעינות תלויות) או עבר זמן בטחון — ממשיכים
+        if(_tilesLoading === 0 || Date.now()-start > maxMs){ resolve(); return; }
+        setTimeout(check, 80);
+      };
+      // נחכה רגע קצר כדי לתת ל-'loading' להתחיל אחרי setView, ואז נבדוק
+      setTimeout(check, 120);
     });
+  }
+
+  async function settleMap(){
+    applyExactView();
+    // נחכה גם לאירוע 'load' של המפה וגם שהאריחים יסתיימו (מה שמגיע ראשון/בטוח)
+    await new Promise(res=>{
+      let done=false; const finish=()=>{ if(done)return; done=true; try{map.off('load',finish);}catch(e){} res(); };
+      try{ map.once('load', finish); }catch(e){}
+      setTimeout(finish, 1500);
+    });
+    await waitTilesIdle(2500);
+    await new Promise(r=>setTimeout(r, 350));   // שהות קצרה לציור סופי
   }
 
   async function doPrint(){
@@ -284,28 +309,22 @@ async function load(){
     box.style.width=''; box.style.height='';
     void box.offsetWidth;        // כפיית reflow כדי שה-CSS החדש ייכנס לתוקף מיד
     await settleMap();
-    await settleMap();           // מעבר שני לוודא יציבות מלאה
+    await settleMap();           // מעבר שני לוודא שהאריחים בגודל ההדפסה נטענו
     window.print();
     // אחרי ההדפסה — מחזירים את תצוגת המסך
-    setTimeout(()=>{ box.style.width=savedW; box.style.height=savedH; sizeFrame(); settleMap(); }, 300);
+    setTimeout(()=>{ box.style.width=savedW; box.style.height=savedH; sizeFrame(); applyExactView(); }, 300);
   }
 
-  // קריטי: Chrome עובר לפריסת-הדפסה (גדלים שונים) ברגע פתיחת הדיאלוג. אירוע beforeprint
-  // הוא הרגע המדויק שבו המיכל כבר בגודל ההדפסה — מריצים כאן applyExactView סינכרונית
-  // כדי שההתאמה לכל התחנות תהיה נכונה בדיוק לדף המודפס (ולא תיתקע על מצב ביניים).
+  // beforeprint: מוודא רק שהמסגרת בגודל הנכון. לא קוראים ל-fitBounds מחדש כאן —
+  // doPrint כבר מיקם והמתין לאריחים; הזזה נוספת כאן הייתה גורמת לטעינת אריחים חדשה
+  // (= רקע שחור) בדיוק כשהדפדפן מצלם. רק מתקנים גודל אם המשתמש הדפיס ידנית (Ctrl+P).
   if(!window._printFitHooked){
     window._printFitHooked=true;
     window.addEventListener('beforeprint', ()=>{
       const box=document.getElementById('frameBox');
       if(box){ box.style.width=''; box.style.height=''; void box.offsetWidth; }
-      // כמה קריאות סינכרוניות כדי לתפוס את הגודל הסופי אחרי שה-@media print הוחל
-      applyExactView(); applyExactView();
+      applyExactView();           // קריאה אחת בלבד למקרה של Ctrl+P ידני (ללא doPrint מקדים)
     });
-    // גם דרך matchMedia('print') — חלק מהדפדפנים מפעילים זאת מוקדם יותר מ-beforeprint
-    try{
-      const mql = window.matchMedia('print');
-      mql.addEventListener('change', e=>{ if(e.matches){ applyExactView(); applyExactView(); } });
-    }catch(e){}
     window.addEventListener('afterprint', ()=>{ sizeFrame(); applyExactView(); });
   }
 
