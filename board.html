@@ -3,222 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="billing.heroTitle">משחק חברה</title>
+<title data-i18n="board.titleDefault">לוח תוצאות חי</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',Arial,sans-serif; color:#1a2a4a; min-height:100vh;
-    background:#0e1a14 url('/poster.png') center top / cover no-repeat fixed; }
-  .overlay { position:fixed; inset:0; background:linear-gradient(180deg, rgba(10,20,15,.25), rgba(10,20,15,.55)); z-index:0; pointer-events:none; }
-  .hero, main, .credit { position:relative; z-index:1; }
-  .hero { padding:48px 20px 60px; text-align:center; }
-  .langWrap { display:flex; justify-content:center; margin-bottom:18px; }
-  .hero h1 { font-size:34px; font-weight:900; margin-bottom:10px; color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.6); }
-  .hero p { font-size:17px; color:rgba(255,255,255,.92); max-width:480px; margin:0 auto 26px; line-height:1.6; text-shadow:0 1px 6px rgba(0,0,0,.6); }
-  .heroCta { display:inline-block; background:linear-gradient(135deg,#f5b800,#ff9100); color:#1a1208; border:none; padding:18px 50px; border-radius:50px; font-size:19px; font-weight:900; cursor:pointer; box-shadow:0 12px 30px rgba(0,0,0,.4); text-decoration:none; }
-  main { max-width:760px; margin:-30px auto 0; padding:0 18px 60px; }
-  .card { background:#fff; border-radius:22px; padding:30px 26px; margin-bottom:22px; box-shadow:0 20px 50px rgba(0,0,0,.35); }
-  .sectionTitle { font-size:22px; font-weight:800; margin-bottom:18px; color:#1a2a4a; text-align:center; }
-  .featGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-  @media (max-width:680px){ .featGrid{ grid-template-columns:1fr; } }
-  .feat { background:#f5f8f3; border-radius:16px; padding:18px 14px; text-align:center; }
-  .feat h3 { font-size:16px; margin-bottom:8px; color:#1a2a4a; }
-  .feat p { font-size:13.5px; color:#5a6b8a; line-height:1.5; }
-  .step { display:flex; gap:14px; align-items:flex-start; margin-bottom:18px; }
-  .step:last-child { margin-bottom:0; }
-  .stepNum { flex-shrink:0; width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,#22a06b,#16c79a); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:15px; }
-  .step h3 { font-size:16px; margin-bottom:4px; color:#1a2a4a; }
-  .step p { font-size:14px; color:#5a6b8a; line-height:1.6; }
-  .secureBox { display:flex; gap:14px; align-items:flex-start; background:#eaf3ee; border-radius:16px; padding:18px; }
-  .secureBox .ic { font-size:30px; }
-  .secureBox h3 { font-size:16px; margin-bottom:6px; color:#0f5a3c; }
-  .secureBox p { font-size:14px; color:#2e5a45; line-height:1.6; }
-  .sandboxNotice { background:#fff3cd; border:2px solid #f0a500; border-radius:14px; padding:12px 16px; font-size:13.5px; color:#5a3d12; font-weight:700; text-align:center; margin-bottom:20px; }
-  .warnBox { background:#fdeeee; border-inline-start:4px solid #c0392b; border-radius:12px; padding:16px 18px; }
-  .warnBox h3 { font-size:15px; color:#7c241a; margin-bottom:10px; }
-  .warnBox ul { padding-inline-start:20px; }
-  .warnBox li { font-size:13.5px; color:#7c241a; line-height:1.8; }
-  label { display:block; font-size:13px; font-weight:700; color:#3a4a6a; margin-bottom:5px; }
-  input { width:100%; padding:13px 14px; border:2px solid #dfe5ee; border-radius:12px; font-size:15px; font-family:inherit; margin-bottom:14px; }
-  input:focus { outline:none; border-color:#22a06b; }
-  .priceTag { text-align:center; font-size:26px; font-weight:900; color:#1a2a4a; margin-bottom:18px; }
-  .priceTag span { font-size:14px; color:#5a6b8a; font-weight:600; display:block; margin-top:2px; }
-  #paypal-buttons { margin-top:6px; min-height:55px; }
-  .errMsg { color:#c0392b; font-size:13.5px; margin-top:8px; text-align:center; }
-  .successBox { text-align:center; }
-  .successBox .big { font-size:40px; margin-bottom:10px; }
-  .credBox { background:#f0f3fa; border-radius:14px; padding:16px; margin:18px 0; text-align:right; }
-  .credBox .row2 { display:flex; justify-content:space-between; padding:6px 0; font-size:14px; border-bottom:1px solid #dfe5ee; }
-  .credBox .row2:last-child { border-bottom:none; }
-  .credBox b { color:#1a2a4a; }
-  .dashBtn { display:block; text-align:center; background:linear-gradient(135deg,#22a06b,#16c79a); color:#fff; padding:16px; border-radius:14px; font-weight:800; font-size:16px; text-decoration:none; margin-top:14px; }
-  .credit { text-align:center; color:rgba(255,255,255,.5); font-size:12.5px; padding:10px 0 30px; }
+  body { font-family:'Segoe UI',Arial,sans-serif; color:#fff; min-height:100vh; overflow-x:hidden;
+    background:#0e1a14 url('/poster.png') center top / cover no-repeat fixed; position:relative; }
+  body::before { content:''; position:fixed; inset:0; background:linear-gradient(180deg, rgba(10,20,15,.35), rgba(10,20,15,.55)); z-index:0; }
+  body > * { position:relative; z-index:1; }
+  header { text-align:center; padding:18px; }
+  header h1 { font-size:28px; text-shadow:0 2px 10px rgba(0,0,0,.4); }
+  header .live { display:inline-block; background:#ff3b3b; padding:3px 12px; border-radius:20px; font-size:13px; font-weight:700; margin-top:6px; animation:pulse 1.5s infinite; }
+  header .langWrap { display:flex; justify-content:center; margin-top:12px; }
+  @keyframes pulse { 50%{opacity:.5;} }
+
+  .awards { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:0 16px 14px; }
+  .award { background:rgba(255,255,255,.12); border-radius:14px; padding:10px 18px; text-align:center; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.15); }
+  .award .lbl { font-size:12px; opacity:.8; } .award .val { font-size:18px; font-weight:800; color:#ffd23f; }
+
+  .city { display:flex; align-items:flex-end; justify-content:center; gap:18px; padding:20px 16px; min-height:340px; flex-wrap:wrap; }
+  .building-wrap { display:flex; flex-direction:column; align-items:center; width:90px; transition:all .5s; }
+  .rank-medal { font-size:24px; height:30px; }
+  .building { width:64px; background:linear-gradient(180deg,#ffd23f,#ff9558); border-radius:8px 8px 0 0; position:relative; transition:height .8s cubic-bezier(.34,1.56,.64,1); display:flex; flex-direction:column-reverse; box-shadow:0 0 20px rgba(255,210,63,.4); overflow:hidden; }
+  .floor { height:22px; border-bottom:2px solid rgba(0,0,0,.25); position:relative; }
+  .floor::after { content:''; position:absolute; top:5px; left:8px; right:8px; height:8px; background:rgba(255,255,255,.5); border-radius:2px; box-shadow:18px 0 rgba(255,255,255,.5); }
+  .building.leader { background:linear-gradient(180deg,#42f5b3,#22a06b); box-shadow:0 0 30px rgba(66,245,179,.6); }
+  .pname { margin-top:8px; font-weight:700; font-size:14px; text-align:center; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pteam { font-size:11px; opacity:.7; }
+  .pscore { font-size:13px; color:#ffd23f; font-weight:800; }
+  .floornum { position:absolute; top:-26px; left:50%; transform:translateX(-50%); background:#fff; color:#1a2a4a; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; box-shadow:0 3px 8px rgba(0,0,0,.3); }
+
+  .panel { background:rgba(255,255,255,.07); margin:14px; border-radius:18px; padding:16px; backdrop-filter:blur(6px); }
+  .panel h2 { font-size:18px; margin-bottom:12px; color:#ffd23f; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { padding:10px; text-align:start; border-bottom:1px solid rgba(255,255,255,.1); }
+  th { font-size:13px; opacity:.7; }
+  tr.gold td { color:#ffd23f; font-weight:800; }
+  .teams { display:flex; gap:12px; flex-wrap:wrap; }
+  .team-card { flex:1; min-width:140px; background:rgba(255,255,255,.1); border-radius:14px; padding:14px; }
+  .team-card .tn { font-weight:800; font-size:16px; } .team-card .tp { color:#ffd23f; font-size:22px; font-weight:800; }
+  .empty { text-align:center; opacity:.6; padding:30px; }
+  .conf { position:fixed; width:10px; height:10px; pointer-events:none; z-index:99; }
+  .scan-wrap { text-align:center; padding:0 16px 8px; }
+  .scan-btn { background:linear-gradient(135deg,#7b2ff7,#9d50ff); color:#fff; border:none; padding:14px 24px; border-radius:14px; font-size:16px; font-weight:800; cursor:pointer; font-family:inherit; box-shadow:0 8px 20px rgba(123,47,247,.4); }
+  #qrReader { width:100%; max-width:320px; margin:12px auto 0; border-radius:14px; overflow:hidden; }
+  .scan-err { color:#ff9b9b; font-size:13px; margin-top:8px; }
 </style>
 </head>
 <body>
+<header>
+  <h1 id="gameName" data-i18n="board.titleDefault">לוח תוצאות חי</h1>
+  <span class="live">● LIVE</span>
+  <div class="langWrap"><span id="langPicker"></span></div>
+</header>
 
-<div class="overlay"></div>
-
-<div class="hero">
-  <div class="langWrap"><span id="langPickerTop"></span></div>
-  <h1 data-i18n="billing.heroTitle">משחק חברה</h1>
-  <p data-i18n="billing.heroSubtitle">מערכת תחנות QR לאירועי גיבוש משפחתיים וחברתיים</p>
-  <a href="#signup" class="heroCta" data-i18n="billing.heroCta">🚀 התחילו עכשיו</a>
+<div class="scan-wrap">
+  <button class="scan-btn" id="scanBtn" onclick="startScan()" data-i18n="common.scanStation">📷 סרוק QR של תחנה</button>
+  <button class="scan-btn" id="mapBtn" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" onclick="goMap()" data-i18n="common.gameMap">🧭 מפת המשחק</button>
+  <div id="qrReader"></div>
+  <p class="scan-err" id="scanErr"></p>
+  <button class="scan-btn" style="display:none;background:#5a6b8a" id="stopScanBtn" onclick="stopScan()" data-i18n="common.stopScan">עצור סריקה</button>
 </div>
 
-<main>
+<div class="awards" id="awards"></div>
+<div class="city" id="city"><div class="empty" data-i18n="board.waiting">ממתינים למתחרים... 🎮</div></div>
 
-  <div class="card">
-    <div class="sectionTitle" data-i18n="billing.featTitle">מה מקבלים</div>
-    <div class="featGrid">
-      <div class="feat"><h3 data-i18n="billing.feat1Title">🗺️ תחנות מותאמות</h3><p data-i18n="billing.feat1Body"></p></div>
-      <div class="feat"><h3 data-i18n="billing.feat2Title">📊 לוח תוצאות חי</h3><p data-i18n="billing.feat2Body"></p></div>
-      <div class="feat"><h3 data-i18n="billing.feat3Title">🌍 שלוש שפות</h3><p data-i18n="billing.feat3Body"></p></div>
-    </div>
-  </div>
+<div class="panel">
+  <h2 data-i18n="board.rankTable">🏆 טבלת דירוג</h2>
+  <table id="rankTable"><thead><tr>
+    <th data-i18n="board.colRank">#</th><th data-i18n="board.colName">שם</th>
+    <th data-i18n="board.colTeam">קבוצה</th><th data-i18n="board.colCorrect">נכונות</th>
+    <th data-i18n="board.colPoints">נקודות</th><th data-i18n="board.colBonus">⚡ בונוס</th>
+    <th data-i18n="board.colAvgTime">זמן ממוצע</th>
+  </tr></thead><tbody id="rankBody"></tbody></table>
+</div>
 
-  <div class="card">
-    <div class="sectionTitle" data-i18n="billing.planTitle">איך זה עובד</div>
-    <div class="step"><div class="stepNum">1</div><div><h3 data-i18n="billing.step1Title"></h3><p data-i18n="billing.step1Body"></p></div></div>
-    <div class="step"><div class="stepNum">2</div><div><h3 data-i18n="billing.step2Title"></h3><p data-i18n="billing.step2Body"></p></div></div>
-    <div class="step"><div class="stepNum">3</div><div><h3 data-i18n="billing.step3Title"></h3><p data-i18n="billing.step3Body"></p></div></div>
-  </div>
+<div class="panel" id="teamsPanel" style="display:none">
+  <h2 data-i18n="board.teamsTitle">👥 דירוג קבוצות</h2>
+  <div class="teams" id="teams"></div>
+</div>
 
-  <div class="card">
-    <div class="secureBox">
-      <div class="ic">🔒</div>
-      <div><h3 data-i18n="billing.secureTitle">תשלום מאובטח</h3><p data-i18n="billing.secureBody"></p></div>
-    </div>
-  </div>
-
-  <div class="card" id="signup">
-    <div id="sandboxNotice" class="sandboxNotice" style="display:none" data-i18n="billing.sandboxNotice"></div>
-    <div class="sectionTitle" data-i18n="billing.formTitle">פתיחת חברה חדשה</div>
-
-    <div id="formStep">
-      <div class="priceTag" id="priceTag">—</div>
-
-      <div class="warnBox" style="margin-bottom:20px">
-        <h3 data-i18n="billing.warningsTitle">⚠️ לב הדברים שכדאי לדעת</h3>
-        <ul>
-          <li data-i18n="billing.warn1"></li>
-          <li data-i18n="billing.warn2"></li>
-          <li data-i18n="billing.warn3"></li>
-        </ul>
-      </div>
-
-      <label data-i18n="billing.formName">שם החברה / המשפחה</label>
-      <input id="coName" data-i18n-ph="billing.formNamePh">
-      <label data-i18n="billing.formPass">סיסמה למנהל</label>
-      <input id="coPass" type="password" data-i18n-ph="billing.formPassPh">
-      <label data-i18n="billing.formEmail">אימייל (לקבלות ועדכונים)</label>
-      <input id="coEmail" type="email" data-i18n-ph="billing.formEmailPh">
-
-      <div id="paypal-buttons"></div>
-      <p class="errMsg" id="formErr"></p>
-    </div>
-
-    <div id="successStep" class="successBox" style="display:none">
-      <div class="big">🎉</div>
-      <h3 data-i18n="billing.successTitle" style="font-size:20px;margin-bottom:8px"></h3>
-      <p data-i18n="billing.successBody" style="color:#5a6b8a;font-size:14px"></p>
-      <div class="credBox">
-        <div class="row2"><span data-i18n="billing.formName"></span><b id="resName"></b></div>
-        <div class="row2"><span data-i18n="billing.formPass"></span><b id="resPass"></b></div>
-      </div>
-      <a href="/dashboard" class="dashBtn" data-i18n="billing.goToDashboard">🎮 כניסה לדשבורד הניהול</a>
-    </div>
-  </div>
-
-</main>
-
-<p class="credit" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
+<p style="text-align:center;color:rgba(255,255,255,.55);font-size:13px;padding:10px 0 24px" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
 
 <script src="/i18n.js"></script>
 <script>
-I18N.renderLangPicker('langPickerTop', {compact:true});
+// ===== צליל סריקה =====
+let _ac=null,_unlocked=false;
+function _ctx(){ if(!_ac){try{_ac=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}} if(_ac&&_ac.state==='suspended')_ac.resume().catch(()=>{}); return _ac;}
+function _unlock(){const c=_ctx();if(!c)return;if(c.state==='suspended')c.resume().catch(()=>{});if(!_unlocked){try{const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);_unlocked=true;}catch(e){}}}
+['pointerdown','touchstart','click','keydown'].forEach(ev=>document.addEventListener(ev,_unlock,{passive:true}));
+function _tone(f,s,d,t,v){const c=_ctx();if(!c)return;const t0=c.currentTime+s;const o=c.createOscillator(),g=c.createGain();o.type=t||'sine';o.frequency.value=f;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v||0.25,t0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);o.start(t0);o.stop(t0+d+0.05);}
+function playScanSound(){_unlock();_tone(1200,0,0.08,'square',0.22);_tone(660,0.12,0.14,'sine',0.25);_tone(880,0.26,0.2,'sine',0.25);}
+
+const companyId = location.pathname.split('/')[2]; // /c/:cid/board
+const _player = new URLSearchParams(location.search).get('player') || '';
+function goMap(){ location.href = '/c/' + companyId + '/map' + (_player ? '?player=' + encodeURIComponent(_player) : ''); }
 function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
-applyPoster();
+let prevFloors = {};
+let lastData = null;
 
-let BCFG = null;
-
-async function loadConfig() {
+// --- סורק QR מובנה ---
+let qrScanner = null;
+async function startScan() {
+  const err = document.getElementById('scanErr'); err.textContent = '';
+  document.getElementById('scanBtn').style.display = 'none';
+  document.getElementById('stopScanBtn').style.display = 'inline-block';
   try {
-    const r = await fetch('/api/billing/public-config');
-    BCFG = await r.json();
-  } catch(e) { BCFG = { paypalClientId:'', mode:'sandbox', weeklyPrice:19.9, currency:'USD' }; }
-
-  document.getElementById('sandboxNotice').style.display = (BCFG.mode === 'sandbox') ? 'block' : 'none';
-  renderPriceTag();
-  I18N.applyLang();
-
-  if (!BCFG.paypalClientId) {
-    document.getElementById('paypal-buttons').innerHTML =
-      '<p style="text-align:center;color:#c0392b;font-size:13.5px">PayPal לא הוגדר עדיין במנהל-על (טאב בילינג בדשבורד)</p>';
-    return;
+    qrScanner = new Html5Qrcode('qrReader');
+    await qrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, onScanSuccess, () => {});
+  } catch (e) {
+    err.textContent = t('common.camErrPerm');
+    document.getElementById('scanBtn').style.display = 'inline-block';
+    document.getElementById('stopScanBtn').style.display = 'none';
   }
-  const s = document.createElement('script');
-  s.src = 'https://www.paypal.com/sdk/js?client-id=' + encodeURIComponent(BCFG.paypalClientId) + '&currency=' + encodeURIComponent(BCFG.currency || 'USD');
-  s.onload = renderPayPalButtons;
-  s.onerror = () => { document.getElementById('formErr').textContent = t('billing.payError'); };
-  document.head.appendChild(s);
+}
+function onScanSuccess(decodedText) {
+  playScanSound();
+  stopScan();
+  try { const url = new URL(decodedText); if (/\/c\/[^/]+\/station\/\d+/.test(url.pathname)) { location.href = url.pathname + '?via=app'; return; } } catch (e) {}
+  location.href = decodedText;
+}
+async function stopScan() {
+  if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch (e) {} qrScanner = null; }
+  document.getElementById('stopScanBtn').style.display = 'none';
+  document.getElementById('scanBtn').style.display = 'inline-block';
 }
 
-function formatPrice() {
-  const cur = (BCFG && BCFG.currency) || 'USD';
-  const price = (BCFG && BCFG.weeklyPrice) || 19.9;
-  return price + ' ' + cur;
-}
-function renderPriceTag() {
-  document.getElementById('priceTag').innerHTML = formatPrice() + '<span>' + t('billing.perWeek') + '</span>';
+function render(data) {
+  lastData = data;
+  if (data.defaultLang) { window.FG_DEFAULT_LANG = data.defaultLang; }
+  document.getElementById('gameName').textContent = (data.companyName ? data.companyName + ' · ' : '') + (data.gameName || t('board.titleDefault'));
+
+  // פרסים
+  const aw = document.getElementById('awards');
+  let awHtml = '';
+  if (data.awards.fastest) awHtml += `<div class="award"><div class="lbl">${t('board.awFastest')}</div><div class="val">${esc(data.awards.fastest)}</div></div>`;
+  if (data.awards.mostCorrect) awHtml += `<div class="award"><div class="lbl">${t('board.awMostCorrect')}</div><div class="val">${esc(data.awards.mostCorrect)}</div></div>`;
+  if (data.players.length) awHtml += `<div class="award"><div class="lbl">${t('board.awLeader')}</div><div class="val">${esc(data.players[0].name)}</div></div>`;
+  aw.innerHTML = awHtml;
+
+  // עיר הבניינים
+  const city = document.getElementById('city');
+  if (!data.players.length) { city.innerHTML = `<div class="empty">${t('board.waiting')}</div>`; }
+  else {
+    const medals = ['🥇','🥈','🥉'];
+    city.innerHTML = data.players.map((p,i) => {
+      const h = Math.max(0, p.floor) * 22;
+      let floors = '';
+      for (let f=0; f<p.floor; f++) floors += '<div class="floor"></div>';
+      if (prevFloors[p.id] !== undefined && p.floor > prevFloors[p.id]) confetti();
+      prevFloors[p.id] = p.floor;
+      return `<div class="building-wrap">
+        <div class="rank-medal">${medals[i]||''}</div>
+        <div class="building ${i===0&&p.floor>0?'leader':''}" style="height:${h}px">
+          ${p.floor>0?`<div class="floornum">${p.floor}</div>`:''}
+          ${floors}
+        </div>
+        <div class="pname">${esc(p.name)}</div>
+        ${p.team?`<div class="pteam">${esc(p.team)}</div>`:''}
+        <div class="pscore">${p.points} ${t('common.pts')}</div>
+      </div>`;
+    }).join('');
+  }
+
+  // טבלה
+  document.getElementById('rankBody').innerHTML = data.players.map((p,i) => `
+    <tr class="${i===0?'gold':''}">
+      <td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.team||'-')}</td>
+      <td>${p.correct}/${p.stationCount}${p.pending?` <span style="opacity:.6">(+${p.pending} ⏳)</span>`:''}</td>
+      <td>${p.points}</td><td>${p.bonusPoints?('+'+p.bonusPoints):'-'}</td><td>${p.avgTimeSec?p.avgTimeSec+'s':'-'}</td>
+    </tr>`).join('');
+
+  // קבוצות
+  const realTeams = data.teams.filter(tm => tm.team !== 'ללא קבוצה' && tm.team !== t('board.noTeam'));
+  if (realTeams.length) {
+    document.getElementById('teamsPanel').style.display = 'block';
+    document.getElementById('teams').innerHTML = data.teams.map(tm => `
+      <div class="team-card"><div class="tn">${esc(tm.team)}</div><div class="tp">${tm.points} ${t('common.pts')}</div><div style="opacity:.7;font-size:13px">${tm.correct} ${t('board.correctWord')} · ${tm.members} ${t('board.members')}</div></div>`).join('');
+  }
 }
 
-function renderPayPalButtons() {
-  if (!window.paypal) return;
-  window.paypal.Buttons({
-    style: { layout:'vertical', color:'gold', shape:'pill', label:'pay' },
-    createOrder: function() {
-      const name = document.getElementById('coName').value.trim();
-      const pass = document.getElementById('coPass').value.trim();
-      const err = document.getElementById('formErr');
-      err.textContent = '';
-      if (name.length < 2 || pass.length < 4) {
-        err.textContent = t('billing.fillFirst');
-        return Promise.reject(new Error('missing-fields'));
-      }
-      return fetch('/api/billing/create-order', { method:'POST' })
-        .then(r => r.json())
-        .then(d => { if (!d.orderId) throw new Error(d.error || 'create-order-failed'); return d.orderId; })
-        .catch(e => { err.textContent = t('billing.payError'); throw e; });
-    },
-    onApprove: function(data) {
-      const err = document.getElementById('formErr');
-      return fetch('/api/billing/capture-order', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          orderId: data.orderID,
-          name: document.getElementById('coName').value.trim(),
-          password: document.getElementById('coPass').value.trim(),
-          billingEmail: document.getElementById('coEmail').value.trim()
-        })
-      }).then(r => r.json()).then(d => {
-        if (!d.ok) { err.textContent = d.error || t('billing.payError'); return; }
-        document.getElementById('resName').textContent = document.getElementById('coName').value.trim();
-        document.getElementById('resPass').textContent = document.getElementById('coPass').value.trim();
-        document.getElementById('formStep').style.display = 'none';
-        document.getElementById('successStep').style.display = 'block';
-      }).catch(() => { err.textContent = t('billing.payError'); });
-    },
-    onError: function() { document.getElementById('formErr').textContent = t('billing.payError'); }
-  }).render('#paypal-buttons');
+function confetti() {
+  const colors = ['#ffd23f','#ff6b35','#42f5b3','#3b7dd8','#fff'];
+  for (let i=0;i<24;i++){
+    const c=document.createElement('div'); c.className='conf';
+    c.style.background=colors[i%colors.length];
+    c.style.left=(40+Math.random()*20)+'%'; c.style.top='30%';
+    c.style.borderRadius=Math.random()>.5?'50%':'2px';
+    document.body.appendChild(c);
+    const ang=Math.random()*Math.PI*2, vel=4+Math.random()*6;
+    let x=0,y=0,vy=-vel*Math.sin(ang),vx=vel*Math.cos(ang),op=1;
+    const id=setInterval(()=>{ vy+=.4; x+=vx; y+=vy; op-=.02;
+      c.style.transform=`translate(${x*10}px,${y*10}px)`; c.style.opacity=op;
+      if(op<=0){clearInterval(id);c.remove();}
+    },30);
+  }
 }
 
-document.addEventListener('langchange', () => {
-  applyPoster();
-  renderPriceTag();
-  I18N.applyLang();
-});
+function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-loadConfig();
+function connect() {
+  try {
+    const es = new EventSource('/api/stream?company=' + companyId);
+    es.onmessage = e => render(JSON.parse(e.data));
+    es.onerror = () => { es.close(); setTimeout(poll, 2000); };
+  } catch(e) { poll(); }
+}
+async function poll() {
+  try { const r = await fetch('/api/company/' + companyId + '/leaderboard'); render(await r.json()); } catch(e){}
+  setTimeout(poll, 3000);
+}
+
+I18N.renderLangPicker('langPicker');
+document.addEventListener('langchange', () => { applyPoster(); if (lastData) render(lastData); });
+applyPoster();
+connect();
 </script>
 </body>
 </html>

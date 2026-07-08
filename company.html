@@ -3,87 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="board.titleDefault">לוח תוצאות חי</title>
+<title data-i18n="common.gameName">משחק חברה</title>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',Arial,sans-serif; color:#fff; min-height:100vh; overflow-x:hidden;
-    background:#0e1a14 url('/poster.png') center top / cover no-repeat fixed; position:relative; }
-  body::before { content:''; position:fixed; inset:0; background:linear-gradient(180deg, rgba(10,20,15,.35), rgba(10,20,15,.55)); z-index:0; }
-  body > * { position:relative; z-index:1; }
-  header { text-align:center; padding:18px; }
-  header h1 { font-size:28px; text-shadow:0 2px 10px rgba(0,0,0,.4); }
-  header .live { display:inline-block; background:#ff3b3b; padding:3px 12px; border-radius:20px; font-size:13px; font-weight:700; margin-top:6px; animation:pulse 1.5s infinite; }
-  header .langWrap { display:flex; justify-content:center; margin-top:12px; }
-  @keyframes pulse { 50%{opacity:.5;} }
-
-  .awards { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; padding:0 16px 14px; }
-  .award { background:rgba(255,255,255,.12); border-radius:14px; padding:10px 18px; text-align:center; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,.15); }
-  .award .lbl { font-size:12px; opacity:.8; } .award .val { font-size:18px; font-weight:800; color:#ffd23f; }
-
-  .city { display:flex; align-items:flex-end; justify-content:center; gap:18px; padding:20px 16px; min-height:340px; flex-wrap:wrap; }
-  .building-wrap { display:flex; flex-direction:column; align-items:center; width:90px; transition:all .5s; }
-  .rank-medal { font-size:24px; height:30px; }
-  .building { width:64px; background:linear-gradient(180deg,#ffd23f,#ff9558); border-radius:8px 8px 0 0; position:relative; transition:height .8s cubic-bezier(.34,1.56,.64,1); display:flex; flex-direction:column-reverse; box-shadow:0 0 20px rgba(255,210,63,.4); overflow:hidden; }
-  .floor { height:22px; border-bottom:2px solid rgba(0,0,0,.25); position:relative; }
-  .floor::after { content:''; position:absolute; top:5px; left:8px; right:8px; height:8px; background:rgba(255,255,255,.5); border-radius:2px; box-shadow:18px 0 rgba(255,255,255,.5); }
-  .building.leader { background:linear-gradient(180deg,#42f5b3,#22a06b); box-shadow:0 0 30px rgba(66,245,179,.6); }
-  .pname { margin-top:8px; font-weight:700; font-size:14px; text-align:center; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .pteam { font-size:11px; opacity:.7; }
-  .pscore { font-size:13px; color:#ffd23f; font-weight:800; }
-  .floornum { position:absolute; top:-26px; left:50%; transform:translateX(-50%); background:#fff; color:#1a2a4a; border-radius:50%; width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; box-shadow:0 3px 8px rgba(0,0,0,.3); }
-
-  .panel { background:rgba(255,255,255,.07); margin:14px; border-radius:18px; padding:16px; backdrop-filter:blur(6px); }
-  .panel h2 { font-size:18px; margin-bottom:12px; color:#ffd23f; }
-  table { width:100%; border-collapse:collapse; }
-  th, td { padding:10px; text-align:start; border-bottom:1px solid rgba(255,255,255,.1); }
-  th { font-size:13px; opacity:.7; }
-  tr.gold td { color:#ffd23f; font-weight:800; }
-  .teams { display:flex; gap:12px; flex-wrap:wrap; }
-  .team-card { flex:1; min-width:140px; background:rgba(255,255,255,.1); border-radius:14px; padding:14px; }
-  .team-card .tn { font-weight:800; font-size:16px; } .team-card .tp { color:#ffd23f; font-size:22px; font-weight:800; }
-  .empty { text-align:center; opacity:.6; padding:30px; }
-  .conf { position:fixed; width:10px; height:10px; pointer-events:none; z-index:99; }
-  .scan-wrap { text-align:center; padding:0 16px 8px; }
-  .scan-btn { background:linear-gradient(135deg,#7b2ff7,#9d50ff); color:#fff; border:none; padding:14px 24px; border-radius:14px; font-size:16px; font-weight:800; cursor:pointer; font-family:inherit; box-shadow:0 8px 20px rgba(123,47,247,.4); }
-  #qrReader { width:100%; max-width:320px; margin:12px auto 0; border-radius:14px; overflow:hidden; }
-  .scan-err { color:#ff9b9b; font-size:13px; margin-top:8px; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { font-family:'Segoe UI',Arial,sans-serif; min-height:100vh; color:#fff;
+    background:#0e1a14 url('/poster.png') center top / cover no-repeat fixed; }
+  .overlay { position:fixed; inset:0; background:linear-gradient(180deg, rgba(10,20,15,.05), rgba(10,20,15,.25)); z-index:0; }
+  #welcome { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; padding:0 0 40px; }
+  #welcome .companyName { background:rgba(0,0,0,.5); padding:8px 24px; border-radius:30px; font-size:20px; font-weight:800; margin-bottom:16px; backdrop-filter:blur(4px); }
+  #welcome .startBtn { background:linear-gradient(135deg,#f5b800,#ff9100); color:#1a1208; border:none; padding:20px 70px; border-radius:50px; font-size:26px; font-weight:900; font-family:inherit; cursor:pointer; box-shadow:0 12px 30px rgba(0,0,0,.5), 0 0 0 4px rgba(255,255,255,.15); letter-spacing:1px; animation:bob 2s ease-in-out infinite; }
+  @keyframes bob { 50% { transform:translateY(-8px); } }
+  #welcome .startBtn:active { transform:scale(.96); }
+  #welcome .hint { margin-top:14px; font-size:14px; color:rgba(255,255,255,.85); text-shadow:0 2px 8px rgba(0,0,0,.8); }
+  #welcome .langWrap { margin-bottom:18px; }
+  #menu { position:relative; z-index:2; min-height:100vh; display:none; align-items:center; justify-content:center; padding:20px; }
+  .card { background:rgba(255,255,255,.97); color:#1a2a4a; border-radius:24px; padding:32px 28px; max-width:420px; width:100%; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,.5); }
+  .card .langWrap { display:flex; justify-content:center; margin-bottom:14px; }
+  .card .logo { font-size:28px; font-weight:900; margin-bottom:2px; }
+  .card .sub { color:#5a6b8a; margin-bottom:22px; font-size:15px; }
+  .btn { display:block; width:100%; padding:16px; border:none; border-radius:14px; font-weight:800; font-size:17px; text-decoration:none; margin-bottom:12px; color:#fff; cursor:pointer; font-family:inherit; }
+  .bjoin { background:linear-gradient(135deg,#22a06b,#16c79a); }
+  .bscan { background:linear-gradient(135deg,#f5b800,#ff9100); color:#1a1208; }
+  .b2 { background:linear-gradient(135deg,#2a4d9e,#3b7dd8); }
+  #qrReader { width:100%; max-width:320px; margin:8px auto 12px; border-radius:14px; overflow:hidden; }
+  .scan-err { color:#c0392b; font-size:13px; margin-bottom:10px; }
+  .credit { color:#8a98b5; font-size:13px; margin-top:16px; }
+  .err-screen { position:relative; z-index:2; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .ph-step { background:#f0f3fa; border-radius:12px; padding:13px 15px; font-size:15px; line-height:1.5; color:#2a3a5a; border-inline-start:4px solid #7d6bb8; }
 </style>
 </head>
 <body>
-<header>
-  <h1 id="gameName" data-i18n="board.titleDefault">לוח תוצאות חי</h1>
-  <span class="live">● LIVE</span>
-  <div class="langWrap"><span id="langPicker"></span></div>
-</header>
 
-<div class="scan-wrap">
-  <button class="scan-btn" id="scanBtn" onclick="startScan()" data-i18n="common.scanStation">📷 סרוק QR של תחנה</button>
-  <button class="scan-btn" id="mapBtn" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" onclick="goMap()" data-i18n="common.gameMap">🧭 מפת המשחק</button>
-  <div id="qrReader"></div>
-  <p class="scan-err" id="scanErr"></p>
-  <button class="scan-btn" style="display:none;background:#5a6b8a" id="stopScanBtn" onclick="stopScan()" data-i18n="common.stopScan">עצור סריקה</button>
+<div id="loadingErr" class="err-screen hidden" style="display:none">
+  <div class="card"><h2 id="errMsg">טוען...</h2></div>
 </div>
 
-<div class="awards" id="awards"></div>
-<div class="city" id="city"><div class="empty" data-i18n="board.waiting">ממתינים למתחרים... 🎮</div></div>
-
-<div class="panel">
-  <h2 data-i18n="board.rankTable">🏆 טבלת דירוג</h2>
-  <table id="rankTable"><thead><tr>
-    <th data-i18n="board.colRank">#</th><th data-i18n="board.colName">שם</th>
-    <th data-i18n="board.colTeam">קבוצה</th><th data-i18n="board.colCorrect">נכונות</th>
-    <th data-i18n="board.colPoints">נקודות</th><th data-i18n="board.colBonus">⚡ בונוס</th>
-    <th data-i18n="board.colAvgTime">זמן ממוצע</th>
-  </tr></thead><tbody id="rankBody"></tbody></table>
+<div id="welcome" style="display:none">
+  <div class="companyName" id="companyNameTop"></div>
+  <div class="langWrap"><span id="langPickerW"></span></div>
+  <button class="startBtn" onclick="enter()" data-i18n="company.start">התחל ▶</button>
+  <div class="hint" data-i18n="company.startHint">לחצו כדי להתחיל את ההרפתקה</div>
 </div>
 
-<div class="panel" id="teamsPanel" style="display:none">
-  <h2 data-i18n="board.teamsTitle">👥 דירוג קבוצות</h2>
-  <div class="teams" id="teams"></div>
+<div class="overlay" id="ov" style="display:none"></div>
+<div id="menu">
+  <div class="card">
+    <div class="langWrap"><span id="langPickerM"></span></div>
+    <div class="logo" id="gameName" data-i18n="common.gameName">משחק חברה</div>
+    <div class="sub" id="companyNameMenu"></div>
+    <a class="btn bjoin" id="joinLink" href="#" data-i18n="company.join">🙋 הצטרף למשחק</a>
+    <button class="btn bscan" id="scanBtn" onclick="startScan()" data-i18n="common.scanStation">📷 סרוק QR של תחנה</button>
+    <div id="qrReader"></div>
+    <p class="scan-err" id="scanErr"></p>
+    <button class="btn b2" style="display:none" id="stopScanBtn" onclick="stopScan()" data-i18n="common.stopScan">עצור סריקה</button>
+    <a class="btn b2" id="boardLink" href="#" data-i18n="common.board">📊 לוח תוצאות חי</a>
+    <a class="btn b2" id="progressLink" href="#" style="background:linear-gradient(135deg,#22a06b,#16c79a)" data-i18n="common.progress">🗺️ ההתקדמות שלי</a>
+    <a class="btn b2" id="mapLink" href="#" style="background:linear-gradient(135deg,#8a5a00,#c47f00)" data-i18n="common.gameMap">🧭 מפת המשחק</a>
+    <button class="btn b2" style="background:linear-gradient(135deg,#5a4b8a,#7d6bb8)" onclick="showPlayerHelp()" data-i18n="phelp.btn">❓ איך משחקים</button>
+    <p class="credit" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
+    <p class="credit" style="margin-top:6px"><span data-i18n="common.moreGames">למשחקים נוספים פנו ל-</span><a href="mailto:mishak.hevra@gmail.com" style="color:#c47f00;font-weight:700;text-decoration:none">mishak.hevra@gmail.com</a></p>
+  </div>
 </div>
 
-<p style="text-align:center;color:rgba(255,255,255,.55);font-size:13px;padding:10px 0 24px" data-i18n="common.createdBy">נוצר ע"י Amir Cohen</p>
+<div id="playerHelp" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(10,20,15,.75);backdrop-filter:blur(4px);overflow:auto;padding:20px">
+  <div style="max-width:480px;margin:24px auto;background:#fff;color:#1a2a4a;border-radius:22px;padding:26px;box-shadow:0 25px 60px rgba(0,0,0,.5)">
+    <h1 style="font-size:24px;text-align:center;margin-bottom:18px" data-i18n="phelp.title">🎮 איך משחקים</h1>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="ph-step" data-i18n="phelp.s1"></div>
+      <div class="ph-step" data-i18n="phelp.s2"></div>
+      <div class="ph-step" data-i18n="phelp.s3"></div>
+      <div class="ph-step" data-i18n="phelp.s4"></div>
+      <div class="ph-step" data-i18n="phelp.s5"></div>
+      <div class="ph-step" data-i18n="phelp.s6"></div>
+    </div>
+    <div style="margin-top:16px;padding:14px;border-radius:14px;background:linear-gradient(135deg,#fff3cd,#ffe9a8);color:#5a3d12;font-weight:700;line-height:1.5;text-align:center" data-i18n="phelp.goal"></div>
+    <button class="btn bjoin" style="margin-top:18px" onclick="hidePlayerHelp()" data-i18n="phelp.close">הבנתי, בואו נתחיל!</button>
+  </div>
+</div>
 
 <script src="/i18n.js"></script>
 <script>
@@ -95,129 +92,81 @@ function _unlock(){const c=_ctx();if(!c)return;if(c.state==='suspended')c.resume
 function _tone(f,s,d,t,v){const c=_ctx();if(!c)return;const t0=c.currentTime+s;const o=c.createOscillator(),g=c.createGain();o.type=t||'sine';o.frequency.value=f;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(v||0.25,t0+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+d);o.start(t0);o.stop(t0+d+0.05);}
 function playScanSound(){_unlock();_tone(1200,0,0.08,'square',0.22);_tone(660,0.12,0.14,'sine',0.25);_tone(880,0.26,0.2,'sine',0.25);}
 
-const companyId = location.pathname.split('/')[2]; // /c/:cid/board
-const _player = new URLSearchParams(location.search).get('player') || '';
-function goMap(){ location.href = '/c/' + companyId + '/map' + (_player ? '?player=' + encodeURIComponent(_player) : ''); }
-function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
-let prevFloors = {};
-let lastData = null;
+const companyId = location.pathname.split('/')[2]; // /c/:cid
+let company = null;
 
-// --- סורק QR מובנה ---
+function applyPoster(){ document.body.style.backgroundImage = "url('/poster.png?lang=" + getLang() + "')"; }
+
+async function init() {
+  try {
+    const r = await fetch('/api/company/' + companyId);
+    if (r.status === 403) { showErr(t('company.disabled')); return; }
+    if (!r.ok) { showErr(t('company.notFound')); return; }
+    company = await r.json();
+    // שפת ברירת-מחדל של החברה (אם השחקן לא בחר שפה בעצמו)
+    window.FG_DEFAULT_LANG = company.defaultLang || 'he';
+    I18N.applyLang();
+    applyPoster();
+    document.getElementById('companyNameTop').textContent = company.name;
+    document.getElementById('gameName').textContent = company.gameName || t('common.gameName');
+    document.getElementById('companyNameMenu').textContent = company.name;
+    document.getElementById('joinLink').href = '/c/' + companyId + '/join';
+    document.getElementById('boardLink').href = '/c/' + companyId + '/board';
+    document.getElementById('progressLink').href = '/c/' + companyId + '/progress';
+    document.getElementById('mapLink').href = '/c/' + companyId + '/map';
+    document.getElementById('welcome').style.display = 'flex';
+  } catch(e) { showErr(t('common.connErr')); }
+}
+function showErr(msg) {
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('menu').style.display = 'none';
+  const s = document.getElementById('loadingErr'); s.style.display = 'flex'; s.classList.remove('hidden');
+  document.getElementById('errMsg').textContent = msg;
+}
+function enter() {
+  document.getElementById('welcome').style.display = 'none';
+  document.getElementById('ov').style.display = 'block';
+  document.getElementById('menu').style.display = 'flex';
+}
+
 let qrScanner = null;
 async function startScan() {
   const err = document.getElementById('scanErr'); err.textContent = '';
   document.getElementById('scanBtn').style.display = 'none';
-  document.getElementById('stopScanBtn').style.display = 'inline-block';
+  document.getElementById('stopScanBtn').style.display = 'block';
   try {
     qrScanner = new Html5Qrcode('qrReader');
-    await qrScanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 220, height: 220 } }, onScanSuccess, () => {});
-  } catch (e) {
-    err.textContent = t('common.camErrPerm');
-    document.getElementById('scanBtn').style.display = 'inline-block';
+    await qrScanner.start({ facingMode:'environment' }, { fps:10, qrbox:{width:220,height:220} }, onScanSuccess, ()=>{});
+  } catch(e) {
+    err.textContent = t('common.camErr');
+    document.getElementById('scanBtn').style.display = 'block';
     document.getElementById('stopScanBtn').style.display = 'none';
   }
 }
-function onScanSuccess(decodedText) {
+function onScanSuccess(txt) {
   playScanSound();
   stopScan();
-  try { const url = new URL(decodedText); if (/\/c\/[^/]+\/station\/\d+/.test(url.pathname)) { location.href = url.pathname + '?via=app'; return; } } catch (e) {}
-  location.href = decodedText;
+  try { const u = new URL(txt); if (/\/c\/[^/]+\/station\/\d+/.test(u.pathname)) { location.href = u.pathname + '?via=app'; return; } } catch(e){}
+  location.href = txt;
 }
 async function stopScan() {
-  if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch (e) {} qrScanner = null; }
+  if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch(e){} qrScanner = null; }
   document.getElementById('stopScanBtn').style.display = 'none';
-  document.getElementById('scanBtn').style.display = 'inline-block';
+  document.getElementById('scanBtn').style.display = 'block';
 }
 
-function render(data) {
-  lastData = data;
-  if (data.defaultLang) { window.FG_DEFAULT_LANG = data.defaultLang; }
-  document.getElementById('gameName').textContent = (data.companyName ? data.companyName + ' · ' : '') + (data.gameName || t('board.titleDefault'));
+// בוררי דגלים (גם במסך הפתיחה וגם בתפריט)
+I18N.renderLangPicker('langPickerW', {compact:true});
+I18N.renderLangPicker('langPickerM');
 
-  // פרסים
-  const aw = document.getElementById('awards');
-  let awHtml = '';
-  if (data.awards.fastest) awHtml += `<div class="award"><div class="lbl">${t('board.awFastest')}</div><div class="val">${esc(data.awards.fastest)}</div></div>`;
-  if (data.awards.mostCorrect) awHtml += `<div class="award"><div class="lbl">${t('board.awMostCorrect')}</div><div class="val">${esc(data.awards.mostCorrect)}</div></div>`;
-  if (data.players.length) awHtml += `<div class="award"><div class="lbl">${t('board.awLeader')}</div><div class="val">${esc(data.players[0].name)}</div></div>`;
-  aw.innerHTML = awHtml;
+function showPlayerHelp(){ document.getElementById('playerHelp').style.display='block'; }
+function hidePlayerHelp(){ document.getElementById('playerHelp').style.display='none'; }
+document.addEventListener('langchange', () => {
+  applyPoster();
+  if (company) document.getElementById('gameName').textContent = company.gameName || t('common.gameName');
+});
 
-  // עיר הבניינים
-  const city = document.getElementById('city');
-  if (!data.players.length) { city.innerHTML = `<div class="empty">${t('board.waiting')}</div>`; }
-  else {
-    const medals = ['🥇','🥈','🥉'];
-    city.innerHTML = data.players.map((p,i) => {
-      const h = Math.max(0, p.floor) * 22;
-      let floors = '';
-      for (let f=0; f<p.floor; f++) floors += '<div class="floor"></div>';
-      if (prevFloors[p.id] !== undefined && p.floor > prevFloors[p.id]) confetti();
-      prevFloors[p.id] = p.floor;
-      return `<div class="building-wrap">
-        <div class="rank-medal">${medals[i]||''}</div>
-        <div class="building ${i===0&&p.floor>0?'leader':''}" style="height:${h}px">
-          ${p.floor>0?`<div class="floornum">${p.floor}</div>`:''}
-          ${floors}
-        </div>
-        <div class="pname">${esc(p.name)}</div>
-        ${p.team?`<div class="pteam">${esc(p.team)}</div>`:''}
-        <div class="pscore">${p.points} ${t('common.pts')}</div>
-      </div>`;
-    }).join('');
-  }
-
-  // טבלה
-  document.getElementById('rankBody').innerHTML = data.players.map((p,i) => `
-    <tr class="${i===0?'gold':''}">
-      <td>${i+1}</td><td>${esc(p.name)}</td><td>${esc(p.team||'-')}</td>
-      <td>${p.correct}/${p.stationCount}${p.pending?` <span style="opacity:.6">(+${p.pending} ⏳)</span>`:''}</td>
-      <td>${p.points}</td><td>${p.bonusPoints?('+'+p.bonusPoints):'-'}</td><td>${p.avgTimeSec?p.avgTimeSec+'s':'-'}</td>
-    </tr>`).join('');
-
-  // קבוצות
-  const realTeams = data.teams.filter(tm => tm.team !== 'ללא קבוצה' && tm.team !== t('board.noTeam'));
-  if (realTeams.length) {
-    document.getElementById('teamsPanel').style.display = 'block';
-    document.getElementById('teams').innerHTML = data.teams.map(tm => `
-      <div class="team-card"><div class="tn">${esc(tm.team)}</div><div class="tp">${tm.points} ${t('common.pts')}</div><div style="opacity:.7;font-size:13px">${tm.correct} ${t('board.correctWord')} · ${tm.members} ${t('board.members')}</div></div>`).join('');
-  }
-}
-
-function confetti() {
-  const colors = ['#ffd23f','#ff6b35','#42f5b3','#3b7dd8','#fff'];
-  for (let i=0;i<24;i++){
-    const c=document.createElement('div'); c.className='conf';
-    c.style.background=colors[i%colors.length];
-    c.style.left=(40+Math.random()*20)+'%'; c.style.top='30%';
-    c.style.borderRadius=Math.random()>.5?'50%':'2px';
-    document.body.appendChild(c);
-    const ang=Math.random()*Math.PI*2, vel=4+Math.random()*6;
-    let x=0,y=0,vy=-vel*Math.sin(ang),vx=vel*Math.cos(ang),op=1;
-    const id=setInterval(()=>{ vy+=.4; x+=vx; y+=vy; op-=.02;
-      c.style.transform=`translate(${x*10}px,${y*10}px)`; c.style.opacity=op;
-      if(op<=0){clearInterval(id);c.remove();}
-    },30);
-  }
-}
-
-function esc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function connect() {
-  try {
-    const es = new EventSource('/api/stream?company=' + companyId);
-    es.onmessage = e => render(JSON.parse(e.data));
-    es.onerror = () => { es.close(); setTimeout(poll, 2000); };
-  } catch(e) { poll(); }
-}
-async function poll() {
-  try { const r = await fetch('/api/company/' + companyId + '/leaderboard'); render(await r.json()); } catch(e){}
-  setTimeout(poll, 3000);
-}
-
-I18N.renderLangPicker('langPicker');
-document.addEventListener('langchange', () => { applyPoster(); if (lastData) render(lastData); });
-applyPoster();
-connect();
+init();
 </script>
 </body>
 </html>
