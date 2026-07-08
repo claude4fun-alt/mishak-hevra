@@ -115,6 +115,12 @@ async function init() {
     document.getElementById('progressLink').href = '/c/' + companyId + '/progress';
     document.getElementById('mapLink').href = '/c/' + companyId + '/map';
     document.getElementById('welcome').style.display = 'flex';
+    // הגעה עם ?scan=1 (למשל מכפתור "סריקת תחנה" במפה) — מדלגים על מסך הפתיחה
+    // ומסך התפריט, ופותחים ישר את סורק ה-QR.
+    if (new URLSearchParams(location.search).get('scan') === '1') {
+      enter();        // מציג את התפריט (שם נמצא סורק ה-QR)
+      startScan();    // פותח מיד את המצלמה
+    }
   } catch(e) { showErr(t('common.connErr')); }
 }
 function showErr(msg) {

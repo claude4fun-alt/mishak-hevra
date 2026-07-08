@@ -84,6 +84,11 @@
 
   <button class="btn" id="submitBtn" onclick="submitAnswer()" data-i18n="station.submit">שליחת תשובה ✓</button>
   <p class="muted" style="text-align:center" id="alreadyMsg"></p>
+  <div id="alreadyNav" class="hidden" style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+    <a class="link" id="alreadyMapLink" href="#" data-i18n="common.gameMap">🧭 מפת המשחק</a>
+    <a class="link" id="alreadyBoardLink" href="#" target="_blank" data-i18n="common.viewBoard">📊 צפו בטבלת התוצאות החיה</a>
+    <button class="btn sec" style="margin-top:6px" id="alreadyScanBtn" onclick="goScanNext()" data-i18n="common.scanNext">📷 סרוק QR של התחנה הבאה</button>
+  </div>
 </div>
 
 <!-- מסך תוצאה -->
@@ -249,6 +254,7 @@ async function loadStation() {
     document.getElementById('submitBtn').style.opacity = .5;
     const pr = station.previousResult;
     document.getElementById('alreadyMsg').textContent = pr.pending ? t('station.alreadyPending') : (pr.correct ? t('station.alreadyCorrect') : t('station.alreadyDone'));
+    showAlreadyNav();
   }
 
   show('qScreen');
@@ -256,6 +262,21 @@ async function loadStation() {
   clearInterval(timerInt);
   updateTimer();
   timerInt = setInterval(updateTimer, 1000);
+}
+
+// מציג את כפתורי הניווט (מפה / תוצאות / סריקה) מתחת להודעת "כבר ענית",
+// עם קישורים הכוללים את מזהה השחקן (כדי שהמפה תציג את הצבעים שלו)
+function showAlreadyNav() {
+  const pq = player ? ('?player=' + encodeURIComponent(player.playerId)) : '';
+  document.getElementById('alreadyMapLink').href = '/c/' + companyId + '/map' + pq;
+  document.getElementById('alreadyBoardLink').href = '/c/' + companyId + '/board' + pq;
+  document.getElementById('alreadyNav').classList.remove('hidden');
+}
+// סריקת תחנה הבאה — פתיחת סורק ה-QR ישירות (דרך עמוד החברה עם ?scan=1),
+// בלי לעבור דרך מסך פתיחה/תפריט
+function goScanNext() {
+  const pq = player ? ('?player=' + encodeURIComponent(player.playerId) + '&scan=1') : '?scan=1';
+  location.href = '/c/' + companyId + pq;
 }
 function updateTimer() {
   document.getElementById('timer').textContent = t('station.timer', { n: Math.floor((Date.now()-startedAt)/1000) });
@@ -293,10 +314,13 @@ async function submitAnswer() {
     if (!r.ok) {
       // 409 = כבר ענית (נכון/ממתין) — נועלים את הכפתור ומראים למה. אחרת שגיאה כללית.
       if (r.status === 409) {
+        document.getElementById('submitBtn').disabled = true;
+        document.getElementById('submitBtn').style.opacity = .5;
         btn.textContent = t('station.submit');
         document.getElementById('alreadyMsg').textContent = (d.previousResult && d.previousResult.pending)
           ? t('station.alreadyPending')
           : t('station.alreadyCorrect');
+        showAlreadyNav();
         return; // הכפתור נשאר מושבת
       }
       alert(d.error || t('station.sendErr'));

@@ -142,7 +142,25 @@
 const parts = location.pathname.split('/');
 const CID = parts[2];
 const QS = new URLSearchParams(location.search);
-const PLAYER = QS.get('player') || '';
+// מזהה השחקן: קודם מה-URL (?player=), ואם חסר — משחזרים מ-localStorage
+// (אותו מפתח שבו station/company/join שומרים את השחקן), כדי שצבעי הסטטוס
+// יוצגו גם אם הגיעו למפה בלי הפרמטר (למשל מכפתור "תצוגת שחקן" או ניווט חוזר).
+let PLAYER = QS.get('player') || '';
+if(!PLAYER){
+  try {
+    const saved = JSON.parse(localStorage.getItem('fg_player_' + CID) || 'null');
+    if(saved && saved.playerId) PLAYER = saved.playerId;
+  } catch(e){}
+}
+// אם קיבלנו את השחקן מה-URL — נשמור אותו מקומית כדי שיישמר להמשך הניווט
+if(QS.get('player')){
+  try {
+    const cur = JSON.parse(localStorage.getItem('fg_player_' + CID) || 'null');
+    if(!cur || cur.playerId !== QS.get('player')){
+      localStorage.setItem('fg_player_' + CID, JSON.stringify({ playerId: QS.get('player') }));
+    }
+  } catch(e){}
+}
 const PRINT = QS.get('print')==='1';
 
 // ניווט — מבלי להסתיר את טקסט הרקע/מפה (כפתורים בפינה, לא על התוכן)
@@ -153,7 +171,7 @@ function goBack(){
   else { location.href = '/c/'+CID+pq(); }
 }
 function goBoard(){ location.href = '/c/'+CID+'/board'+pq(); }
-function goScan(){ location.href = '/c/'+CID+pq(); }
+function goScan(){ location.href = '/c/'+CID+(pq()?pq()+'&scan=1':'?scan=1'); }
 
 // במצב הדפסה: הסתר ניווט (כדי שלא יודפס)
 if(PRINT){ const nb=document.getElementById('navBar'); if(nb) nb.style.display='none'; }
