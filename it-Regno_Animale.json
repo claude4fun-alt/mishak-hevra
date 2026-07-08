@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Famiglia e Amici",
+  "lang": "it",
+  "style": "riflessione / famiglia e amici",
+  "ageRange": "13",
+  "description": "Domande calorose e riflessive e mini-missioni su famiglia, amicizia e lavoro di squadra.",
+  "gameName": "Famiglia e Amici",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Legami",
+      "questionType": "text",
+      "questionText": "Come si chiamano le persone a cui sei legato per sangue o matrimonio?",
+      "correctAnswer": "famiglia, parenti",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Fiducia",
+      "questionType": "text",
+      "questionText": "Indica una qualità che rende qualcuno un BUON amico. (qualsiasi risposta sensata)",
+      "correctAnswer": "onesto, onestà, gentile, gentilezza, leale, lealtà, premuroso, fiducia, divertente, solidale, disponibile, rispetto",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Squadra",
+      "questionType": "text",
+      "questionText": "Completa il detto: 'L'unione fa la ___.'",
+      "correctAnswer": "forza",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Albero genealogico",
+      "questionType": "text",
+      "questionText": "Come si chiama il fratello di tuo padre o tua madre?",
+      "correctAnswer": "zio",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Condividere",
+      "questionType": "text",
+      "questionText": "Se un amico è triste, indica una cosa che puoi fare per farlo sentire meglio.",
+      "correctAnswer": "ascoltare, parlare, abbraccio, abbracciare, aiutare, consolare, sostenere, esserci, sorriso, giocare",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Missione: grazie",
+      "questionType": "photo",
+      "questionText": "MISSIONE: Fate una foto di gruppo con un gesto di 'grazie' verso un familiare.",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Generazioni",
+      "questionType": "text",
+      "questionText": "Come si chiama la madre di tua madre?",
+      "correctAnswer": "nonna",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Litigio",
+      "questionType": "text",
+      "questionText": "Qual è un buon primo passo quando due amici litigano?",
+      "correctAnswer": "parlare, scusarsi, ascoltare, calmarsi, comunicare, scusa, compromesso",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Missione: squadra",
+      "questionType": "photo",
+      "questionText": "MISSIONE: Formate una piramide umana o un abbraccio di gruppo e fate una foto!",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Valori",
+      "questionType": "text",
+      "questionText": "Completa: 'Chi trova un amico trova un ___.'",
+      "correctAnswer": "tesoro",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

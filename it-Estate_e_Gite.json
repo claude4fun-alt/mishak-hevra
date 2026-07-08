@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "שוברי ראש",
+  "lang": "he",
+  "style": "חשיבה / חידות",
+  "ageRange": "25",
+  "description": "חידות חשיבה לרוחב ופאזלים לוגיים למבוגרים. תחשבו לפני שאתם עונים!",
+  "gameName": "שוברי ראש",
+  "stations": [
+    {
+      "id": 1,
+      "title": "חידה 1",
+      "questionType": "text",
+      "questionText": "למה יש מקשים אבל לא פותח שום מנעול, יש בו רווח אבל אין חדר?",
+      "correctAnswer": "מקלדת",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "חידה 2",
+      "questionType": "text",
+      "questionText": "ככל שיש ממנו יותר, רואים פחות. מה זה?",
+      "correctAnswer": "חושך, אפלה",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "לוגיקה",
+      "questionType": "text",
+      "questionText": "לחקלאי יש 17 כבשים, וכולן חוץ מ-9 ברחו. כמה נשארו?",
+      "correctAnswer": "9, תשע",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "משחק מילים",
+      "questionType": "text",
+      "questionText": "איזו מילה בת 3 אותיות הופכת לרבים כשמוסיפים לה s באנגלית? (רמז: באנגלית)",
+      "correctAnswer": "no, nos",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "חידה 3",
+      "questionType": "text",
+      "questionText": "מה יכול להסתובב בכל העולם בעודו נשאר בפינה אחת?",
+      "correctAnswer": "בול, בול דואר",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "תרגיל",
+      "questionType": "text",
+      "questionText": "מחבט וכדור עולים יחד 1.10 ש\"ח. המחבט עולה 1 ש\"ח יותר מהכדור. כמה עולה הכדור (באגורות)?",
+      "correctAnswer": "5, 5 אגורות, 0.05",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "חידה 4",
+      "questionType": "text",
+      "questionText": "למה יש ראש וזנב אבל אין גוף?",
+      "correctAnswer": "מטבע",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "רצף",
+      "questionType": "text",
+      "questionText": "מה בא בהמשך: א, ב, ג, ד, ה, ו, ... ?",
+      "correctAnswer": "ז",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "חידה 5",
+      "questionType": "text",
+      "questionText": "מה נעשה רטוב יותר ככל שהוא מייבש?",
+      "correctAnswer": "מגבת",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "לוגיקת זמן",
+      "questionType": "text",
+      "questionText": "אם שעון מראה 3:00 בדיוק, כמה מעלות יש בין מחוג השעות למחוג הדקות?",
+      "correctAnswer": "90, תשעים",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "משפחה וחברים",
+  "lang": "he",
+  "style": "חשיבה / משפחה וחברים",
+  "ageRange": "13",
+  "description": "שאלות חמות ומחשבתיות ומשימות קטנות על משפחה, חברות ועבודת צוות.",
+  "gameName": "משפחה וחברים",
+  "stations": [
+    {
+      "id": 1,
+      "title": "קשרים",
+      "questionType": "text",
+      "questionText": "איך קוראים לאנשים שקשורים אלינו בדם או בנישואין?",
+      "correctAnswer": "משפחה, קרובי משפחה, קרובים",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "אמון",
+      "questionType": "text",
+      "questionText": "ציינו תכונה אחת שעושה מישהו לחבר טוב. (כל תשובה הגיונית)",
+      "correctAnswer": "כן, כנות, טוב, נדיב, נאמן, נאמנות, אכפתי, אכפתיות, אמון, מצחיק, תומך, עוזר, כבוד, נחמד",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "עבודת צוות",
+      "questionType": "text",
+      "questionText": "השלימו את הפתגם: 'שניים עדיפים על ___.'",
+      "correctAnswer": "אחד",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "עץ משפחה",
+      "questionType": "text",
+      "questionText": "איך קוראים לאח של אבא או אמא שלך?",
+      "correctAnswer": "דוד",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "שיתוף",
+      "questionType": "text",
+      "questionText": "אם חבר עצוב, ציינו דבר אחד שאפשר לעשות כדי לעזור לו להרגיש טוב יותר.",
+      "correctAnswer": "להקשיב, לדבר, חיבוק, לחבק, לעזור, לנחם, לתמוך, להיות לידו, חיוך, לשחק",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "משימה: תודה",
+      "questionType": "photo",
+      "questionText": "משימה: צלמו תמונה קבוצתית שמראה מחוות 'תודה' למישהו מהמשפחה.",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "דורות",
+      "questionType": "text",
+      "questionText": "איך קוראים לאמא של אמא שלך?",
+      "correctAnswer": "סבתא",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "מריבה",
+      "questionType": "text",
+      "questionText": "מה צעד ראשון טוב כששני חברים רבים?",
+      "correctAnswer": "לדבר, להתנצל, להקשיב, להירגע, לתקשר, סליחה, פשרה",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "משימה: צוות",
+      "questionType": "photo",
+      "questionText": "משימה: צרו פירמידה אנושית או חיבוק קבוצתי וצלמו תמונה!",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "ערכים",
+      "questionType": "text",
+      "questionText": "השלימו: 'חבר טוב נמדד בשעת ___.'",
+      "correctAnswer": "צרה, מצוקה, דחק",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

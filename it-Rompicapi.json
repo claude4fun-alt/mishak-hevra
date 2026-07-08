@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Family & Friends",
+  "lang": "en",
+  "style": "thinking / family & friends",
+  "ageRange": "13",
+  "description": "Warm, thoughtful questions and mini-missions about family, friendship and teamwork.",
+  "gameName": "Family & Friends",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Bonds",
+      "questionType": "text",
+      "questionText": "What do we call the people you are related to by blood or marriage?",
+      "correctAnswer": "family, relatives",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Trust",
+      "questionType": "text",
+      "questionText": "Name one quality that makes someone a GOOD friend. (any reasonable answer)",
+      "correctAnswer": "honest, honesty, kind, kindness, loyal, loyalty, caring, trust, trustworthy, funny, supportive, helpful, respect",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Teamwork",
+      "questionType": "text",
+      "questionText": "Complete the saying: 'Two heads are better than ___.'",
+      "correctAnswer": "one",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Family tree",
+      "questionType": "text",
+      "questionText": "What do you call your parent's brother?",
+      "correctAnswer": "uncle",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Sharing",
+      "questionType": "text",
+      "questionText": "If a friend is sad, name one thing you can do to help them feel better.",
+      "correctAnswer": "listen, talk, hug, help, comfort, support, be there, cheer, smile, play",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Mission: thanks",
+      "questionType": "photo",
+      "questionText": "MISSION: Take a group photo showing a 'thank you' gesture to someone in your family.",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Generations",
+      "questionType": "text",
+      "questionText": "What do you call your mother's mother?",
+      "correctAnswer": "grandmother, grandma, granny, nana",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Conflict",
+      "questionType": "text",
+      "questionText": "What is a good first step when two friends have an argument?",
+      "correctAnswer": "talk, apologize, listen, calm, communicate, sorry, compromise",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Mission: team",
+      "questionType": "photo",
+      "questionText": "MISSION: Form a human pyramid or a group hug and take a photo!",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Values",
+      "questionType": "text",
+      "questionText": "Finish the sentence: 'A friend in need is a friend ___.'",
+      "correctAnswer": "indeed",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

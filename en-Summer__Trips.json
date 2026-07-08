@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "קיץ וטיולים",
+  "lang": "he",
+  "style": "ילדים / קיץ וטיולים",
+  "ageRange": "10",
+  "description": "שאלות קלות ומהנות על הקיץ, הטבע וטיולים משפחתיים. מושלם לילדים צעירים.",
+  "gameName": "קיץ וטיולים",
+  "stations": [
+    {
+      "id": 1,
+      "title": "אור בשמיים",
+      "questionType": "text",
+      "questionText": "איזה כוכב גדול ובוהק רואים בשמיים ביום קיץ שמשי?",
+      "correctAnswer": "שמש, השמש",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "הגנה",
+      "questionType": "text",
+      "questionText": "מה מורחים על העור כדי להגן עליו מהשמש?",
+      "correctAnswer": "קרם הגנה, קרם, מסנן קרינה",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "קינוח קר",
+      "questionType": "text",
+      "questionText": "איזה קינוח מתוק וקפוא נמס מהר ביום חם?",
+      "correctAnswer": "גלידה, ארטיק, קרטיב",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "על העיניים",
+      "questionType": "text",
+      "questionText": "מה מרכיבים על העיניים כדי לחסום את אור השמש החזק?",
+      "correctAnswer": "משקפי שמש, משקפיים",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "כיף במים",
+      "questionType": "text",
+      "questionText": "מה לובשים כדי לשחות בים או בבריכה?",
+      "correctAnswer": "בגד ים, בגד-ים",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "לילה בשטח",
+      "questionType": "text",
+      "questionText": "במה ישנים כשיוצאים לקמפינג בטבע?",
+      "correctAnswer": "אוהל",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "טיול בטבע",
+      "questionType": "text",
+      "questionText": "איך קוראים להליכה ארוכה בטבע, לרוב במעלה גבעה או הר?",
+      "correctAnswer": "טיול, מסע, הליכה, טרק",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "חרק מזמזם",
+      "questionType": "text",
+      "questionText": "איזה חרק מייצר דבש ולפעמים עוקץ בקיץ?",
+      "correctAnswer": "דבורה",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "אורזים",
+      "questionType": "text",
+      "questionText": "איך קוראים לתיק שאורזים בו בגדים לטיול?",
+      "correctAnswer": "מזוודה, תיק",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "תמונת קבוצה",
+      "questionType": "photo",
+      "questionText": "משימה: צלמו את כל הקבוצה קופצת באוויר בו-זמנית!",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Estate e Gite",
+  "lang": "it",
+  "style": "bambini / estate e viaggi",
+  "ageRange": "10",
+  "description": "Domande facili e divertenti su estate, natura e gite in famiglia. Perfetto per i più piccoli.",
+  "gameName": "Estate e Gite",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Luce nel cielo",
+      "questionType": "text",
+      "questionText": "Quale grande stella luminosa vediamo nel cielo in una giornata estiva di sole?",
+      "correctAnswer": "sole, il sole",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Protezione",
+      "questionType": "text",
+      "questionText": "Cosa metti sulla pelle per proteggerla dal sole?",
+      "correctAnswer": "crema solare, crema, protezione solare",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Dolce freddo",
+      "questionType": "text",
+      "questionText": "Quale dolce freddo si scioglie in fretta in una giornata calda?",
+      "correctAnswer": "gelato, ghiacciolo",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Sugli occhi",
+      "questionType": "text",
+      "questionText": "Cosa indossi sugli occhi per bloccare la luce forte del sole?",
+      "correctAnswer": "occhiali da sole, occhiali",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "In acqua",
+      "questionType": "text",
+      "questionText": "Cosa indossi per nuotare in mare o in piscina?",
+      "correctAnswer": "costume, costume da bagno",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Notte in tenda",
+      "questionType": "text",
+      "questionText": "Dove dormi quando vai in campeggio all'aperto?",
+      "correctAnswer": "tenda",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Passeggiata",
+      "questionType": "text",
+      "questionText": "Come si chiama una lunga camminata nella natura, spesso in salita?",
+      "correctAnswer": "escursione, camminata, trekking",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Insetto ronzante",
+      "questionType": "text",
+      "questionText": "Quale insetto produce il miele e d'estate a volte punge?",
+      "correctAnswer": "ape",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Si parte",
+      "questionType": "text",
+      "questionText": "Come si chiama la borsa in cui metti i vestiti per un viaggio?",
+      "correctAnswer": "valigia, borsa",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Foto di gruppo",
+      "questionType": "photo",
+      "questionText": "MISSIONE: Fate una foto di tutto il gruppo che salta in aria insieme!",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "צורות ותבניות",
+  "lang": "he",
+  "style": "צורות / חשיבה חזותית",
+  "ageRange": "13",
+  "description": "חידות חשיבה חזותית על צורות, תבניות ורצפים. בלי תמונות — הכול מתואר במילים.",
+  "gameName": "צורות ותבניות",
+  "stations": [
+    {
+      "id": 1,
+      "title": "צלעות",
+      "questionType": "text",
+      "questionText": "כמה צלעות יש למשושה?",
+      "correctAnswer": "6, שש, שישה",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "מה הבא",
+      "questionType": "text",
+      "questionText": "רצף: עיגול, ריבוע, עיגול, ריבוע, עיגול... מה בא עכשיו?",
+      "correctAnswer": "ריבוע",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "פינות",
+      "questionType": "text",
+      "questionText": "כמה פינות (קודקודים) יש לקובייה?",
+      "correctAnswer": "8, שמונה",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "היוצא דופן",
+      "questionType": "text",
+      "questionText": "משולש, ריבוע, מחומש, עיגול — לאיזו צורה אין צלעות ישרות?",
+      "correctAnswer": "עיגול, מעגל",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "קיפול",
+      "questionType": "text",
+      "questionText": "אם מקפלים ריבוע בדיוק לאורך האלכסון, איזו צורה מתקבלת?",
+      "correctAnswer": "משולש",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "תבנית מספרים",
+      "questionType": "text",
+      "questionText": "2, 4, 8, 16... מה המספר הבא?",
+      "correctAnswer": "32",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "זוויות",
+      "questionType": "text",
+      "questionText": "כמה מעלות יש בזווית ישרה?",
+      "correctAnswer": "90, תשעים",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "סימטריה",
+      "questionType": "text",
+      "questionText": "כמה צירי סימטריה יש לריבוע מושלם?",
+      "correctAnswer": "4, ארבעה, ארבע",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "מראה",
+      "questionType": "text",
+      "questionText": "איזו אות נראית אותו דבר במראה: E, F או A?",
+      "correctAnswer": "A",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "בנייה",
+      "questionType": "text",
+      "questionText": "כמה פאות יש לקובייה?",
+      "correctAnswer": "6, שש, שישה",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

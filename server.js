@@ -8,8 +8,10 @@ const QRCode = require('qrcode');
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
+app.set('trust proxy', true); // נדרש כדי ש-req.ip ישקף את ה-IP האמיתי של המבקר מאחורי הפרוקסי של Render (לא ה-IP הפנימי שלו)
 const PORT = process.env.PORT || 3007;
 
 const DATA_DIR = path.join(__dirname, 'data');
@@ -69,7 +71,7 @@ async function ghPush(retry = true) {
 // ============================================================
 //  מודל נתונים רב-חברות
 // ============================================================
-function makeId(prefix) { return prefix + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function makeId(prefix) { return prefix + '_' + Date.now().toString(36) + crypto.randomBytes(5).toString('hex'); }
 
 function defaultStations() {
   const stations = [];
@@ -88,7 +90,11 @@ function defaultMapConfig() {
     bounds: null,    // {north,south,east,west} — האזור הגיאוגרפי המדויק שהמנהל מסגר (להדפסה/תצוגה עקבית)
     markerSize: 30,  // קוטר עיגול התחנה בפיקסלים (16-64)
     viewWidth: 0,    // רוחב חלון המפה בעורך בעת השמירה (פיקסלים) — לכיול זום עקבי בהדפסה/מסך
-    markers: []  // [{id:1..10, lat, lng}]
+    markers: [],  // [{id:1..10, lat, lng}]
+    // תמונת-מפה קבועה ("צילום" מהעורך). כשקיימת — השחקן רואה תמונה סטטית זהה בכל
+    // מכשיר/יחס-מסך, במקום מפת Leaflet חיה (שנחתכת לפי גודל הקונטיינר).
+    // { image:'data:image/webp;base64,...', markers:[{id, x%, y%}], viewW, viewH, savedAt }
+    snapshot: null
   };
 }
 
@@ -267,7 +273,25 @@ function normalizeMapConfig(m) {
   if (m.bounds && isFinite(m.bounds.north) && isFinite(m.bounds.south) && isFinite(m.bounds.east) && isFinite(m.bounds.west)) cfg.bounds = { north: Number(m.bounds.north), south: Number(m.bounds.south), east: Number(m.bounds.east), west: Number(m.bounds.west) };
   cfg.locked = !!m.locked;
   if (Array.isArray(m.markers)) cfg.markers = m.markers.filter(x => x && isFinite(x.lat) && isFinite(x.lng) && Number(x.id) >= 1 && Number(x.id) <= 10).map(x => ({ id: Number(x.id), lat: Number(x.lat), lng: Number(x.lng) })).slice(0, 10);
+  cfg.snapshot = normalizeSnapshot(m.snapshot);
   return cfg;
+}
+
+// נרמול snapshot של מפה (תמונה קבועה + מיקומי תחנות באחוזים). מחזיר null אם לא תקין.
+function normalizeSnapshot(s) {
+  if (!s || typeof s !== 'object') return null;
+  if (typeof s.image !== 'string' || s.image.indexOf('data:image/') !== 0) return null;
+  if (!Array.isArray(s.markers) || !s.markers.length) return null;
+  return {
+    image: s.image.slice(0, 4000000),   // תקרה ~4MB — כמו תקרת imageUrl של שאלה
+    viewW: Math.max(1, Math.round(Number(s.viewW) || 0)) || 1,
+    viewH: Math.max(1, Math.round(Number(s.viewH) || 0)) || 1,
+    markers: s.markers
+      .filter(x => x && Number(x.id) >= 1 && Number(x.id) <= 10 && isFinite(x.x) && isFinite(x.y))
+      .map(x => ({ id: Number(x.id), x: Number(x.x), y: Number(x.y) }))
+      .slice(0, 10),
+    savedAt: Number(s.savedAt) || Date.now()
+  };
 }
 
 // מעקב פופולריות: סופר שימוש בחבילה רק אם ≥5 שחקנים שונים כבר ענו בחברה שטענה אותה
@@ -284,13 +308,11 @@ function maybeCountPackUse(c) {
 }
 
 // ============================================================
-//  multer
+//  multer — כל ההעלאות (תמונת שאלה + תמונת תשובה) משתמשות באחסון-זיכרון
+//  ועוברות עיבוד חובה דרך sharp לפני שמירה. כך לא ניתן להעלות קובץ
+//  לא-תמונה (svg/html וכו') ולקבל אותו מוגש דרך /uploads — sharp נכשל
+//  על כל דבר שאינו תמונה אמיתית, והפלט הוא תמיד webp שאנחנו יוצרים.
 // ============================================================
-const storage = multer.diskStorage({
-  destination: (req, f, cb) => cb(null, UPLOADS_DIR),
-  filename: (req, f, cb) => cb(null, Date.now() + '_' + Math.random().toString(36).slice(2, 8) + (path.extname(f.originalname) || '.jpg'))
-});
-const upload = multer({ storage, limits: { fileSize: 12 * 1024 * 1024 } });
 const memUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 
 app.use(express.json({ limit: '20mb' }));
@@ -424,8 +446,8 @@ app.post('/api/company/:cid/join', (req, res) => {
   const c = getCompany(req.params.cid);
   if (!c) return res.status(404).json({ error: 'חברה לא קיימת' });
   if (!c.enabled) return res.status(403).json({ error: 'החברה מושבתת כרגע' });
-  const name = (req.body.name || '').toString().trim();
-  const team = (req.body.team || '').toString().trim();
+  const name = (req.body.name || '').toString().trim().slice(0, 60);
+  const team = (req.body.team || '').toString().trim().slice(0, 60);
   const resume = req.body.resume === true || req.body.resume === 'true';
   if (!name) return res.status(400).json({ error: 'נדרש שם' });
 
@@ -446,8 +468,13 @@ app.post('/api/company/:cid/join', (req, res) => {
     return res.json({ playerId: existing.id, name: existing.name, team: existing.team, companyId: c.id, companyName: c.name, resumed: true });
   }
 
+  // יצירת שחקן חדש — כאן (ורק כאן) חלה הגבלת הקצב נגד הצפת שחקנים מזויפים
+  if (joinRateLimited(req)) {
+    return res.status(429).json({ error: 'יותר מדי הצטרפויות מהמכשיר הזה — נסו שוב בעוד כמה דקות' });
+  }
   const id = makeId('p');
   c.players[id] = { id, name, team, joinedAt: Date.now(), answers: {} };
+  recordJoin(req);
   saveDB(); broadcast(c.id);
   res.json({ playerId: id, name, team, companyId: c.id, companyName: c.name });
 });
@@ -466,18 +493,43 @@ app.get('/api/company/:cid/station/:id', (req, res) => {
 });
 
 // הגשת תשובה
-app.post('/api/company/:cid/answer', upload.single('photo'), (req, res) => {
+app.post('/api/company/:cid/answer', memUpload.single('photo'), async (req, res) => {
   const c = getCompany(req.params.cid);
   if (!c) return res.status(404).json({ error: 'חברה לא קיימת' });
-  const { playerId, stationId, answerText, startedAt } = req.body;
+  const { playerId, stationId, startedAt } = req.body;
+  const answerText = (req.body.answerText || '').toString().slice(0, 1000);
   const player = c.players[playerId];
   const station = c.stations.find(s => s.id == stationId);
   if (!player || !station) return res.status(400).json({ error: 'נתונים לא תקינים' });
+  // מניעת דריסת תשובה קיימת: אם כבר ענו נכון (correct===true) או שהתשובה
+  // ממתינה לאישור המנהל (correct===null, תמונה) — חוסמים. תשובה שגויה
+  // (correct===false) עדיין ניתנת להחלפה, כדי לאפשר לשחקן לנסות שוב.
+  const prevAns = player.answers[station.id];
+  if (prevAns && (prevAns.correct === true || prevAns.correct === null)) {
+    return res.status(409).json({
+      error: prevAns.correct === true ? 'כבר ענית נכון על תחנה זו' : 'התשובה שלך לתחנה זו ממתינה לאישור המנהל',
+      alreadyAnswered: true,
+      previousResult: { correct: prevAns.correct, pending: prevAns.correct === null }
+    });
+  }
   const timeMs = startedAt ? Math.max(0, Date.now() - Number(startedAt)) : 0;
   let correct = null, photoUrl = '';
-  if (req.file) photoUrl = '/uploads/' + req.file.filename;
+  if (req.file) {
+    // עיבוד חובה דרך sharp: גם מגן (קובץ שאינו תמונה אמיתית נכשל ונדחה) וגם דוחס ומאחד פורמט.
+    // הקובץ נכתב לדיסק תחת שם שאנחנו קובעים — לעולם לא לפי שם/סיומת שהלקוח שלח.
+    try {
+      const buf = await sharp(req.file.buffer).rotate().resize({ width: 1400, withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
+      const filename = Date.now() + '_' + crypto.randomBytes(5).toString('hex') + '.webp';
+      fs.writeFileSync(path.join(UPLOADS_DIR, filename), buf);
+      photoUrl = '/uploads/' + filename;
+    } catch (e) { return res.status(400).json({ error: 'התמונה לא תקינה, נסו תמונה אחרת' }); }
+  }
   if (station.questionType === 'text') correct = checkAnswer(station, answerText);
   const bonus = correct === true ? speedBonus(c, timeMs) : 0;
+  // אם מחליפים תשובה שגויה קודמת שהיתה בה תמונה — מוחקים את הקובץ היתום מהדיסק
+  if (prevAns && prevAns.photoUrl && prevAns.photoUrl !== photoUrl) {
+    try { fs.unlinkSync(path.join(UPLOADS_DIR, path.basename(prevAns.photoUrl))); } catch (e) {}
+  }
   player.answers[station.id] = { stationId: station.id, answerText: answerText || '', photoUrl, correct, basePoints: correct ? station.points : 0, bonus, points: correct ? (station.points + bonus) : 0, timeMs, at: Date.now() };
   c.submissions.push({ playerId, name: player.name, team: player.team, ...player.answers[station.id] });
   maybeCountPackUse(c);
@@ -531,7 +583,7 @@ app.get('/api/company/:cid/map', (req, res) => {
   });
   res.json({
     gameName: c.gameName, companyName: c.name, defaultLang: c.defaultLang || 'he',
-    mapConfig: { center: cfg.center, zoom: cfg.zoom, viewWidth: cfg.viewWidth || 0, bounds: cfg.bounds || null, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [] },
+    mapConfig: { center: cfg.center, zoom: cfg.zoom, viewWidth: cfg.viewWidth || 0, bounds: cfg.bounds || null, locked: cfg.locked, markerSize: cfg.markerSize || 30, markers: cfg.markers || [], snapshot: cfg.snapshot || null },
     stations: statusById,
     name: player ? player.name : '', team: player ? player.team : ''
   });
@@ -542,23 +594,67 @@ app.get('/api/company/:cid/map', (req, res) => {
 //  אימות - מנהל-על + מנהלי חברות
 // ============================================================
 const sessions = {}; // token -> { role:'super'|'company', companyId? }
-function makeToken() { return 't_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); }
+function makeToken() { return 't_' + crypto.randomBytes(24).toString('hex'); }
+
+// הגנה בסיסית מפני ניחוש סיסמאות (brute-force) על ההתחברות — לפי IP, בזיכרון בלבד.
+// לא מסתמך על חבילה חיצונית; מספיק להפוך ניסוי-וטעיה אוטומטי לבלתי-מעשי.
+const LOGIN_WINDOW_MS = 10 * 60 * 1000; // חלון של 10 דקות
+const LOGIN_MAX_ATTEMPTS = 10;           // עד 10 ניסיונות כושלים בחלון, ואז חסימה זמנית
+const loginAttempts = {}; // ip -> { count, firstAt }
+function loginRateLimited(req) {
+  const ip = req.ip || 'unknown';
+  const rec = loginAttempts[ip];
+  if (!rec) return false;
+  if (Date.now() - rec.firstAt > LOGIN_WINDOW_MS) { delete loginAttempts[ip]; return false; }
+  return rec.count >= LOGIN_MAX_ATTEMPTS;
+}
+function recordLoginAttempt(req, success) {
+  const ip = req.ip || 'unknown';
+  if (success) { delete loginAttempts[ip]; return; }
+  const now = Date.now();
+  if (!loginAttempts[ip] || now - loginAttempts[ip].firstAt > LOGIN_WINDOW_MS) loginAttempts[ip] = { count: 0, firstAt: now };
+  loginAttempts[ip].count++;
+}
+
+// הגנה מפני הצפת שחקנים מזויפים: הגבלת מספר הצטרפויות (join) חדשות לכל IP
+// בחלון זמן. "המשך משחק" (resume) של שחקן קיים לא נספר — רק יצירת שחקן חדש.
+// בזיכרון בלבד, נאפס עם restart (מספיק כדי לחסום סקריפט הצפה אוטומטי).
+const JOIN_WINDOW_MS = 10 * 60 * 1000;   // חלון 10 דקות
+const JOIN_MAX_NEW = 25;                  // עד 25 שחקנים חדשים לכל IP בחלון
+const joinAttempts = {}; // ip -> { count, firstAt }
+function joinRateLimited(req) {
+  const ip = req.ip || 'unknown';
+  const rec = joinAttempts[ip];
+  if (!rec) return false;
+  if (Date.now() - rec.firstAt > JOIN_WINDOW_MS) { delete joinAttempts[ip]; return false; }
+  return rec.count >= JOIN_MAX_NEW;
+}
+function recordJoin(req) {
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  if (!joinAttempts[ip] || now - joinAttempts[ip].firstAt > JOIN_WINDOW_MS) joinAttempts[ip] = { count: 0, firstAt: now };
+  joinAttempts[ip].count++;
+}
 
 // התחברות: מנהל-על (amirco) או מנהל חברה (סיסמת חברה)
 app.post('/api/admin/login', (req, res) => {
+  if (loginRateLimited(req)) return res.status(429).json({ error: 'יותר מדי ניסיונות התחברות כושלים — נסו שוב בעוד כמה דקות' });
   const user = (req.body.user || '').trim();
   const pass = (req.body.pass || '').trim();
   // מנהל-על
   if (user === SUPER_USER && pass === SUPER_PASS) {
+    recordLoginAttempt(req, true);
     const token = makeToken(); sessions[token] = { role: 'super' };
     return res.json({ token, role: 'super' });
   }
   // מנהל חברה: השדה user = שם החברה, pass = סיסמת החברה
   const company = Object.values(db.companies).find(c => c.name === user && c.password === pass);
   if (company) {
+    recordLoginAttempt(req, true);
     const token = makeToken(); sessions[token] = { role: 'company', companyId: company.id };
     return res.json({ token, role: 'company', companyId: company.id, companyName: company.name });
   }
+  recordLoginAttempt(req, false);
   res.status(401).json({ error: 'שם או סיסמה שגויים' });
 });
 
@@ -675,7 +771,7 @@ app.post('/api/admin/billing-config', auth, superOnly, (req, res) => {
 app.get('/api/admin/billing-companies', auth, superOnly, (req, res) => {
   runBillingSweep();
   const list = Object.values(db.companies).filter(c => c.accountSource === 'billing').map(c => ({
-    id: c.id, name: c.name, enabled: c.enabled, controlledBy: c.controlledBy,
+    id: c.id, name: c.name, enabled: c.enabled, accountSource: c.accountSource, controlledBy: c.controlledBy,
     enabledUntil: c.enabledUntil, deleteAt: c.deleteAt, billingEmail: c.billingEmail || '',
     lastPayment: (c.billingHistory || []).slice(-1)[0] || null
   }));
@@ -1066,9 +1162,46 @@ app.post('/api/admin/company/:cid/map', auth, (req, res) => {
       .map(x => ({ id: Number(x.id), lat: Number(x.lat), lng: Number(x.lng) }))
       .slice(0, 10);
   }
+  // שמירת הקונפיג לא מוחקת snapshot קיים — הוא מתעדכן/נמחק רק דרך /map-snapshot.
+  // (הדשבורד מצלם snapshot חדש מיד אחרי כל שמירה, כך שהוא לא נשאר "ישן" ביחס לתחנות.)
+  cfg.snapshot = (c.mapConfig && c.mapConfig.snapshot) || null;
   c.mapConfig = cfg;
   saveDB();
   res.json({ ok: true, mapConfig: c.mapConfig });
+});
+
+// תמונת-מפה קבועה (snapshot) — שמירה/מחיקה (מנהל).
+// מקבל dataURL של צילום העורך + מיקומי התחנות באחוזים על התמונה.
+// התמונה עוברת חובה דרך sharp (כמו כל תמונה אחרת בפרויקט): קובץ שאינו תמונה
+// אמיתית נדחה, והפלט הוא תמיד webp דחוס שאנחנו יוצרים — לא הקלט המקורי.
+app.post('/api/admin/company/:cid/map-snapshot', auth, async (req, res) => {
+  const c = resolveCompany(req, res); if (!c) return;
+  if (!c.mapConfig) c.mapConfig = defaultMapConfig();
+  const b = req.body || {};
+  if (b.clear === true || b.clear === 'true') {
+    c.mapConfig.snapshot = null;
+    saveDB();
+    return res.json({ ok: true, cleared: true });
+  }
+  const raw = normalizeSnapshot(b);
+  if (!raw) return res.status(400).json({ error: 'נתוני snapshot לא תקינים' });
+  const m = /^data:image\/[a-z0-9.+-]+;base64,(.+)$/i.exec(raw.image);
+  if (!m) return res.status(400).json({ error: 'פורמט תמונה לא תקין' });
+  let webp;
+  try {
+    webp = await sharp(Buffer.from(m[1], 'base64'))
+      .resize({ width: 1200, withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+  } catch (e) { return res.status(400).json({ error: 'התמונה לא תקינה' }); }
+  c.mapConfig.snapshot = {
+    image: 'data:image/webp;base64,' + webp.toString('base64'),
+    viewW: raw.viewW, viewH: raw.viewH,
+    markers: raw.markers,
+    savedAt: Date.now()
+  };
+  saveDB();
+  res.json({ ok: true, savedAt: c.mapConfig.snapshot.savedAt, bytes: webp.length });
 });
 
 

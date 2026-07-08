@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Rompicapi",
+  "lang": "it",
+  "style": "logica / indovinelli",
+  "ageRange": "25",
+  "description": "Indovinelli di pensiero laterale e puzzle logici per adulti. Pensa prima di rispondere!",
+  "gameName": "Rompicapi",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Indovinello 1",
+      "questionType": "text",
+      "questionText": "Cos'ha i tasti ma non apre serrature, ha spazio ma nessuna stanza?",
+      "correctAnswer": "tastiera",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Indovinello 2",
+      "questionType": "text",
+      "questionText": "Più ce n'è, meno vedi. Cos'è?",
+      "correctAnswer": "buio, oscurità",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Logica",
+      "questionType": "text",
+      "questionText": "Un contadino ha 17 pecore, e tutte tranne 9 scappano. Quante ne restano?",
+      "correctAnswer": "9, nove",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Gioco di parole",
+      "questionType": "text",
+      "questionText": "Quale numero, se scritto in lettere, ha tante lettere quanto il suo valore? (in italiano)",
+      "correctAnswer": "tre",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Indovinello 3",
+      "questionType": "text",
+      "questionText": "Cosa può viaggiare per il mondo restando in un angolo?",
+      "correctAnswer": "francobollo",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Trucco",
+      "questionType": "text",
+      "questionText": "Una mazza e una palla costano 1,10 insieme. La mazza costa 1,00 più della palla. Quanto costa la palla (in centesimi)?",
+      "correctAnswer": "5, 5 centesimi, 0.05",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Indovinello 4",
+      "questionType": "text",
+      "questionText": "Cos'ha una testa e una coda ma nessun corpo?",
+      "correctAnswer": "moneta",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Sequenza",
+      "questionType": "text",
+      "questionText": "Cosa viene dopo: 1, 1, 2, 3, 5, 8, ... ?",
+      "correctAnswer": "13",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Indovinello 5",
+      "questionType": "text",
+      "questionText": "Cosa diventa più bagnato man mano che asciuga?",
+      "correctAnswer": "asciugamano",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Logica del tempo",
+      "questionType": "text",
+      "questionText": "Se un orologio segna le 3:00 esatte, quanti gradi ci sono tra la lancetta delle ore e quella dei minuti?",
+      "correctAnswer": "90, novanta",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

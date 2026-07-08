@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Brain Teasers",
+  "lang": "en",
+  "style": "logic / riddles",
+  "ageRange": "25",
+  "description": "Lateral-thinking riddles and logic puzzles for adults. Think before you answer!",
+  "gameName": "Brain Teasers",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Riddle 1",
+      "questionType": "text",
+      "questionText": "What has keys but opens no locks, has space but no room, and lets you enter but not go inside?",
+      "correctAnswer": "keyboard",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Riddle 2",
+      "questionType": "text",
+      "questionText": "The more of this there is, the less you see. What is it?",
+      "correctAnswer": "darkness, dark",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Logic",
+      "questionType": "text",
+      "questionText": "A farmer has 17 sheep, and all but 9 run away. How many are left?",
+      "correctAnswer": "9, nine",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Word play",
+      "questionType": "text",
+      "questionText": "What word becomes shorter when you add two letters to it?",
+      "correctAnswer": "short",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Riddle 3",
+      "questionType": "text",
+      "questionText": "What can travel around the world while staying in one corner?",
+      "correctAnswer": "stamp, a stamp",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Math trick",
+      "questionType": "text",
+      "questionText": "A bat and ball cost 1.10 together. The bat costs 1.00 more than the ball. How much is the ball (in cents)?",
+      "correctAnswer": "5, 5 cents, 0.05, five",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Riddle 4",
+      "questionType": "text",
+      "questionText": "What has a head and a tail but no body?",
+      "correctAnswer": "coin, a coin",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Sequence",
+      "questionType": "text",
+      "questionText": "What comes next: O, T, T, F, F, S, S, ... ?",
+      "correctAnswer": "E, eight",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Riddle 5",
+      "questionType": "text",
+      "questionText": "What gets wetter the more it dries?",
+      "correctAnswer": "towel, a towel",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Time logic",
+      "questionType": "text",
+      "questionText": "If a clock shows 3:15, what is the angle between the hour and minute hands (approximately, in degrees)?",
+      "correctAnswer": "7.5, 7, 8",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

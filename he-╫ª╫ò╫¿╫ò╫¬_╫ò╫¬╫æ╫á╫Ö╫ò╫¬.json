@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Regno Animale",
+  "lang": "it",
+  "style": "animali / natura",
+  "ageRange": "15",
+  "description": "Domande su animali, habitat e biologia — una sfida divertente per i ragazzi.",
+  "gameName": "Regno Animale",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Il più veloce",
+      "questionType": "text",
+      "questionText": "Qual è l'animale terrestre più veloce del mondo nella corsa?",
+      "correctAnswer": "ghepardo",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Il più alto",
+      "questionType": "text",
+      "questionText": "Qual è l'animale più alto sulla Terra?",
+      "correctAnswer": "giraffa",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Gigante del mare",
+      "questionType": "text",
+      "questionText": "Qual è l'animale più grande mai esistito?",
+      "correctAnswer": "balenottera azzurra, balena",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Senza ossa",
+      "questionType": "text",
+      "questionText": "Come si chiamano gli animali senza spina dorsale, come insetti e meduse?",
+      "correctAnswer": "invertebrati, invertebrato",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Trasformazione",
+      "questionType": "text",
+      "questionText": "Come si chiama il processo in cui un bruco diventa farfalla?",
+      "correctAnswer": "metamorfosi",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Cacciatore notturno",
+      "questionType": "text",
+      "questionText": "Quale uccello può girare la testa quasi completamente e caccia di notte?",
+      "correctAnswer": "gufo, civetta",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Nome del gruppo",
+      "questionType": "text",
+      "questionText": "Come si chiama un gruppo di leoni che vivono insieme?",
+      "correctAnswer": "branco",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Sangue freddo",
+      "questionType": "text",
+      "questionText": "I rettili come serpenti e lucertole sono a sangue caldo o freddo?",
+      "correctAnswer": "sangue freddo, freddo",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Zampe",
+      "questionType": "text",
+      "questionText": "Quante zampe ha un ragno?",
+      "correctAnswer": "8, otto",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Lungo sonno",
+      "questionType": "text",
+      "questionText": "Come si chiama il sonno invernale profondo degli orsi?",
+      "correctAnswer": "letargo",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

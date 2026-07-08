@@ -81,6 +81,16 @@
   body.printing-snapshot #mapSnapshot{ display:block !important; }
   body.printing-snapshot #map{ visibility:hidden !important; }
 
+  /* ===== מצב תמונה קבועה (snapshot) =====
+     כשלמנהל יש snapshot שמור, השחקן רואה תמונה סטטית + סיכות HTML באחוזים —
+     אותה תצוגה בדיוק בכל מכשיר ויחס-מסך, בלי Leaflet ובלי טעינת אריחים. */
+  #snapBox{position:absolute;inset:0;display:none;z-index:500;}
+  #snapBox img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block;
+    user-select:none;-webkit-user-drag:none;}
+  #snapBox .pin{position:absolute;transform:translate(-50%,-50%);}
+  #snapBox .attr{position:absolute;bottom:2px;right:4px;z-index:10;font-size:9px;color:#fff;
+    background:rgba(0,0,0,.45);padding:0 4px;border-radius:3px;pointer-events:none;}
+
   /* הדפסה: דף A4 לאורך, המסגרת ממלאה את העמוד. נכתב אחרון כדי לגבור על שאר הכללים */
   @media print{
     @page{ size:A4 portrait; margin:6mm; }
@@ -107,6 +117,7 @@
     <img id="frameImg" src="/map-frame.png" alt="">
     <div id="mapWindow">
       <div id="map"></div>
+      <div id="snapBox"></div>
       <div id="mapTitle" data-i18n="map.loading">טוען…</div>
     </div>
   </div>
@@ -181,6 +192,64 @@ function buildPin(id, status){
     iconSize:[sz,sz], iconAnchor:[anc,anc] });
 }
 
+// ===== ציור מצב snapshot: תמונה קבועה + סיכות HTML באחוזים =====
+let _snapImgLoaded = false;
+function renderSnapshot(snap, cfg, d){
+  const box = document.getElementById('snapBox');
+  document.getElementById('map').style.display='none';
+  box.style.display='block';
+
+  // תמונה — נוצרת פעם אחת; ברענוני סטטוס רק הסיכות מתעדכנות
+  let img = document.getElementById('snapImg');
+  if(!img){
+    img = document.createElement('img');
+    img.id='snapImg'; img.alt='';
+    img.onload = ()=>{ _snapImgLoaded = true; };
+    img.src = snap.image;
+    box.appendChild(img);
+    const attr = document.createElement('span');
+    attr.className='attr'; attr.textContent='Esri';
+    box.appendChild(attr);
+  }
+
+  // גודל סיכה: שומר על אותו יחס ויזואלי כמו בעורך — מוקטן/מוגדל לפי רוחב החלון בפועל
+  const winW = document.getElementById('mapWindow').clientWidth || 1;
+  const scale = winW / (snap.viewW || winW);
+  const pin = Math.max(14, Math.min(64, Math.round((cfg.markerSize || 30) * scale)));
+
+  // סיכות — נבנות מחדש בכל רענון (סטטוס/צבע מתעדכנים)
+  box.querySelectorAll('.pin').forEach(el=>el.remove());
+  snap.markers.forEach(mk=>{
+    if(mk.x < 0 || mk.x > 100 || mk.y < 0 || mk.y > 100) return;  // מחוץ לתמונה
+    const st = (d.stations && d.stations[mk.id]) ? d.stations[mk.id] : null;
+    const status = st ? st.status : 'none';
+    const tip = (st && st.title && st.title.trim()) ? st.title.trim() : (t('common.station') + ' ' + mk.id);
+    const el = document.createElement('div');
+    el.className = 'pin ' + status;
+    el.style.cssText = `--pin:${pin}px; left:${mk.x}%; top:${mk.y}%;`;
+    el.textContent = mk.id;
+    el.title = tip;
+    box.appendChild(el);
+  });
+
+  // הדפסה: התוכן כבר סטטי — פשוט מדפיסים אחרי שהתמונה נטענה
+  window.fgPrintMap = async function(){
+    const t0 = Date.now();
+    while(!_snapImgLoaded && Date.now()-t0 < 4000){ await new Promise(r=>setTimeout(r,100)); }
+    window.print();
+  };
+  if(PRINT && !window._printed){ window._printed = true; setTimeout(()=>window.fgPrintMap(), 600); }
+}
+// רענון גודל סיכות בעת שינוי גודל חלון (במצב snapshot) — עם השהיה קצרה כדי
+// לא להציף בקשות בזמן סיבוב מסך
+let _snapResizeT = null;
+window.addEventListener('resize', ()=>{
+  const box = document.getElementById('snapBox');
+  if(!box || box.style.display!=='block') return;
+  clearTimeout(_snapResizeT);
+  _snapResizeT = setTimeout(load, 250);
+});
+
 async function load(){
   let d;
   try {
@@ -209,6 +278,20 @@ async function load(){
 
   sizeFrame();
   document.getElementById('msg').style.display='none';
+
+  // ===== מצב תמונה קבועה (snapshot) =====
+  // אם המנהל שמר snapshot — מציגים אותו במקום מפת Leaflet חיה. התמונה זהה בכל
+  // מכשיר; חלון-המפה בעורך ובשחקן חולקים את אותם אחוזי מסגרת, כך שהיחס זהה
+  // ו-object-fit:fill אינו מעוות. הסיכות מצוירות כ-HTML לפי אחוזים על התמונה,
+  // כך שצבע הסטטוס ממשיך להתעדכן בכל רענון בלי לגעת בתמונה.
+  const snap = cfg.snapshot;
+  if(snap && snap.image && Array.isArray(snap.markers) && snap.markers.length && !map){
+    renderSnapshot(snap, cfg, d);
+    return;
+  }
+  // אין snapshot (או שכבר רצה מפה חיה) — ממשיכים במסלול Leaflet הרגיל
+  document.getElementById('snapBox').style.display='none';
+  document.getElementById('map').style.display='';
 
   const hasBounds = cfg.bounds && isFinite(cfg.bounds.north);
   if(!map){

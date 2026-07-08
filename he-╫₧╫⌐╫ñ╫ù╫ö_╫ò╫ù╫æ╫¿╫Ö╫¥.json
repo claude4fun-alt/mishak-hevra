@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Animal Kingdom",
+  "lang": "en",
+  "style": "animals / nature",
+  "ageRange": "15",
+  "description": "Questions about animals, habitats and biology — a fun challenge for teens.",
+  "gameName": "Animal Kingdom",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Fastest",
+      "questionType": "text",
+      "questionText": "Which land animal is the fastest runner in the world?",
+      "correctAnswer": "cheetah",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Tallest",
+      "questionType": "text",
+      "questionText": "What is the tallest animal on Earth?",
+      "correctAnswer": "giraffe",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Ocean giant",
+      "questionType": "text",
+      "questionText": "What is the largest animal that has ever lived?",
+      "correctAnswer": "blue whale, whale",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "No bones",
+      "questionType": "text",
+      "questionText": "What do we call animals without a backbone, like insects and jellyfish?",
+      "correctAnswer": "invertebrates, invertebrate",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Change form",
+      "questionType": "text",
+      "questionText": "What is the process called when a caterpillar becomes a butterfly?",
+      "correctAnswer": "metamorphosis",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Night hunter",
+      "questionType": "text",
+      "questionText": "Which bird can rotate its head almost all the way around and hunts at night?",
+      "correctAnswer": "owl",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Group name",
+      "questionType": "text",
+      "questionText": "What do we call a group of lions living together?",
+      "correctAnswer": "pride",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Cold blood",
+      "questionType": "text",
+      "questionText": "Reptiles like snakes and lizards are warm-blooded or cold-blooded?",
+      "correctAnswer": "cold-blooded, cold blooded, cold",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Big heart",
+      "questionType": "text",
+      "questionText": "How many legs does a spider have?",
+      "correctAnswer": "8, eight",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Long sleep",
+      "questionType": "text",
+      "questionText": "What do we call the deep winter sleep of bears?",
+      "correctAnswer": "hibernation, hibernate",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

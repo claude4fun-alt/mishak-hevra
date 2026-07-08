@@ -290,6 +290,19 @@ async function submitAnswer() {
     const r = await fetch('/api/company/' + companyId + '/answer', { method:'POST', body: fd });
     const d = await r.json();
     clearInterval(timerInt);
+    if (!r.ok) {
+      // 409 = כבר ענית (נכון/ממתין) — נועלים את הכפתור ומראים למה. אחרת שגיאה כללית.
+      if (r.status === 409) {
+        btn.textContent = t('station.submit');
+        document.getElementById('alreadyMsg').textContent = (d.previousResult && d.previousResult.pending)
+          ? t('station.alreadyPending')
+          : t('station.alreadyCorrect');
+        return; // הכפתור נשאר מושבת
+      }
+      alert(d.error || t('station.sendErr'));
+      btn.disabled=false; btn.textContent=t('station.submit');
+      return;
+    }
     showResult(d);
   } catch(e) {
     alert(t('station.sendErr'));

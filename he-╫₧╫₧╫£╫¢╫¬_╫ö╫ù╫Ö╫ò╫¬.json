@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Forme e Schemi",
+  "lang": "it",
+  "style": "forme / logica visiva",
+  "ageRange": "13",
+  "description": "Indovinelli di ragionamento visivo su forme, schemi e sequenze. Nessuna immagine — tutto descritto a parole.",
+  "gameName": "Forme e Schemi",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Lati",
+      "questionType": "text",
+      "questionText": "Quanti lati ha un esagono?",
+      "correctAnswer": "6, sei",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Il prossimo",
+      "questionType": "text",
+      "questionText": "Sequenza: cerchio, quadrato, cerchio, quadrato, cerchio... cosa viene ora?",
+      "correctAnswer": "quadrato",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Vertici",
+      "questionType": "text",
+      "questionText": "Quanti vertici (angoli) ha un cubo?",
+      "correctAnswer": "8, otto",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "L'intruso",
+      "questionType": "text",
+      "questionText": "Triangolo, quadrato, pentagono, cerchio — quale forma NON ha lati dritti?",
+      "correctAnswer": "cerchio",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Piega",
+      "questionType": "text",
+      "questionText": "Se pieghi un quadrato esattamente lungo la diagonale, che forma ottieni?",
+      "correctAnswer": "triangolo",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Schema numerico",
+      "questionType": "text",
+      "questionText": "2, 4, 8, 16... qual è il prossimo numero?",
+      "correctAnswer": "32",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Angoli",
+      "questionType": "text",
+      "questionText": "Quanti gradi ha un angolo retto?",
+      "correctAnswer": "90, novanta",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Simmetria",
+      "questionType": "text",
+      "questionText": "Quante linee di simmetria ha un quadrato perfetto?",
+      "correctAnswer": "4, quattro",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Specchio",
+      "questionType": "text",
+      "questionText": "Quale lettera appare uguale allo specchio: E, F o A?",
+      "correctAnswer": "A",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Costruisci",
+      "questionType": "text",
+      "questionText": "Quante facce ha un cubo?",
+      "correctAnswer": "6, sei",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}

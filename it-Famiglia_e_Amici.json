@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Summer & Trips",
+  "lang": "en",
+  "style": "kids / summer & travel",
+  "ageRange": "10",
+  "description": "Fun and easy questions about summer, nature and family trips. Perfect for younger kids.",
+  "gameName": "Summer & Trips",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Sky light",
+      "questionType": "text",
+      "questionText": "What big bright star do we see in the sky on a sunny summer day?",
+      "correctAnswer": "sun",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Beach gear",
+      "questionType": "text",
+      "questionText": "What do you put on your skin to protect it from the sun?",
+      "correctAnswer": "sunscreen, sunblock, sun cream, lotion",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Cool treat",
+      "questionType": "text",
+      "questionText": "What frozen sweet treat melts fast on a hot day?",
+      "correctAnswer": "ice cream, icecream, ice-cream, popsicle",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Pack smart",
+      "questionType": "text",
+      "questionText": "What do you wear over your eyes to block bright sunlight?",
+      "correctAnswer": "sunglasses, glasses, shades",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Water fun",
+      "questionType": "text",
+      "questionText": "What do you wear to go swimming in the sea or pool?",
+      "correctAnswer": "swimsuit, bathing suit, swimming suit, trunks",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Camp night",
+      "questionType": "text",
+      "questionText": "What do you sleep in when you go camping outdoors?",
+      "correctAnswer": "tent",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Nature walk",
+      "questionType": "text",
+      "questionText": "What do we call a long walk in nature, often up a hill or mountain?",
+      "correctAnswer": "hike, hiking, trek",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Buzzy bug",
+      "questionType": "text",
+      "questionText": "Which insect makes honey and can sometimes sting in summer?",
+      "correctAnswer": "bee",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Road trip",
+      "questionType": "text",
+      "questionText": "What do we call the bag you pack your clothes in for a trip?",
+      "correctAnswer": "suitcase, bag, luggage",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Team photo",
+      "questionType": "photo",
+      "questionText": "MISSION: Take a photo of your whole group jumping in the air at the same time!",
+      "correctAnswer": "",
+      "points": 15,
+      "imageUrl": ""
+    }
+  ]
+}

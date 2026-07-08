@@ -1,0 +1,102 @@
+{
+  "format": "mishak-hevra-questions",
+  "version": 1,
+  "name": "Shapes & Patterns",
+  "lang": "en",
+  "style": "shapes / visual logic",
+  "ageRange": "13",
+  "description": "Visual reasoning puzzles about shapes, patterns and sequences. No images needed — described in words.",
+  "gameName": "Shapes & Patterns",
+  "stations": [
+    {
+      "id": 1,
+      "title": "Sides",
+      "questionType": "text",
+      "questionText": "How many sides does a hexagon have?",
+      "correctAnswer": "6, six",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 2,
+      "title": "Next in line",
+      "questionType": "text",
+      "questionText": "A sequence goes: circle, square, circle, square, circle... what comes next?",
+      "correctAnswer": "square",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 3,
+      "title": "Count corners",
+      "questionType": "text",
+      "questionText": "How many corners (vertices) does a cube have?",
+      "correctAnswer": "8, eight",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 4,
+      "title": "Odd one out",
+      "questionType": "text",
+      "questionText": "Triangle, square, pentagon, circle — which shape has NO straight sides?",
+      "correctAnswer": "circle",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 5,
+      "title": "Fold it",
+      "questionType": "text",
+      "questionText": "If you fold a square exactly in half corner-to-corner, what shape do you get?",
+      "correctAnswer": "triangle",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 6,
+      "title": "Pattern math",
+      "questionType": "text",
+      "questionText": "2, 4, 8, 16... what is the next number?",
+      "correctAnswer": "32",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 7,
+      "title": "Angles",
+      "questionType": "text",
+      "questionText": "How many degrees are in a right angle?",
+      "correctAnswer": "90, ninety",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 8,
+      "title": "Symmetry",
+      "questionType": "text",
+      "questionText": "How many lines of symmetry does a perfect square have?",
+      "correctAnswer": "4, four",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 9,
+      "title": "Mirror",
+      "questionType": "text",
+      "questionText": "Which letter looks the same in a mirror: E, F, or A?",
+      "correctAnswer": "A",
+      "points": 10,
+      "imageUrl": ""
+    },
+    {
+      "id": 10,
+      "title": "Build it",
+      "questionType": "text",
+      "questionText": "How many faces does a cube have?",
+      "correctAnswer": "6, six",
+      "points": 10,
+      "imageUrl": ""
+    }
+  ]
+}
